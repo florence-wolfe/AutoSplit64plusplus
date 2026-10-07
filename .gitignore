@@ -38,6 +38,7 @@ MANIFEST
 
 # Custom
 config.ini
+.DS_Store
 src/autosplit64/gui/_version.py
 .master_version
 misc/
