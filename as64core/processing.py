@@ -1,5 +1,6 @@
 import time
 import json
+import logging
 
 
 processes = {}
@@ -34,6 +35,10 @@ class ProcessorGenerator(object):
             p = file_path
 
         file = ProcessorGenerator._open_file(p)
+        if not file:
+            print(p, "2: File Error")
+            return None
+
         transitions = {}
 
         #
@@ -47,10 +52,6 @@ class ProcessorGenerator(object):
                 return None
 
             sub_processors[sub_processor_key] = sub_processor
-
-        if not file:
-            print(file["name"], "2: File Error")
-            return None
 
         # Create blank processor instance
         processor = Processor()
@@ -270,8 +271,13 @@ class ProcessorSwitch(object):
         self._processors = {}
         self._current_processor = ""
         self._prev_processor = ""
+        self._last_error = None
 
     def execute(self, process_name):
+        # Skip split types without a processor, or whose processor failed to generate
+        if self._processors.get(process_name) is None or self._processors.get(self._current_processor) is None:
+            return
+
         try:
             if process_name != self._current_processor:
                 if self._processors[self._current_processor].relinquish():
@@ -283,8 +289,13 @@ class ProcessorSwitch(object):
             self._processors[self._current_processor].execute()
 
             self._prev_processor = process_name
-        except (KeyError, AttributeError):
-            pass
+        except ConnectionAbortedError:
+            raise
+        except Exception as e:
+            # Keep splitting, but log bugs in the processes, once rather than every frame
+            if repr(e) != self._last_error:
+                logging.getLogger(".log").exception("Split processor %s failed", self._current_processor)
+            self._last_error = repr(e)
 
     def register_processor(self, name, processor):
         self._processors[name] = processor
