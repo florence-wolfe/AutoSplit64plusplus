@@ -152,6 +152,12 @@ class App(QtWidgets.QMainWindow):
         self.dialogs["route_editor"].route_updated.connect(self._on_route_update)
         self.dialogs["settings_dialog"].applied.connect(self.settings_updated)
         self.dialogs["capture_editor"].applied.connect(self._reset)
+
+        # On macOS, the right-click menu is also in the menu bar
+        if self.menuBar().isNativeMenuBar():
+            self.menu_bar_menu = self.menuBar().addMenu("Options")
+            self.menu_bar_menu.aboutToShow.connect(self._rebuild_menu_bar_menu)
+            self._populate_menu(self.menu_bar_menu)
  
     def settings_updated(self):
         self.set_always_on_top(config.get("general", "on_top"))
@@ -269,89 +275,81 @@ class App(QtWidgets.QMainWindow):
 
     def contextMenuEvent(self, event):
         context_menu = QtWidgets.QMenu(self)
-        route_menu = QtWidgets.QMenu("Open Route")
-        route_actions = {}
-        category_menus = {}
+        self._populate_menu(context_menu)
+        context_menu.exec(self.mapToGlobal(event.pos()))
+
+    def _rebuild_menu_bar_menu(self):
+        # Rebuilt on every open, like the right-click menu, so routes and checkboxes are current
+        for submenu in self.menu_bar_menu.findChildren(QtWidgets.QMenu):
+            submenu.deleteLater()
+        self.menu_bar_menu.clear()
+        self._populate_menu(self.menu_bar_menu)
+
+    def _populate_menu(self, menu):
+        """ Fill menu with the app's actions. Used by the right-click menu and the menu bar. """
+        route_menu = QtWidgets.QMenu("Open Route", menu)
 
         # SRL MODE Action
-        srl_action = QtGui.QAction("SRL Mode", self, checkable=True)
-        context_menu.addAction(srl_action)
+        srl_action = QtGui.QAction("SRL Mode", menu, checkable=True)
+        menu.addAction(srl_action)
         srl_action.setChecked(config.get("general", "srl_mode"))
-        context_menu.addSeparator()
+        srl_action.triggered.connect(self._set_srl_mode)
+        menu.addSeparator()
 
         for category in sorted(self._routes, key=lambda text:[int(c) if c.isdigit() else c for c in re.split(r'(\d+)', text)]):
             if len(self._routes[category]) == 1 or category == "":
                 for route in self._routes[category]:
-                    route_menu.addAction(route[0])
-                    route_actions[route[0]] = partial(self._save_open_route, route[1])
+                    route_menu.addAction(route[0]).triggered.connect(partial(self._save_open_route, route[1]))
             else:
-                category_menus[category] = QtWidgets.QMenu(str(category))
-                route_menu.addMenu(category_menus[category])
+                category_menu = QtWidgets.QMenu(str(category), route_menu)
+                route_menu.addMenu(category_menu)
 
                 for route in self._routes[category]:
-                    category_menus[category].addAction(route[0])
-                    route_actions[route[0]] = partial(self._save_open_route, route[1])
+                    category_menu.addAction(route[0]).triggered.connect(partial(self._save_open_route, route[1]))
 
         route_menu.addSeparator()
-        file_action = route_menu.addAction("From File")
+        route_menu.addAction("From File").triggered.connect(self.open_route_browser)
 
         # Actions
-        edit_route = context_menu.addAction("Edit Route")
-        context_menu.addMenu(route_menu)
-        context_menu.addSeparator()
-        cords_action = context_menu.addAction("Edit Coordinates")
-        context_menu.addSeparator()
-        advanced_action = context_menu.addAction("Settings")
-        context_menu.addSeparator()
-        reset_gen_action = context_menu.addAction("Generate Reset Templates")
-        context_menu.addSeparator()
-        output_action = context_menu.addAction("Show Output")
-        context_menu.addSeparator()
-        autostart_action = QtGui.QAction("Autostart", self, checkable=True)
-        context_menu.addAction(autostart_action)
+        menu.addAction("Edit Route").triggered.connect(self.dialogs["route_editor"].show)
+        menu.addMenu(route_menu)
+        menu.addSeparator()
+        menu.addAction("Edit Coordinates").triggered.connect(self._edit_coordinates)
+        menu.addSeparator()
+        menu.addAction("Settings").triggered.connect(self.dialogs["settings_dialog"].show)
+        menu.addSeparator()
+        menu.addAction("Generate Reset Templates").triggered.connect(self.dialogs["reset_dialog"].show)
+        menu.addSeparator()
+        menu.addAction("Show Output").triggered.connect(self.dialogs["output_dialog"].show)
+        menu.addSeparator()
+        autostart_action = QtGui.QAction("Autostart", menu, checkable=True)
+        menu.addAction(autostart_action)
         autostart_action.setChecked(config.get("general", "auto_start"))
-        context_menu.addSeparator()
-        about_action = context_menu.addAction("About")
-        context_menu.addSeparator()
-        exit_action = context_menu.addAction("Exit")
+        autostart_action.triggered.connect(self._set_autostart)
+        menu.addSeparator()
+        menu.addAction("About").triggered.connect(self.dialogs["about_dialog"].show)
+        menu.addSeparator()
+        menu.addAction("Exit").triggered.connect(self.close)
 
-        action = context_menu.exec(self.mapToGlobal(event.pos()))
+        # Keep About, Settings and Exit in this menu instead of macOS moving them to the application menu
+        for action in menu.actions() + route_menu.actions():
+            action.setMenuRole(QtGui.QAction.MenuRole.NoRole)
 
-        # Connections
-        if action == srl_action:
-            checked = srl_action.isChecked()
-            config.set_key("general", "srl_mode", checked)
-            config.save_config()
-        elif action == edit_route:
-            self.dialogs["route_editor"].show()
-        elif action == file_action:
-            self.open_route_browser()
-        elif action == cords_action:
-            self.dialogs["capture_editor"].show()
-            try:
-                self.dialogs["output_dialog"].close()
-            except AttributeError:
-                pass
-        elif action == advanced_action:
-            self.dialogs["settings_dialog"].show()
-        elif action == reset_gen_action:
-            self.dialogs["reset_dialog"].show()
-        elif action == output_action:
-            self.dialogs["output_dialog"].show()
-        elif action == autostart_action:
-            checked = autostart_action.isChecked()
-            config.set_key("general", "auto_start", checked)
-            config.save_config()
-            self.autostart()
-        elif action == about_action:
-            self.dialogs["about_dialog"].show()
-        elif action == exit_action:
-            self.close()
-        else:
-            try:
-                route_actions[action.text()]()
-            except (KeyError, AttributeError):
-                pass
+    def _set_srl_mode(self, checked):
+        config.set_key("general", "srl_mode", checked)
+        config.save_config()
+
+    def _set_autostart(self, checked):
+        config.set_key("general", "auto_start", checked)
+        config.save_config()
+        self.autostart()
+
+    def _edit_coordinates(self):
+        self.dialogs["capture_editor"].show()
+        try:
+            self.dialogs["output_dialog"].close()
+        except AttributeError:
+            pass
 
     def mousePressEvent(self, event):
         if event.buttons() == QtCore.Qt.MouseButton.LeftButton:
