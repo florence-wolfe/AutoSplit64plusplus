@@ -17,7 +17,9 @@ class VersionTest(unittest.TestCase):
     def test_local_build_uses_git_describe(self):
         described = subprocess.run(["git", "describe", "--tags", "--match", "v[0-9]*", "--dirty"],
                                    capture_output=True, text=True).stdout.strip()
-        with mock.patch.dict(os.environ, {}, clear=True):
+        # Keep PATH, which Windows needs to find git
+        with mock.patch.dict(os.environ):
+            os.environ.pop("AS64_VERSION", None)
             self.assertEqual(build.release_version(), described.removeprefix("v") or "dev")
 
     def test_version_file_exists_only_for_the_build(self):

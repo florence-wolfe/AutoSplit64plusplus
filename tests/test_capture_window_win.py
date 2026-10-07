@@ -7,6 +7,8 @@ from unittest import mock
 
 import numpy as np
 
+import as64core
+
 
 class FakeWindowsCapture:
     """ Stands in for windows_capture.WindowsCapture; the test delivers frames """
@@ -42,9 +44,11 @@ class CaptureWindowWinTest(unittest.TestCase):
             window_title=mock.Mock(return_value="Emulator"))
         modules = {"windows_capture": types.SimpleNamespace(WindowsCapture=FakeWindowsCapture),
                    "as64core.capture_window": self.print_window}
-        patcher = mock.patch.dict(sys.modules, modules)
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        # On Windows the real capture_window is already imported, and "from . import" finds it on the package
+        for patcher in [mock.patch.dict(sys.modules, modules),
+                        mock.patch.object(as64core, "capture_window", self.print_window, create=True)]:
+            patcher.start()
+            self.addCleanup(patcher.stop)
         sys.modules.pop("as64core.capture_window_win", None)
         self.module = importlib.import_module("as64core.capture_window_win")
         self.addCleanup(sys.modules.pop, "as64core.capture_window_win", None)
