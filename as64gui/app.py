@@ -1,23 +1,19 @@
 import os
 import logging
-import threading
 from functools import partial
 import re
-import requests
-import json
 from PyQt6 import QtCore, QtGui, QtWidgets
 from as64core import route_loader, config, livesplit, livesplit_one
 from as64core.resource_utils import base_path, resource_path, absolute_path, rel_to_abs
 from . import constants
-from .widgets import PictureButton, StateButton, StarCountDisplay, SplitListWidget, ServerStatusIndicator, MenuButton
+from .widgets import PictureButton, StateButton, StarCountDisplay, SplitListWidget, ServerStatusIndicator, MenuButton, UpdateBadge
 from .dialogs import AboutDialog, CaptureEditor, SettingsDialog, RouteEditor, ResetGeneratorDialog, OutputDialog
+from .updates import Updates
 
 class App(QtWidgets.QMainWindow):
     start = QtCore.pyqtSignal()
     stop = QtCore.pyqtSignal()
     closed = QtCore.pyqtSignal()
-    # The update check runs on its own thread and reports a new version through this
-    update_available = QtCore.pyqtSignal(str)
 
     def __init__(self, parent=None):
         self.autostarter_active = False
@@ -57,6 +53,9 @@ class App(QtWidgets.QMainWindow):
         self.split_list = SplitListWidget(self.central_widget)
         self.server_status = ServerStatusIndicator(self.central_widget)
         self.menu_button = MenuButton(self.central_widget)
+        self.update_badge = UpdateBadge(constants.VERSION, self.central_widget)
+        # Split detection is running unless the start button offers to start it
+        self.updates = Updates(self, self.update_badge, lambda: self.start_btn.get_state() != "start")
 
         # Font
         self.button_font = QtGui.QFont("Tw Cen MT", 14)
@@ -82,8 +81,7 @@ class App(QtWidgets.QMainWindow):
         self.show()
         
         if config.get("general", "update_check"):
-            self.update_available.connect(self.display_update_message)
-            threading.Thread(target=self.update_check, daemon=True).start()
+            self.updates.check()
         
         # Handle splash screen closure
         try:
@@ -181,13 +179,16 @@ class App(QtWidgets.QMainWindow):
         self._reset()
 
     def resizeEvent(self, event):
-        # Keep the server status in the top right corner and the menu button in the bottom right,
-        # above the other widgets
+        # Keep the server status in the top right corner, the menu button in the bottom right and the
+        # version at the bottom left of the right panel, level with the menu button, above the other widgets
         size = self.central_widget.size()
         self.server_status.move(size.width() - self.server_status.size().width() - 6, 6)
         self.server_status.raise_()
         self.menu_button.move(size.width() - self.menu_button.size().width() - 8, size.height() - self.menu_button.size().height() - 8)
         self.menu_button.raise_()
+        self.update_badge.move(size.width() - self.right_panel.size().width() + 8,
+                               self.menu_button.y() + (self.menu_button.size().height() - self.update_badge.size().height()) // 2)
+        self.update_badge.raise_()
         super().resizeEvent(event)
 
     def _show_button_menu(self):
@@ -447,50 +448,6 @@ class App(QtWidgets.QMainWindow):
         msg.setText(message)
         msg.exec()
 
-    def display_update_message(self, version):
-        msg = QtWidgets.QMessageBox(self)
-        msg.setWindowTitle("Update Available")
-        msg.setText(f"A new version of AutoSplit 64+ is available!\n\nCurrent Version: {constants.VERSION}\nLatest Version: {version}")
-        
-        # Create custom icon label
-        icon_label = QtWidgets.QLabel()
-        pixmap = QtGui.QPixmap(base_path(constants.STAR_HOVER_PATH))
-        icon_label.setPixmap(pixmap)
-        layout = msg.layout()
-        layout.addWidget(icon_label, 0, 0, 1, 1, QtCore.Qt.AlignmentFlag.AlignCenter)
-        msg.addButton("Ignore", QtWidgets.QMessageBox.ButtonRole.RejectRole)
-        download_btn = msg.addButton("Download", QtWidgets.QMessageBox.ButtonRole.AcceptRole)
-        
-        def on_button_clicked(button):
-            if button == download_btn:
-                QtGui.QDesktopServices.openUrl(QtCore.QUrl(f"https://github.com/{constants.GITHUB_REPO}/releases/latest"))
-
-        msg.buttonClicked.connect(on_button_clicked)
-        msg.exec()
-
-    def parse_version(self, version_str):
-        version = version_str.lstrip('v')
-        return [int(x) for x in version.split('.')]
-
-    def update_check(self):
-        # Running from source, or a local build, isn't a release to update
-        if constants.VERSION == "dev" or "-" in constants.VERSION:
-            return
-
-        try:
-            response = requests.get(f"https://api.github.com/repos/{constants.GITHUB_REPO}/releases/latest", timeout=10)
-            response.raise_for_status()
-            data = json.loads(response.text)
-            latest_version = data["tag_name"]
-
-            if self.parse_version(latest_version) > self.parse_version(constants.VERSION):
-                self.update_available.emit(latest_version)
-            else:
-                return None
-        except Exception as e:
-            logging.error(f"Update check failed: {str(e)}")
-            return None
-
     def _load_route_dir(self):
         self._routes = {}
 
@@ -541,6 +498,7 @@ class App(QtWidgets.QMainWindow):
             pass
 
         self.stop.emit()
+        self.updates.on_quit()
         super().close()
         
     def closeEvent(self, event):

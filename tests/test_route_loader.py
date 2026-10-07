@@ -76,7 +76,7 @@ class EncoderTest(unittest.TestCase):
 
 class RouteDirectoryTest(unittest.TestCase):
     def test_invalid_route_file_is_skipped(self):
-        with mock.patch.object(App, "update_check"):
+        with mock.patch("as64gui.updates.Updates.check"):
             app = App()
         self.addCleanup(close_window, app)
 

@@ -19,7 +19,7 @@ class ListenerThreadTest(unittest.TestCase):
         self.calls = []
         record = lambda name: lambda *args: self.calls.append((name, threading.current_thread()))
         patches = [
-            mock.patch.object(App, "update_check"),
+            mock.patch("as64gui.updates.Updates.check"),
             mock.patch.object(AutoSplit64.livesplit, "connect"),
             mock.patch.object(App, "set_started", record("set_started")),
             mock.patch.object(App, "update_display", record("update_display")),

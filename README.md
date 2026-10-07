@@ -148,6 +148,13 @@ On macOS, the Capture Editor's `Source` chooses what to capture. Each source nee
 - Select your emulator in the `Process` drop-down. The capture includes the window's title bar, so make sure the `Game Region` only covers the game.
 - Don't resize the emulator window after setting the region. If you do, set the region again.
 
+### Updates
+The installed version is shown at the bottom, next to the menu button. Click it to check for an update. With `Check for Updates` on (in `Settings`), AutoSplit64++ also checks when it opens and offers a new version, and a green dot appears next to the version: click it to update.
+
+Updating downloads the new version, checks it, and installs it either right away (AutoSplit64++ restarts) or when you quit. Split detection has to be stopped before updating, in case you're in a run. Your settings, routes and reset templates are kept.
+
+On macOS, each new version needs the Screen Recording and Camera permissions again, as it isn't signed by an Apple developer account.
+
 ### Routes
 
 We must let AutoSplit 64 know when we want splits to occur. This can be done by using the Route Editor (`Right-Click -> Edit Route`) to generate route files.

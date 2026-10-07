@@ -6,7 +6,7 @@ except ImportError:
 TITLE = "AutoSplit64++"
 AUTHOR = "Davi Be\nSynozure"
 
-GITHUB_REPO = "DaviBe92/AutoSplit64plus"
+GITHUB_REPO = "florence-wolfe/AutoSplit64plusplus"
 DISCORD_LINK = "https://discord.gg/VmrQQBpPSK"
 
 WIDTH = 365
