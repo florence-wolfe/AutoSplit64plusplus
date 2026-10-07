@@ -11,6 +11,9 @@ COLORS = {
     "stopped": QtGui.QColor(120, 123, 127),
 }
 
+# How long the "Copied" message stays up, in milliseconds
+COPIED_MESSAGE_TIME = 2500
+
 DESCRIPTIONS = {
     "connected": "LiveSplit One connected",
     "waiting": "Waiting for LiveSplit One to connect",
@@ -29,6 +32,7 @@ class ServerStatusIndicator(QtWidgets.QWidget):
 
         self._state = "stopped"
         self._url = ""
+        self._showing_copied = False
 
         self._timer = QtCore.QTimer(self)
         self._timer.timeout.connect(self.refresh)
@@ -59,9 +63,24 @@ class ServerStatusIndicator(QtWidgets.QWidget):
         painter.drawEllipse(QtCore.QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5))
 
     def mousePressEvent(self, event):
+        # Copy on release instead, since releasing the mouse hides tooltips
         if event.button() == QtCore.Qt.MouseButton.LeftButton:
-            QtWidgets.QApplication.clipboard().setText(self._url)
-            QtWidgets.QToolTip.showText(event.globalPosition().toPoint(), f"Copied {self._url}", self)
             event.accept()
         else:
             super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == QtCore.Qt.MouseButton.LeftButton:
+            QtWidgets.QApplication.clipboard().setText(self._url)
+            QtWidgets.QToolTip.showText(event.globalPosition().toPoint(), f"Copied {self._url}", self, self.rect(), COPIED_MESSAGE_TIME)
+            # Keep the hover tooltip from replacing the message while it's shown
+            self._showing_copied = True
+            QtCore.QTimer.singleShot(COPIED_MESSAGE_TIME, lambda: setattr(self, "_showing_copied", False))
+            event.accept()
+        else:
+            super().mouseReleaseEvent(event)
+
+    def event(self, event):
+        if event.type() == QtCore.QEvent.Type.ToolTip and self._showing_copied:
+            return True
+        return super().event(event)
