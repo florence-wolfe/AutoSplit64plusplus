@@ -30,5 +30,18 @@ class StartButtonTest(unittest.TestCase):
         self.stopped.assert_called_once()
 
 
+
+class MenuTest(unittest.TestCase):
+    def test_order(self):
+        with mock.patch("as64gui.updates.Updates.check"):
+            app = App()
+        self.addCleanup(close_window, app)
+        menu = QtWidgets.QMenu(app)
+        app._populate_menu(menu)
+        items = [a.text() if not a.isSeparator() else "---" for a in menu.actions()]
+        self.assertEqual(items, ["Edit Route", "Open Route", "---", "Edit Coordinates", "---", "Settings", "---",
+                                 "Generate Reset Templates", "---", "Show Output", "---", "Autostart", "SRL Mode",
+                                 "---", "About", "---", "Exit"])
+
 if __name__ == "__main__":
     unittest.main()

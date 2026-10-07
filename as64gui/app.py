@@ -329,14 +329,6 @@ class App(QtWidgets.QMainWindow):
         menu.setToolTipsVisible(True)
         route_menu.setToolTipsVisible(True)
 
-        # SRL MODE Action
-        srl_action = QtGui.QAction("SRL Mode", menu, checkable=True)
-        menu.addAction(srl_action)
-        srl_action.setChecked(config.get("general", "srl_mode"))
-        srl_action.setToolTip("Don't reset the timer when you reset the console, e.g. in races")
-        srl_action.triggered.connect(self._set_srl_mode)
-        menu.addSeparator()
-
         for category in sorted(self._routes, key=lambda text:[int(c) if c.isdigit() else c for c in re.split(r'(\d+)', text)]):
             if len(self._routes[category]) == 1 or category == "":
                 for route in self._routes[category]:
@@ -380,6 +372,11 @@ class App(QtWidgets.QMainWindow):
         autostart_action.setChecked(config.get("general", "auto_start"))
         autostart_action.setToolTip("Start split detection when AutoSplit64++ opens, trying for up to 5 minutes")
         autostart_action.triggered.connect(self._set_autostart)
+        srl_action = QtGui.QAction("SRL Mode", menu, checkable=True)
+        menu.addAction(srl_action)
+        srl_action.setChecked(config.get("general", "srl_mode"))
+        srl_action.setToolTip("Don't reset the timer when you reset the console, e.g. in races")
+        srl_action.triggered.connect(self._set_srl_mode)
         menu.addSeparator()
         action = menu.addAction("About")
         action.setToolTip("Version and credits")
