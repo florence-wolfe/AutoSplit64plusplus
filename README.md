@@ -188,8 +188,9 @@ Run from source:
 Build the app:
 1. Set up the virtual environment as above
 2. Run `./build_mac.sh`
-3. The app is created in `dist/AutoSplit64++/`. Keep `AutoSplit64++.app` together with the other files in that folder, since it reads its resources and stores its settings there. Move the whole folder if you want it somewhere else, e.g. `~/Applications`.
-4. Running `./build_mac.sh` again updates the app and keeps your settings, routes and reset templates.
+3. The app is created as `dist/AutoSplit64++.app`. Move it to `Applications` (or anywhere else) to install it.
+
+The app stores its settings, log, routes and reset templates in `~/Library/Application Support/AutoSplit64++/`. Installing a new build keeps them.
 
 ## Support
 - For help join our [Discord](https://discord.gg/VmrQQBpPSK)

@@ -1,11 +1,10 @@
 import sys
 import os
 
-# A macOS .app starts with "/" as its working directory. Run from the folder containing
-# the .app instead, where the resources and config live, like the Windows build.
+# The macOS app runs from Application Support, where its resources and settings are
 if getattr(sys, "frozen", False) and sys.platform == "darwin":
-    from as64core.resource_utils import base_path
-    os.chdir(base_path())
+    from as64core.resource_utils import install_mac_app_data
+    install_mac_app_data()
 
 from threading import Thread
 import logging

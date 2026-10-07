@@ -1,5 +1,5 @@
 #!/bin/sh
-# Builds dist/AutoSplit64++/ containing AutoSplit64++.app and its resources.
+# Builds dist/AutoSplit64++.app, which includes its resources and can be installed anywhere.
 set -e
 cd "$(dirname "$0")"
 . .venv/bin/activate
@@ -24,13 +24,15 @@ pyinstaller \
     --noupx \
     --workpath "$WORK" \
     --distpath "$WORK/dist" \
+    --add-data "logic:logic" \
+    --add-data "resources:resources" \
+    --add-data "routes:routes" \
+    --add-data "templates:templates" \
+    --add-data "defaults.ini:." \
     AutoSplit64.py
 
-# Replace the app and its resources, but keep settings, routes and generated reset templates
-mkdir -p "dist/$NAME/routes" "dist/$NAME/templates"
-rm -rf "dist/$NAME/$NAME.app" "dist/$NAME/logic" "dist/$NAME/resources"
-cp -R "$WORK/dist/$NAME.app" logic resources defaults.ini "dist/$NAME/"
-rsync -a --ignore-existing routes/ "dist/$NAME/routes/"
-rsync -a --ignore-existing templates/ "dist/$NAME/templates/"
+rm -rf "dist/$NAME.app"
+mkdir -p dist
+cp -R "$WORK/dist/$NAME.app" dist/
 
-echo "Built dist/$NAME/$NAME.app"
+echo "Built dist/$NAME.app"
