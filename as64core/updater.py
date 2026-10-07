@@ -6,6 +6,7 @@ The app can't replace itself while it runs (and a running .exe can't be overwrit
 detached script waits for it to quit, installs the update and optionally reopens it.
 """
 import hashlib
+import logging
 import os
 import re
 import subprocess
@@ -93,6 +94,9 @@ def download(release, directory, progress=None):
 
 # Waits for AutoSplit64++ to quit, then swaps the app for the update, keeping the old one if that fails
 _MACOS_INSTALL = """#!/bin/sh
+# Log what happens, as nobody sees this script run
+exec >"$AS64_WORK/install.log" 2>&1
+set -x
 while kill -0 "$AS64_PID" 2>/dev/null; do sleep 0.2; done
 staging="$AS64_WORK/update"
 rm -rf "$staging"
@@ -115,35 +119,46 @@ if [ "$AS64_RELAUNCH" = 1 ]; then open "$AS64_APP"; fi
 _WINDOWS_INSTALL = r"""
 param([int]$AppPid, [string]$Zip, [string]$InstallDir, [string]$Work, [int]$Relaunch)
 $ErrorActionPreference = "Stop"
-Wait-Process -Id $AppPid -ErrorAction SilentlyContinue
-$staging = Join-Path $Work "update"
-if (Test-Path $staging) { Remove-Item $staging -Recurse -Force }
-Expand-Archive -Path $Zip -DestinationPath $staging -Force
-$new = Get-ChildItem $staging -Directory | Select-Object -First 1
+# Log what happens, as nobody sees this script run
+Start-Transcript -Path (Join-Path $Work "install.log") | Out-Null
+try {
+    Wait-Process -Id $AppPid -ErrorAction SilentlyContinue
+    $staging = Join-Path $Work "update"
+    if (Test-Path $staging) { Remove-Item $staging -Recurse -Force }
+    Expand-Archive -Path $Zip -DestinationPath $staging -Force
+    $new = Get-ChildItem $staging -Directory | Select-Object -First 1
 
-foreach ($name in "libraries", "logic", "resources", "obs-plugin") {
-    $source = Join-Path $new.FullName $name
-    $target = Join-Path $InstallDir $name
-    if (Test-Path $target) { Remove-Item $target -Recurse -Force }
-    if (Test-Path $source) { Copy-Item $source $target -Recurse }
-}
-Get-ChildItem $new.FullName -File | Copy-Item -Destination $InstallDir -Force
+    foreach ($name in "libraries", "logic", "resources", "obs-plugin") {
+        $source = Join-Path $new.FullName $name
+        $target = Join-Path $InstallDir $name
+        if (Test-Path $target) { Remove-Item $target -Recurse -Force }
+        if (Test-Path $source) { Copy-Item $source $target -Recurse }
+    }
+    Get-ChildItem $new.FullName -File | Copy-Item -Destination $InstallDir -Force
 
-foreach ($name in "routes", "templates") {
-    $source = Join-Path $new.FullName $name
-    if (-not (Test-Path $source)) { continue }
-    Get-ChildItem $source -Recurse -File | ForEach-Object {
-        $target = Join-Path (Join-Path $InstallDir $name) $_.FullName.Substring($source.Length + 1)
-        if (-not (Test-Path $target)) {
-            New-Item -ItemType Directory -Force (Split-Path $target) | Out-Null
-            Copy-Item $_.FullName $target
+    foreach ($name in "routes", "templates") {
+        $source = Join-Path $new.FullName $name
+        if (-not (Test-Path $source)) { continue }
+        Get-ChildItem $source -Recurse -File | ForEach-Object {
+            $target = Join-Path (Join-Path $InstallDir $name) $_.FullName.Substring($source.Length + 1)
+            if (-not (Test-Path $target)) {
+                New-Item -ItemType Directory -Force (Split-Path $target) | Out-Null
+                Copy-Item $_.FullName $target
+            }
         }
     }
-}
 
-if ($Relaunch) {
-    $exe = Get-ChildItem $InstallDir -Filter "*.exe" | Select-Object -First 1
-    Start-Process $exe.FullName -WorkingDirectory $InstallDir
+    if ($Relaunch) {
+        $exe = Get-ChildItem $InstallDir -Filter "*.exe" | Select-Object -First 1
+        Start-Process $exe.FullName -WorkingDirectory $InstallDir
+    }
+}
+catch {
+    "Install failed: $($_ | Out-String)"
+    exit 1
+}
+finally {
+    Stop-Transcript | Out-Null
 }
 """
 
@@ -168,16 +183,20 @@ def install_on_exit(zip_path, relaunch, pid=None, install_path=None):
         script.write_text(_MACOS_INSTALL)
         env = dict(os.environ, AS64_PID=str(pid), AS64_ZIP=str(zip_path), AS64_APP=str(install_path),
                    AS64_WORK=work, AS64_RELAUNCH="1" if relaunch else "0")
-        return subprocess.Popen(["/bin/sh", str(script)], env=env, start_new_session=True)
+        process = subprocess.Popen(["/bin/sh", str(script)], env=env, start_new_session=True)
 
-    if sys.platform == "win32":
+    elif sys.platform == "win32":
         install_path = install_path or Path(sys.executable).parent
         script = Path(work) / "install.ps1"
         script.write_text(_WINDOWS_INSTALL)
-        return subprocess.Popen(
+        process = subprocess.Popen(
             ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script),
              "-AppPid", str(pid), "-Zip", str(zip_path), "-InstallDir", str(install_path), "-Work", work,
              "-Relaunch", "1" if relaunch else "0"],
             creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP)
+    else:
+        raise UpdateError(f"Updates can't be installed on {sys.platform}")
 
-    raise UpdateError(f"Updates can't be installed on {sys.platform}")
+    process.log_path = Path(work) / "install.log"
+    logging.getLogger(".log").info("Installing the update after AutoSplit64++ quits, logging to %s", process.log_path)
+    return process

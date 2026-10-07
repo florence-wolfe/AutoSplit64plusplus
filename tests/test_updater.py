@@ -121,18 +121,21 @@ class MacInstallTest(InstallTestCase):
 
     def install(self, zip_path):
         with mock.patch.object(updater.sys, "platform", "darwin"):
-            updater.install_on_exit(zip_path, relaunch=False, pid=self.running_process(), install_path=self.app).wait(10)
+            process = updater.install_on_exit(zip_path, relaunch=False, pid=self.running_process(), install_path=self.app)
+        process.wait(10)
+        return process
 
     def test_replaces_app_after_it_quits(self):
         self.install(self.zip)
         self.assertEqual((self.app / "Contents" / "MacOS" / "AutoSplit64++").read_text(), "new")
         self.assertEqual(sorted(p.name for p in self.app.parent.iterdir()), ["My AS64.app"])
 
-    def test_broken_update_keeps_app(self):
+    def test_broken_update_keeps_app_and_logs_why(self):
         broken = self.dir / "broken.zip"
         broken.write_bytes(b"not a zip")
-        self.install(broken)
+        process = self.install(broken)
         self.assertEqual((self.app / "Contents" / "MacOS" / "AutoSplit64++").read_text(), "old")
+        self.assertIn("ditto", process.log_path.read_text())
 
 
 @unittest.skipUnless(sys.platform == "win32", "installs a Windows app")
@@ -150,9 +153,11 @@ class WindowsInstallTest(InstallTestCase):
                                ("templates/default_reset_one.jpg", "default")]:
                 archive.writestr(f"AutoSplit64++/{path}", text)
 
-        updater.install_on_exit(zip_path, relaunch=False, pid=self.running_process(), install_path=install).wait(60)
+        process = updater.install_on_exit(zip_path, relaunch=False, pid=self.running_process(), install_path=install)
+        process.wait(60)
 
-        self.assertEqual((install / "AutoSplit64++.exe").read_text(), "new exe")
+        log = process.log_path.read_text() if process.log_path.exists() else "(no log)"
+        self.assertEqual((install / "AutoSplit64++.exe").read_text(), "new exe", log)
         self.assertEqual(sorted(p.name for p in (install / "libraries").iterdir()), ["new.dll"])
         self.assertEqual((install / "config.ini").read_text(), "settings")
         self.assertEqual((install / "routes" / "mine.as64").read_text(), "my route")
