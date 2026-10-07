@@ -3,6 +3,7 @@ import sys
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 import cv2
+import numpy as np
 
 from as64core import capture_shmem, config
 if sys.platform == "darwin":
@@ -293,12 +294,16 @@ class CaptureEditor(QtWidgets.QDialog):
             except IndexError:
                 pass
         
+            preview_image = None
             if selected_hwnd:
                 try:
                     preview_image = capture_window.capture(selected_hwnd)
-                    cv2.imwrite(resource_utils.resource_path(PREVIEW_PATH), preview_image)
                 except:
                     pass
+            # Never show an earlier capture when nothing could be captured now
+            if preview_image is None:
+                preview_image = np.zeros((480, 640, 3), np.uint8)
+            cv2.imwrite(resource_utils.resource_path(PREVIEW_PATH), preview_image)
             
         self.preview_pixmap.load(resource_utils.resource_path(PREVIEW_PATH))
 
