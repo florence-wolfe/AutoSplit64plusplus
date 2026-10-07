@@ -33,10 +33,25 @@ jobs:
         with:
           enable-cache: true
 
+      # build.py puts the plugin in the Windows app; configuring downloads the OBS sources it builds against
+      - name: Build the OBS plugin
+        if: runner.os == 'Windows'
+        working-directory: obs-plugin
+        run: |
+          cmake --preset windows-x64
+          cmake --build --preset windows-x64
+
       - name: Build
         run: uv run build.py
         env:
           AS64_VERSION: ${{ github.ref_name }}
+
+      # build.py only warns when the plugin is missing, which is fine locally but not for a release
+      - name: Check the OBS plugin is in the app
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "dist/AutoSplit64++/obs-plugin/autosplit64plus-framegrabber.dll")) { throw "The OBS plugin is missing from the app" }
 
       - name: Package the app
         if: runner.os == 'macOS'
