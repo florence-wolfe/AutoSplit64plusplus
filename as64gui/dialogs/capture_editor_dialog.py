@@ -10,7 +10,7 @@ if sys.platform == "darwin":
     from as64core import capture_device_mac as capture_device
     from as64core import capture_window_mac as capture_window
 else:
-    from as64core import capture_window
+    from as64core import capture_window_win as capture_window
 from as64core import resource_utils
 from ..widgets import HLine
 from ..graphics import RectangleSelector
@@ -434,8 +434,8 @@ class CaptureEditor(QtWidgets.QDialog):
             self.shmem_capture.close_shmem()
         except:
             pass  # Ignore any errors during close
+        capture_window.stop()
         if sys.platform == "darwin":
-            capture_window.stop()
             capture_device.stop()
             self._permission_timer.stop()
         config.rollback()

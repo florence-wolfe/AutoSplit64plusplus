@@ -16,7 +16,7 @@ class ImportTest(unittest.TestCase):
             for module in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
                 if module.name.endswith("_mac") and sys.platform != "darwin":
                     continue
-                if module.name == "as64core.capture_window" and sys.platform != "win32":
+                if (module.name.endswith("_win") or module.name == "as64core.capture_window") and sys.platform != "win32":
                     continue
                 with self.subTest(module.name):
                     importlib.import_module(module.name)

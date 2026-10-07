@@ -109,6 +109,10 @@ def capture(hwnd, client_area=True):
     return image
 
 
+def window_title(hwnd):
+    return win32gui.GetWindowText(hwnd)
+
+
 def get_capture_size(hwnd):
     left, top, right, bot = win32gui.GetWindowRect(hwnd)
 

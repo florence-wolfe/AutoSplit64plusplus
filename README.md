@@ -115,7 +115,10 @@ If the region was not detected poperly, adjust the region manually and ensure it
 - Press `Apply` to save changes.
 
 #### Window Capture
-Window Capture will take a screenshot of the selected programm 30 times/second.
+Window Capture streams the selected program's window with Windows.Graphics.Capture (the API used by screen sharing apps and OBS), also while the window is covered by other windows. It needs Windows 10 version 1903 or newer; on older versions it takes a screenshot of the window 30 times/second instead.
+
+- On Windows 10, Windows draws a yellow border around a window while it's captured. Windows 11 lets AutoSplit64++ turn it off.
+- The whole window is captured, where earlier versions cut it off at the bottom and right, and its framing may differ slightly. If you set up your `Game Region` with an earlier version, check that it still covers only the game.
 
 - Make sure you have your capture software open (i.e.AmaRecTV)
 - Open the Capture Editor in AutoSplit64++ (`Right-Click -> Edit Coordinates`):

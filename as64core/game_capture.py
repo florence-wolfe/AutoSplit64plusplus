@@ -5,7 +5,7 @@ if sys.platform == "darwin":
     from . import capture_device_mac as capture_device
     from . import capture_window_mac as capture_window
 else:
-    from . import capture_window
+    from . import capture_window_win as capture_window
 from .image_utils import enhance_contrast
 import numpy as np
 
@@ -150,7 +150,8 @@ class GameCapture(object):
     def close(self):
         if self._use_obs:
             self._shmem.close_shmem()
-        elif sys.platform == "darwin":
+        else:
             capture_window.stop()
-            capture_device.stop()
+            if sys.platform == "darwin":
+                capture_device.stop()
 
