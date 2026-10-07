@@ -100,7 +100,9 @@ class MainWindowTest(unittest.TestCase):
         from autosplit64.core import config
         get = config.get
         for on_top in (True, False):
-            with self.subTest(on_top), mock.patch.object(config, "get", lambda section, key=None: on_top if key == "on_top" else get(section, key)):
+            # Applying settings starts the LiveSplit One server in its connection mode, the default on macOS
+            with self.subTest(on_top), mock.patch.object(config, "get", lambda section, key=None: on_top if key == "on_top" else get(section, key)), \
+                    mock.patch("autosplit64.gui.app.livesplit.connect"), mock.patch("autosplit64.gui.app.livesplit_one.stop_server"):
                 self.app.settings_updated()
                 self.assertIs(self.on_top(), on_top)
                 self.assertTrue(self.app.isVisible())
