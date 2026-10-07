@@ -710,42 +710,35 @@ class ConnectionMenu(BaseMenu):
         self.menu_layout.addItem(
             QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Minimum), 4, 0)
 
+        # Only the settings of the selected connection mode are shown, see _show_mode_settings.
+        # The column 2 spacer is in the mode's row, which is always shown, so hidden rows collapse.
         self.menu_layout.addItem(
-            QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum), 5, 2)
-        self.menu_layout.addWidget(self.host_lb, 5, 0)
-        self.menu_layout.addWidget(self.host_le, 5, 1)
-        self.menu_layout.addWidget(self.port_lb, 6, 0)
-        self.menu_layout.addWidget(self.port_le, 6, 1)
-
-        self.menu_layout.addItem(
-            QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Minimum), 7, 0)
-        
-        self.menu_layout.addWidget(HLine(), 8, 0, 1, 3)
-
-        self.menu_layout.addItem(
-            QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Minimum), 9, 0)
-        
-        self.menu_layout.addWidget(self.ls_pipe_host_lb, 10, 0)
-        self.menu_layout.addWidget(self.ls_pipe_host_le, 10, 1)        
-
-        self.menu_layout.addItem(
-            QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Minimum), 11, 0)
-
-        self.menu_layout.addWidget(HLine(), 12, 0, 1, 3)
-
-        self.menu_layout.addItem(
-            QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Minimum), 13, 0)
-
-        self.menu_layout.addWidget(self.lso_port_lb, 14, 0)
-        self.menu_layout.addWidget(self.lso_port_le, 14, 1)
-
+            QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum), 1, 2)
+        self.menu_layout.addWidget(self.ls_pipe_host_lb, 5, 0)
+        self.menu_layout.addWidget(self.ls_pipe_host_le, 5, 1)
+        self.menu_layout.addWidget(self.host_lb, 6, 0)
+        self.menu_layout.addWidget(self.host_le, 6, 1)
+        self.menu_layout.addWidget(self.port_lb, 7, 0)
+        self.menu_layout.addWidget(self.port_le, 7, 1)
+        self.menu_layout.addWidget(self.lso_port_lb, 8, 0)
+        self.menu_layout.addWidget(self.lso_port_le, 8, 1)
 
         self.menu_layout.addItem(QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Expanding), 15, 0)
 
         self.port_le.setValidator(self.int_validator)
         self.lso_port_le.setValidator(self.int_validator)
 
+        self.ls_mode_combo.currentIndexChanged.connect(self._show_mode_settings)
         self.load_preferences()
+        self._show_mode_settings(self.ls_mode_combo.currentIndex())
+
+    def _show_mode_settings(self, mode):
+        """ Show the settings of the connection mode: 0 Named Pipe, 1 TCP, 2 LiveSplit One """
+        for widget_mode, widgets in [(0, (self.ls_pipe_host_lb, self.ls_pipe_host_le)),
+                                     (1, (self.host_lb, self.host_le, self.port_lb, self.port_le)),
+                                     (2, (self.lso_port_lb, self.lso_port_le))]:
+            for widget in widgets:
+                widget.setVisible(mode == widget_mode)
 
     def load_preferences(self):
         self.host_le.setText(str(config.get('connection', 'ls_host')))
