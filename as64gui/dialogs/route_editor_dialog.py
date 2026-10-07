@@ -1,4 +1,5 @@
 from os import path
+import sys
 from json import JSONDecodeError
 import re
 import xml.etree.ElementTree as ET
@@ -42,6 +43,11 @@ class RouteEditor(QtWidgets.QMainWindow):
 
     def __init__(self, parent=None):
         super(RouteEditor, self).__init__(parent)
+
+        # On macOS, only dialogs are kept at their parent's window level, so a normal window
+        # would open behind the main window when it's always on top
+        if sys.platform == "darwin":
+            self.setWindowFlag(QtCore.Qt.WindowType.Dialog)
 
         # Route
         self.route = None
