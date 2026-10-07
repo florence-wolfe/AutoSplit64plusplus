@@ -4,6 +4,7 @@ Window capture for macOS using ScreenCaptureKit, the API screen sharing apps use
 Same interface as capture_window.py, with an SCWindow in place of a hwnd. A window is
 captured by a stream that keeps the latest frame, so capture() doesn't wait for the screen.
 """
+import subprocess
 import threading
 
 import numpy as np
@@ -75,11 +76,23 @@ def _windows():
     return content.windows()
 
 
+def has_permission():
+    """ Whether the app has the Screen Recording permission """
+    return Quartz.CGPreflightScreenCaptureAccess()
+
+
+def request_permission():
+    """ Show macOS's Screen Recording prompt. macOS only shows it once per app. """
+    Quartz.CGRequestScreenCaptureAccess()
+
+
+def open_permission_settings():
+    subprocess.run(["open", "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"])
+
+
 def get_visible_processes():
     """ Returns a list of (process, window) with the largest window of each process """
-    # Asks for the Screen Recording permission the first time
-    if not Quartz.CGPreflightScreenCaptureAccess():
-        Quartz.CGRequestScreenCaptureAccess()
+    if not has_permission():
         return []
 
     largest = {}

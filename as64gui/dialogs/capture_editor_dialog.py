@@ -95,6 +95,8 @@ class CaptureEditor(QtWidgets.QDialog):
         self.left_layout.addWidget(self.use_obs_cb, 0, 0, 1, 2)
         # The OBS Plugin is only available on Windows
         self.use_obs_cb.setVisible(sys.platform == "win32")
+        if sys.platform == "darwin":
+            self._add_permission_panel()
         self.left_layout.addWidget(self.process_lb, 1, 0)
         self.left_layout.addWidget(self.process_combo, 1, 1)
         self.left_layout.addWidget(self.capture_btn, 2, 0, 1, 2)
@@ -145,7 +147,47 @@ class CaptureEditor(QtWidgets.QDialog):
         self._process_list = capture_window.get_visible_processes()
         self.process_combo.addItems([proc[0].name() for proc in self._process_list])
 
+    def _add_permission_panel(self):
+        """ Shown on macOS while the Screen Recording permission is missing """
+        self.permission_panel = QtWidgets.QWidget()
+        permission_layout = QtWidgets.QVBoxLayout(self.permission_panel)
+        permission_layout.setContentsMargins(0, 0, 0, 8)
+
+        permission_lb = QtWidgets.QLabel("Screen Recording permission is needed to capture the emulator window. "
+                                         "After allowing it, you may need to restart AutoSplit64++.")
+        permission_lb.setWordWrap(True)
+        allow_btn = QtWidgets.QPushButton("Allow Screen Recording")
+        settings_btn = QtWidgets.QPushButton("Open System Settings")
+        for btn in (allow_btn, settings_btn):
+            btn.setAutoDefault(False)
+        allow_btn.clicked.connect(capture_window.request_permission)
+        settings_btn.clicked.connect(capture_window.open_permission_settings)
+
+        permission_layout.addWidget(permission_lb)
+        permission_layout.addWidget(allow_btn)
+        permission_layout.addWidget(settings_btn)
+        # Shares the row of the OBS Plugin checkbox, which is hidden on macOS
+        self.left_layout.addWidget(self.permission_panel, 0, 0, 1, 2)
+
+        # Check again while the editor is open, to notice when the permission is granted
+        self._permission_timer = QtCore.QTimer(self)
+        self._permission_timer.timeout.connect(self._update_permission)
+
+    def _update_permission(self):
+        granted = capture_window.has_permission()
+        if granted and not self.permission_panel.isHidden():
+            self._refresh_process_list()
+            self.refresh_graphics_scene()
+        self.permission_panel.setVisible(not granted)
+        if granted:
+            self._permission_timer.stop()
+        else:
+            self._permission_timer.start(1000)
+
     def show(self):
+        if sys.platform == "darwin":
+            self._update_permission()
+
         # Load game_region from preferences
         game_region = config.get('game', 'game_region')
         self.game_region_selector.resize(game_region[2], game_region[3])
@@ -292,6 +334,7 @@ class CaptureEditor(QtWidgets.QDialog):
             pass  # Ignore any errors during close
         if sys.platform == "darwin":
             capture_window.stop()
+            self._permission_timer.stop()
         config.rollback()
         super().closeEvent(e)
 

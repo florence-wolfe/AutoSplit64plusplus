@@ -92,6 +92,8 @@ class GameCapture(object):
             except Exception as e:
                 raise Exception(str(e))    
         else:
+            if not bool(self._hwnd) and sys.platform == "darwin" and not capture_window.has_permission():
+                raise Exception("AutoSplit64++ needs the Screen Recording permission to capture the game.\n\nOpen Edit Coordinates to allow it.")
             if not bool(self._hwnd):
                 raise Exception(f"Could not find {self._process_name}\n\nMake sure the program is running and visible!")
 
