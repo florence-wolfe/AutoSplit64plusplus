@@ -154,7 +154,9 @@ class CaptureEditor(QtWidgets.QDialog):
         permission_layout = QtWidgets.QVBoxLayout(self.permission_panel)
         permission_layout.setContentsMargins(0, 0, 0, 8)
 
-        permission_lb = QtWidgets.QLabel("Screen Recording permission is needed to capture the emulator window. "
+        permission_lb = QtWidgets.QLabel("Screen Recording permission is needed to capture the emulator window.\n\n"
+                                         "If it's already on in System Settings, it may belong to an earlier build. "
+                                         "Allow Screen Recording asks macOS again for this one.\n\n"
                                          "After allowing it, you may need to restart AutoSplit64++.")
         permission_lb.setWordWrap(True)
         allow_btn = QtWidgets.QPushButton("Allow Screen Recording")

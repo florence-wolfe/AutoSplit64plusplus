@@ -4,7 +4,9 @@ Window capture for macOS using ScreenCaptureKit, the API screen sharing apps use
 Same interface as capture_window.py, with an SCWindow in place of a hwnd. A window is
 captured by a stream that keeps the latest frame, so capture() doesn't wait for the screen.
 """
+import logging
 import subprocess
+import sys
 import threading
 
 import numpy as np
@@ -13,7 +15,7 @@ import psutil
 import Quartz
 import ScreenCaptureKit as SCK
 from CoreMedia import CMSampleBufferGetImageBuffer, CMTimeMake
-from Foundation import NSObject
+from Foundation import NSBundle, NSObject
 
 _TIMEOUT = 5
 _MINIMUM_WINDOW_SIZE = 100
@@ -69,20 +71,47 @@ def _wait(start):
     return result
 
 
-def _windows():
+_last_error = None
+
+
+def _shareable_content():
+    """ Returns the windows ScreenCaptureKit can capture, or None without the Screen Recording permission """
+    global _last_error
     content, error = _wait(lambda handler: SCK.SCShareableContent.getShareableContentExcludingDesktopWindows_onScreenWindowsOnly_completionHandler_(True, True, handler))
-    if content is None:
-        return []
-    return content.windows()
+    # Log each new refusal once, as this is called repeatedly while waiting for the permission
+    if error is not None and error.localizedDescription() != _last_error:
+        logging.getLogger(".log").warning("ScreenCaptureKit refused (preflight %s): %s", Quartz.CGPreflightScreenCaptureAccess(), error.localizedDescription())
+    _last_error = error.localizedDescription() if error is not None else None
+    return content
+
+
+def _windows():
+    content = _shareable_content()
+    return content.windows() if content is not None else []
 
 
 def has_permission():
-    """ Whether the app has the Screen Recording permission """
-    return Quartz.CGPreflightScreenCaptureAccess()
+    """
+    Whether the app has the Screen Recording permission. Asks ScreenCaptureKit itself, since
+    CGPreflightScreenCaptureAccess() can be out of date.
+    """
+    return _shareable_content() is not None
 
 
 def request_permission():
-    """ Show macOS's Screen Recording prompt. macOS only shows it once per app. """
+    """
+    Show macOS's Screen Recording prompt. macOS only shows it once per app, and keeps a grant
+    for one build of an ad-hoc signed app. So forget the earlier decision first, which makes
+    macOS ask again for this build.
+    """
+    bundle_id = NSBundle.mainBundle().bundleIdentifier()
+    # Running from source, the permission belongs to the terminal app instead
+    if getattr(sys, "frozen", False) and bundle_id:
+        reset = subprocess.run(["tccutil", "reset", "ScreenCapture", bundle_id], capture_output=True, text=True)
+        if reset.returncode != 0:
+            logging.getLogger(".log").warning("Resetting the Screen Recording permission failed: %s", reset.stderr.strip())
+            open_permission_settings()
+            return
     Quartz.CGRequestScreenCaptureAccess()
 
 
@@ -92,9 +121,6 @@ def open_permission_settings():
 
 def get_visible_processes():
     """ Returns a list of (process, window) with the largest window of each process """
-    if not has_permission():
-        return []
-
     largest = {}
     for window in _windows():
         app = window.owningApplication()
