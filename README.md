@@ -45,12 +45,28 @@ The project's main objectives are to simplify setup and enhance reliability.
 
 ## Quick Setup
 
-1. Download the latest [Release](https://github.com/DaviBe92/AutoSplit64/releases).
-2. Extract contents and run `AutoSplit64plus.exe`.
+1. Download the latest [Release](https://github.com/florence-wolfe/AutoSplit64plusplus/releases) for your platform.
+2. Windows: extract the zip and run `AutoSplit64++.exe`. macOS: see [Installing on macOS](#installing-on-macos).
 3. Set LiveSplit to start at 1.36 seconds.
 4. Set Game Capture method and region.
 5. Generate Reset Templates.
 6. Press Start.
+
+### Installing on macOS
+
+1. Open the downloaded zip and drag `AutoSplit64++.app` into your `Applications` folder.
+2. Open AutoSplit64++. The first time, macOS says it can't verify that AutoSplit64++ is free of malware and doesn't open it, because AutoSplit64++ isn't signed by a registered Apple developer. Click `Done`.
+3. Open `System Settings -> Privacy & Security`, scroll down to `Security`, where it says AutoSplit64++ was blocked, and click `Open Anyway`. Confirm with your password or Touch ID, then click `Open`.
+
+On macOS 14 and earlier, you can instead Control-click (or right-click) the app, choose `Open`, and confirm.
+
+Alternatively, remove the flag macOS puts on downloaded files in Terminal, which only makes sense for apps you trust:
+
+```
+xattr -dr com.apple.quarantine /Applications/AutoSplit64++.app
+```
+
+This is only needed once for each version you download yourself: updates installed by AutoSplit64++ open without it. If you open AutoSplit64++ before moving it, it offers to move itself to Applications: until it's moved, macOS may run it from a temporary read-only copy, where updates can't be installed.
 
 ### Interface
 
