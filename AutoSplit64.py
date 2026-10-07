@@ -14,10 +14,26 @@ import as64core
 from as64core.processing import register_process, ProcessorGenerator
 from as64core.route_loader import load
 from as64core import config, livesplit
-from as64processes.standard import *
-from as64processes.xcam import *
-from as64processes.ddd import *
-from as64processes.final import *
+from as64core.resource_utils import resource_path
+from as64processes.standard import (
+    ProcessDummy,
+    ProcessFadein,
+    ProcessFadeout,
+    ProcessFadeoutNoStar,
+    ProcessFadeoutResetOnly,
+    ProcessFileSelectSplit,
+    ProcessFlashCheck,
+    ProcessPostFadeout,
+    ProcessReset,
+    ProcessResetNoStart,
+    ProcessRunStart,
+    ProcessRunStartUpSegment,
+    ProcessStarCount,
+    ProcessWait,
+)
+from as64processes.xcam import ProcessXCam, ProcessXCamStartUpSegment
+from as64processes.ddd import ProcessDDDEntry, ProcessDDDEntryX, ProcessFindDDDPortal
+from as64processes.final import ProcessFinalStageEntry, ProcessFinalStarGrab, ProcessFinalStarSpawn
 
 class AutoSplit64(QtCore.QObject):
     error = QtCore.pyqtSignal(str)
