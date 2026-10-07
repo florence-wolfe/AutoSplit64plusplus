@@ -226,13 +226,10 @@ class Base(Thread):
             
             self._ls_socket = livesplit.connect()
 
-            valid = self.validity_check()
-
-            if not valid:
-                self.stop()
-            else:
-                self._start_occurred()
-            
+            # A failing check reports the error, which also stops split detection
+            if not self.validity_check():
+                return
+            self._start_occurred()
 
             self._processor_switch._current_processor = self._current_split.split_type
             

@@ -56,5 +56,22 @@ class ValidityCheckTest(unittest.TestCase):
         self.assertIn(".onnx", message)
 
 
+
+class RunTest(unittest.TestCase):
+    def test_failed_start_checks_end_the_run(self):
+        b = make_base()
+        b._route, b._current_split = None, None
+        b._processor_switch = mock.Mock()
+        b.logger = mock.Mock()
+        # A failing check reports the error, which also stops split detection
+        b.validity_check = mock.Mock(return_value=False)
+        b.stop = mock.Mock()
+
+        with mock.patch.object(base.livesplit, "connect"):
+            b.run()
+
+        b.logger.error.assert_not_called()
+        b.stop.assert_not_called()
+
 if __name__ == "__main__":
     unittest.main()
