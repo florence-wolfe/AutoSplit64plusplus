@@ -412,8 +412,6 @@ class App(QtWidgets.QMainWindow):
             self._drag_position = event.globalPosition().toPoint() - self.pos()
             event.accept()
 
-        self.dialogs["about_dialog"].close()
-
     def mouseReleaseEvent(self, event):
         if event.buttons() == QtCore.Qt.MouseButton.LeftButton:
             self._drag = False

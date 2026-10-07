@@ -4,7 +4,7 @@ try:
 except ImportError:
     VERSION = "dev"
 TITLE = "AutoSplit64++"
-AUTHOR = "Davi Be\nSynozure"
+AUTHOR = "Flo Wolfe\nDavi Be\nSynozure"
 
 GITHUB_REPO = "florence-wolfe/AutoSplit64plusplus"
 DISCORD_LINK = "https://discord.gg/VmrQQBpPSK"
