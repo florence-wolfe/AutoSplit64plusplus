@@ -206,7 +206,7 @@ class Base(Thread):
             return False
 
         if not self._model.valid():
-            self._error_occurred("Unable to load prediction model " + config.get("model", "path"))
+            self._error_occurred("Unable to load prediction model " + (MODEL_PATH_LEGACY if config.get("model", "legacy") else MODEL_PATH))
             return False
 
         return True

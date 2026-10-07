@@ -37,5 +37,24 @@ class SyncSplitIndexTest(unittest.TestCase):
         self.base.set_split_index.assert_not_called()
 
 
+class ValidityCheckTest(unittest.TestCase):
+    def setUp(self):
+        self.base = make_base()
+        self.base._error_occurred = mock.Mock()
+        self.base._ls_socket = None
+        size = base.config.get("game", "capture_size")
+        self.base._game_capture = mock.Mock(get_capture_size=mock.Mock(return_value=list(size)))
+        self.base._model = mock.Mock(valid=mock.Mock(return_value=False))
+        patcher = mock.patch.object(base.livesplit, "check_connection", return_value=True)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_model_that_failed_to_load_is_reported(self):
+        self.assertFalse(self.base.validity_check())
+        message = self.base._error_occurred.call_args.args[0]
+        self.assertIn("Unable to load prediction model", message)
+        self.assertIn(".onnx", message)
+
+
 if __name__ == "__main__":
     unittest.main()
