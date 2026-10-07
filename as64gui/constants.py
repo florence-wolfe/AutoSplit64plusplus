@@ -1,5 +1,5 @@
 VERSION = "0.3.1"
-TITLE = "AutoSplit 64+"
+TITLE = "AutoSplit64++"
 AUTHOR = "Davi Be\nSynozure"
 
 GITHUB_REPO = "DaviBe92/AutoSplit64plus"

@@ -17,7 +17,7 @@ class AboutDialog(QtWidgets.QDialog):
 
         self.width = 420
         self.height = 320
-        self.title = "About AutoSplit64+"
+        self.title = "About AutoSplit64++"
 
         self.background = QtWidgets.QLabel(parent=self)
         

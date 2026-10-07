@@ -1,10 +1,10 @@
 #!/bin/sh
-# Builds dist/AutoSplit64plusplus/ containing AutoSplit64plusplus.app and its resources.
+# Builds dist/AutoSplit64++/ containing AutoSplit64++.app and its resources.
 set -e
 cd "$(dirname "$0")"
 . .venv/bin/activate
 
-NAME=AutoSplit64plusplus
+NAME="AutoSplit64++"
 WORK=build/mac
 
 # Convert the PNG icon to .icns

@@ -1,9 +1,11 @@
-<h1 align="center"> AutoSplit64+ </h1><br>
+<h1 align="center"> AutoSplit64++ </h1><br>
 <p align="center">
     <img alt="AS64+" title="AS64+" src="resources\gui\icons\as64plus.png" width="256">
 </p>
 
 ## Introduction
+AutoSplit64++ is a fork of [AutoSplit64+](https://github.com/DaviBe92/AutoSplit64plus) that adds macOS (Apple Silicon) support, direct window capture on macOS, LiveSplit One support and a resizable window. The rest of this README is based on AutoSplit64+'s.
+
 AutoSplit64+ is an enhanced fork of [AutoSplit64](https://github.com/Kainev/AutoSplit64), providing automated splitting for Super Mario 64 speedruns on console. 
 It analyzes captured gameplay to control LiveSplit timer events automatically. 
 
@@ -60,7 +62,7 @@ All windows and options are accessed via the right-click menu. On macOS, the sam
 
 ### LiveSplit
 
-AutoSplit64+ directly communicates with LiveSplit using a Named Pipe. There is no need to manually start the LiveSplit Server.
+AutoSplit64++ directly communicates with LiveSplit using a Named Pipe. There is no need to manually start the LiveSplit Server.
 
 Since AS64+ recognizes the reset only when the Super Mario 64 logo appears, we need to set the Timer to Start at 1.36 seconds.
 
@@ -68,9 +70,9 @@ In LiveSplit `Right-Click -> Edit Splits...` &rarr; Set `Start Timer at:` to **1
 
 #### LiveSplit One
 
-AutoSplit64+ can also control [LiveSplit One](https://one.livesplit.org) (the web timer):
+AutoSplit64++ can also control [LiveSplit One](https://one.livesplit.org) (the web timer):
 
-1. In AutoSplit64+, `Settings -> Connection` &rarr; set `Connection Mode` to **LiveSplit One**. It listens on port `16835` by default. The dot in the top right corner shows the server state (green: connected, amber: waiting for LiveSplit One, red: could not start). Hover it for the URL and click it to copy the URL.
+1. In AutoSplit64++, `Settings -> Connection` &rarr; set `Connection Mode` to **LiveSplit One**. It listens on port `16835` by default. The dot in the top right corner shows the server state (green: connected, amber: waiting for LiveSplit One, red: could not start). Hover it for the URL and click it to copy the URL.
 2. In LiveSplit One, `Settings -> Server Connection -> Connect` &rarr; enter `ws://localhost:16835`.
 3. Click `OK` to leave LiveSplit One's settings. LiveSplit One ignores timer commands while its settings are open.
 
@@ -98,8 +100,8 @@ The AutoSplit64+ Grabber OBS plugin sends the gameplay directly to AutoSplit64+ 
 
 - If you have any other Filters applied, make sure `AS64+ Frame Grabber` is at the very top
 - Close Filters Menu
-##### Setup AutoSplit64+:
-- Open the Capture Editor in AutoSplit64+ (`Right-Click -> Edit Coordinates`):
+##### Setup AutoSplit64++:
+- Open the Capture Editor in AutoSplit64++ (`Right-Click -> Edit Coordinates`):
 
 ![OBS Plugin Capture](repo/capture_screen_obs.png)
 
@@ -116,7 +118,7 @@ If the region was not detected poperly, adjust the region manually and ensure it
 Window Capture will take a screenshot of the selected programm 30 times/second.
 
 - Make sure you have your capture software open (i.e.AmaRecTV)
-- Open the Capture Editor in AutoSplit64+ (`Right-Click -> Edit Coordinates`):
+- Open the Capture Editor in AutoSplit64++ (`Right-Click -> Edit Coordinates`):
  
 ![Window Capture](repo/capture_screen_window.png)
 
@@ -136,7 +138,7 @@ If you are using a correctly configured version of AmaRecTV as shown (with windo
 #### Window Capture on macOS
 On macOS, Window Capture streams the emulator window directly with ScreenCaptureKit (the same API used by screen sharing apps), so neither OBS nor a virtual camera is needed. The window can be behind other windows, but not minimized.
 
-- The first time the Capture Editor opens, macOS asks for the Screen Recording permission. Allow it in `System Settings -> Privacy & Security -> Screen & System Audio Recording` and restart AutoSplit64+. When running from source, the permission is for your terminal app instead.
+- The first time the Capture Editor opens, macOS asks for the Screen Recording permission. Allow it in `System Settings -> Privacy & Security -> Screen & System Audio Recording` and restart AutoSplit64++. When running from source, the permission is for your terminal app instead.
 - Select your emulator in the `Process` drop-down. The capture includes the window's title bar, so make sure the `Game Region` only covers the game.
 - Don't resize the emulator window after setting the region. If you do, set the region again.
 
@@ -181,12 +183,12 @@ On macOS, the Named Pipe connection and the OBS Plugin are not available. Use th
 Run from source:
 1. Create a Python 3.12 virtual environment in the repository: `python3.12 -m venv .venv`
 2. Install dependencies: `.venv/bin/pip install -r requirements.txt`
-3. Start AutoSplit64+: `.venv/bin/python AutoSplit64.py`
+3. Start AutoSplit64++: `.venv/bin/python AutoSplit64.py`
 
 Build the app:
 1. Set up the virtual environment as above
 2. Run `./build_mac.sh`
-3. The app is created in `dist/AutoSplit64plusplus/`. Keep `AutoSplit64plusplus.app` together with the other files in that folder, since it reads its resources and stores its settings there. Move the whole folder if you want it somewhere else, e.g. `~/Applications`.
+3. The app is created in `dist/AutoSplit64++/`. Keep `AutoSplit64++.app` together with the other files in that folder, since it reads its resources and stores its settings there. Move the whole folder if you want it somewhere else, e.g. `~/Applications`.
 4. Running `./build_mac.sh` again updates the app and keeps your settings, routes and reset templates.
 
 ## Support
