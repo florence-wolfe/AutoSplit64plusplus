@@ -1,6 +1,11 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 
+# Rows alternate between these colors, starting with the first
+ROW_COLORS = (QtGui.QColor(20, 22, 24), QtGui.QColor(15, 17, 19))
+ROW_HEIGHT = 37
+
+
 class SplitListWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -28,6 +33,8 @@ class SplitListWidget(QtWidgets.QWidget):
                 split_index = i + self._display_index
                 y_pos = split_height * i
 
+                painter.fillRect(0, int(y_pos), int(split_width), int(split_height), ROW_COLORS[i % 2])
+
                 if split_index == self._selected_index:
                     painter.fillRect(0, int(y_pos), int(split_width), int(split_height), 
                                      QtWidgets.QApplication.palette().color(QtGui.QPalette.ColorRole.Highlight))
@@ -42,6 +49,13 @@ class SplitListWidget(QtWidgets.QWidget):
                 pass
 
         painter.end()
+
+    def resizeEvent(self, event):
+        # Show as many rows as fit, keeping the selected split visible
+        self._display_count = max(1, self.height() // ROW_HEIGHT)
+        self._display_index = max(0, min(self._display_index, len(self.splits) - self._display_count))
+        self.set_selected_index(self._selected_index)
+        super().resizeEvent(event)
 
     def wheelEvent(self, event):
         self.scroll_vertically(event.angleDelta())

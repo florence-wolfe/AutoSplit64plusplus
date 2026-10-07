@@ -38,14 +38,17 @@ class App(QtWidgets.QMainWindow):
 
         # Widgets
         self.central_widget = QtWidgets.QWidget(self)
-        self.star_count = StarCountDisplay(parent=self.central_widget)
+        self.central_layout = QtWidgets.QHBoxLayout(self.central_widget)
+        # Fixed size panel for the star, star count and start button, which keep their positions in it
+        self.right_panel = QtWidgets.QWidget(self.central_widget)
+        self.star_count = StarCountDisplay(parent=self.right_panel)
         self.star_btn = PictureButton(QtGui.QPixmap(base_path(constants.STAR_PATH)),
                                       pixmap_pressed=QtGui.QPixmap(base_path(constants.STAR_HOVER_PATH)),
                                       pixmap_hover=QtGui.QPixmap(base_path(constants.STAR_HOVER_PATH)),
-                                      parent=self.central_widget)
-        self.start_btn_initial_x = 206
+                                      parent=self.right_panel)
+        self.start_btn_initial_x = 23
         self.start_btn_initial_y = 180
-        self.start_btn = StateButton(self.start_pixmap, self.start_pixmap, parent=self.central_widget)
+        self.start_btn = StateButton(self.start_pixmap, self.start_pixmap, parent=self.right_panel)
         self.split_list = SplitListWidget(self.central_widget)
 
         # Font
@@ -86,9 +89,9 @@ class App(QtWidgets.QMainWindow):
 
     def set_always_on_top(self, on_top):
         if on_top:
-            self.setWindowFlags(QtCore.Qt.WindowType.MSWindowsFixedSizeDialogHint | QtCore.Qt.WindowType.WindowStaysOnTopHint)
+            self.setWindowFlags(QtCore.Qt.WindowType.Window | QtCore.Qt.WindowType.WindowStaysOnTopHint)
         else:
-            self.setWindowFlags(QtCore.Qt.WindowType.MSWindowsFixedSizeDialogHint)
+            self.setWindowFlags(QtCore.Qt.WindowType.Window)
 
         self.show()
 
@@ -97,26 +100,31 @@ class App(QtWidgets.QMainWindow):
         self.setWindowTitle(self.title)
 
         if config.get("general", "on_top"):
-            self.setWindowFlags(QtCore.Qt.WindowType.MSWindowsFixedSizeDialogHint | QtCore.Qt.WindowType.WindowStaysOnTopHint)
+            self.setWindowFlags(QtCore.Qt.WindowType.Window | QtCore.Qt.WindowType.WindowStaysOnTopHint)
         else:
         #     self.setWindowFlags(QtCore.Qt.WindowType.FramelessWindowHint)
-            self.setWindowFlags(QtCore.Qt.WindowType.MSWindowsFixedSizeDialogHint)
+            self.setWindowFlags(QtCore.Qt.WindowType.Window)
 
-        self.setFixedSize(self.width, self.height)
+        self.setMinimumSize(self.width, self.height)
+        self.resize(self.width, self.height)
 
         # Configure Central Widget
         self.central_widget.setObjectName("central_widget")
-
-        self.central_widget.setStyleSheet(r"QWidget#central_widget{background-image: url(" +
-                                          resource_path(constants.BACKGROUND_PATH) +
-                                          "); background-attachment: fixed;}")
+        self.central_widget.setStyleSheet("QWidget#central_widget{background-color: rgb(23, 25, 27);}")
         self.setCentralWidget(self.central_widget)
 
+        # The split list takes up all extra space, the right panel stays centered
+        self.central_layout.setContentsMargins(0, 0, 0, 0)
+        self.central_layout.setSpacing(0)
+        self.central_layout.addWidget(self.split_list, 1)
+        self.central_layout.addWidget(self.right_panel, 0, QtCore.Qt.AlignmentFlag.AlignVCenter)
+        self.right_panel.setFixedSize(182, self.height)
+
         # Configure Other Widgets
-        self.star_btn.move(242, 35)
+        self.star_btn.move(59, 35)
 
         self.star_count.setFixedWidth(150)
-        self.star_count.move(197, 115)
+        self.star_count.move(14, 115)
         self.star_count.setFont(self.start_count_font)
         self.star_count.star_count = "-"
         self.star_count.split_star = "-"
@@ -134,8 +142,7 @@ class App(QtWidgets.QMainWindow):
         self.start_btn.leaveEvent = lambda e: self._on_start_btn_hover(False)
 
         self.split_list.setFont(self.button_font)
-        self.split_list.setFixedSize(183, self.height)
-        self.split_list.move(0, 0)
+        self.split_list.setMinimumSize(183, self.height)
 
         self.open_route()
 
