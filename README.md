@@ -133,6 +133,13 @@ When capturing another progamm or the region was not detected poperly, adjust th
 **NOTE:**
 If you are using a correctly configured version of AmaRecTV as shown (with windows size at 100% `Right-Click AmaRecTV -> 100%`), the default settings should already be set appropriately.
 
+#### Window Capture on macOS
+On macOS, Window Capture streams the emulator window directly with ScreenCaptureKit (the same API used by screen sharing apps), so neither OBS nor a virtual camera is needed. The window can be behind other windows, but not minimized.
+
+- The first time the Capture Editor opens, macOS asks for the Screen Recording permission. Allow it in `System Settings -> Privacy & Security -> Screen & System Audio Recording` and restart AutoSplit64+. When running from source, the permission is for your terminal app instead.
+- Select your emulator in the `Process` drop-down. The capture includes the window's title bar, so make sure the `Game Region` only covers the game.
+- Don't resize the emulator window after setting the region. If you do, set the region again.
+
 ### Routes
 
 We must let AutoSplit 64 know when we want splits to occur. This can be done by using the Route Editor (`Right-Click -> Edit Route`) to generate route files.

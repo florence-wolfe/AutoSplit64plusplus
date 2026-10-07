@@ -1,6 +1,5 @@
 import mmap
 import ctypes
-import sys
 import numpy as np
 import time
 
@@ -23,8 +22,6 @@ class SharedMemoryCapture(object):
         if self.shmem_handle:
             return True
         """Open the shared memory connection"""
-        if sys.platform != "win32":
-            raise Exception("The OBS Plugin is only available on Windows.\n\nUncheck \"Use OBS Plugin\" in the Game Capture Editor.")
         self.shmem_handle = ctypes.windll.kernel32.OpenFileMappingW(FILE_MAP_READ, False, SHMEM_NAME)
         if not self.shmem_handle:
             raise Exception("Could not find OBS Grabber Plugin!\n\nPlease make sure the plugin is enabled and OBS is running.")

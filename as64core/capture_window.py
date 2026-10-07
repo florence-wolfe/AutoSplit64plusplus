@@ -1,12 +1,9 @@
-import sys
+from ctypes import windll
+import win32gui
+import win32ui
+import win32process
 import numpy as np
 import psutil
-
-if sys.platform == "win32":
-    from ctypes import windll
-    import win32gui
-    import win32ui
-    import win32process
 
 EXCLUSION_LIST = ["ApplicationFrameHost.exe",
                   "WinRAR.exe",
@@ -28,8 +25,6 @@ EXCLUSION_LIST = ["ApplicationFrameHost.exe",
 def get_visible_processes():
     """ Returns a list of processes with a valid hwnd """
     processes = []
-    if sys.platform != "win32":
-        return processes
     for proc in psutil.process_iter():
         hwnd = 0
         try:

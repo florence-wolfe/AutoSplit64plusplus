@@ -1,5 +1,10 @@
+import sys
+
 from . import capture_shmem
-from . import capture_window
+if sys.platform == "darwin":
+    from . import capture_window_mac as capture_window
+else:
+    from . import capture_window
 from .image_utils import enhance_contrast
 import numpy as np
 
@@ -32,7 +37,8 @@ from .constants import (
 class GameCapture(object):
     def __init__(self, use_obs, vc_fix, process_name, game_region, version):
         # Initialize GameCapture
-        self._use_obs = use_obs
+        # The OBS Plugin is only available on Windows
+        self._use_obs = use_obs and sys.platform == "win32"
         self._process_name = process_name
         self._vc_fix = vc_fix
         
@@ -134,4 +140,6 @@ class GameCapture(object):
     def close(self):
         if self._use_obs:
             self._shmem.close_shmem()
+        elif sys.platform == "darwin":
+            capture_window.stop()
 

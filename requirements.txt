@@ -8,3 +8,5 @@ psutil==6.1.1
 onnxruntime==1.20.1
 requests == 2.32.3
 websockets==17.2
+pyobjc-framework-ScreenCaptureKit==12.2.2; sys_platform == "darwin"
+pyobjc-framework-Quartz==12.2.2; sys_platform == "darwin"

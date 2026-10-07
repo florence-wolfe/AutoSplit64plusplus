@@ -1,8 +1,14 @@
+import sys
+
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 import cv2
 
-from as64core import capture_shmem, capture_window, config
+from as64core import capture_shmem, config
+if sys.platform == "darwin":
+    from as64core import capture_window_mac as capture_window
+else:
+    from as64core import capture_window
 from as64core import resource_utils
 from ..widgets import HLine
 from ..graphics import RectangleSelector
@@ -86,6 +92,8 @@ class CaptureEditor(QtWidgets.QDialog):
         self._refresh_process_list()
 
         self.left_layout.addWidget(self.use_obs_cb, 0, 0, 1, 2)
+        # The OBS Plugin is only available on Windows
+        self.use_obs_cb.setVisible(sys.platform == "win32")
         self.left_layout.addWidget(self.process_lb, 1, 0)
         self.left_layout.addWidget(self.process_combo, 1, 1)
         self.left_layout.addWidget(self.capture_btn, 2, 0, 1, 2)
@@ -153,7 +161,7 @@ class CaptureEditor(QtWidgets.QDialog):
                 self.process_combo.setCurrentIndex(i)
 
         # Load use_obs preference
-        use_obs = config.get("game", "use_obs")
+        use_obs = config.get("game", "use_obs") and sys.platform == "win32"
         self.use_obs_cb.setChecked(use_obs)
         self.toggle_capture_method(use_obs)
         
@@ -281,6 +289,8 @@ class CaptureEditor(QtWidgets.QDialog):
             self.shmem_capture.close_shmem()
         except:
             pass  # Ignore any errors during close
+        if sys.platform == "darwin":
+            capture_window.stop()
         config.rollback()
         super().closeEvent(e)
 
