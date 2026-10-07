@@ -28,13 +28,6 @@ def convert_to_cv2(img):
     return open_cv_image[:, :, ::-1].copy()
 
 
-def cv2_convert_to_gray(img):
-    return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-
-def np_convert_to_gray(np_rgb):
-    return np.dot(np_rgb[..., :3], [0.299, 0.587, 0.114])
-
 def enhance_contrast(image, contrast_factor=0.85):
     
     # Convert to float for calculations

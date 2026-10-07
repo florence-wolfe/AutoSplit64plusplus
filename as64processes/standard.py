@@ -171,7 +171,6 @@ class ProcessFadein(Process):
     def on_transition(self):
         as64core.fps = 29.97
         as64core.enable_predictions(False)
-        as64core.fadein()
 
         super().on_transition()
 

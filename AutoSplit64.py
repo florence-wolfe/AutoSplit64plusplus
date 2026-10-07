@@ -11,7 +11,7 @@ import logging
 from PyQt6 import QtCore, QtWidgets, QtGui
 from as64gui.app import App
 import as64core
-from as64core.processing import register_process, insert_global_hook, insert_global_processor_hook, ProcessorGenerator
+from as64core.processing import register_process, ProcessorGenerator
 from as64core.route_loader import load
 from as64core import config, livesplit
 from as64processes.standard import *
@@ -84,11 +84,11 @@ class AutoSplit64(QtCore.QObject):
             timing = None
 
         if timing == as64core.TIMING_UP_RTA:
-            insert_global_hook("RESET", ProcessResetNoStart())
+            register_process("RESET", ProcessResetNoStart())
             as64core.start_on_reset = False
             initial_processor = ProcessorGenerator.generate("logic/up_rta/initial_up_rta.processor")
         elif timing == as64core.TIMING_FILE_SELECT:
-            insert_global_hook("RESET", ProcessResetNoStart())
+            register_process("RESET", ProcessResetNoStart())
             as64core.start_on_reset = False
             initial_processor = ProcessorGenerator.generate("logic/file_select/initial_file_select_start.processor")
         else:

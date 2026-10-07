@@ -53,14 +53,6 @@ class Route(object):
 
 
 #
-# Split Class
-#
-
-class Split(object):
-    pass
-
-
-#
 # Base
 #
 ls_host: str = DEFAULT_LS_HOST
@@ -159,18 +151,6 @@ def undo() -> None:
 # Tracking Functions
 #
 
-def fadeout() -> None:
-    pass
-
-
-def fadein() -> None:
-    pass
-
-
-def increment_star() -> None:
-    pass
-
-
 def incoming_split(star_count: bool = True, fadeout: bool = True, fadein: bool = True) -> bool:
     pass
 
@@ -180,18 +160,6 @@ def current_split():
 
 
 def split_index() -> int:
-    pass
-
-
-#
-# Route
-#
-
-def load() -> Route:
-    pass
-
-
-def save() -> None:
     pass
 
 

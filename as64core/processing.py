@@ -4,19 +4,10 @@ import logging
 
 
 processes = {}
-subprocess_hooks = {}
 
 
 def register_process(name, process):
     processes[name] = process
-
-
-def insert_global_hook(name, process):
-    processes[name] = process
-
-
-def insert_global_processor_hook(old_path, new_path):
-    subprocess_hooks[old_path] = new_path
 
 
 class ProcessorGenerator(object):
@@ -29,14 +20,9 @@ class ProcessorGenerator(object):
     @staticmethod
     def generate(file_path):
         # Load processor file
-        try:
-            p = subprocess_hooks[file_path]
-        except KeyError:
-            p = file_path
-
-        file = ProcessorGenerator._open_file(p)
+        file = ProcessorGenerator._open_file(file_path)
         if not file:
-            print(p, "2: File Error")
+            print(file_path, "2: File Error")
             return None
 
         transitions = {}
@@ -134,24 +120,6 @@ class ProcessorGenerator(object):
         return data
 
 
-def generate_processor(file_path):
-    with open(file_path) as file:
-        data = json.load(file)
-
-    # Create Processor Instance
-    processor = Processor()
-
-    # Set initial process
-    processor.initial_process = processes[data["initial_process"]]
-
-    # Create Transitions
-    for proc in data["transitions"]:
-        for signal in data["transitions"][proc]:
-            processor.add_transition(Transition(processes[proc], processes[proc].signals[signal], processes[data["transitions"][proc][signal]]))
-
-    return processor
-
-
 class Signal(object):
     """
     Object used to define transition relationships between processes
@@ -177,8 +145,6 @@ class Transition(object):
 
 
 class Process(object):
-    LOOP = Signal()
-
     def __init__(self):
         self.signals = {"LOOP": Signal()}
         self._transition_time = time.time()

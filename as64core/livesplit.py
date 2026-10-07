@@ -119,11 +119,7 @@ def split_index(ls_socket):
         readable = select.select([ls_socket], [], [], 0.5)
         if readable[0]:
             try:
-                data = (ls_socket.recv(1000)).decode("utf-8")
-                if not isinstance(data, bool):
-                    return int(data)
-                else:
-                    return False
+                return int(ls_socket.recv(1000).decode("utf-8"))
             except:
                 return False
         else:
@@ -152,8 +148,4 @@ def split_index(ls_socket):
             # If there is data available:
             if available > 0:
                 # Read the data from the pipe
-                data = win32file.ReadFile(ls_socket, 1000)[1].decode("utf-8")
-                if not isinstance(data, bool):
-                    return int(data)
-                else:
-                    return False
+                return int(win32file.ReadFile(ls_socket, 1000)[1].decode("utf-8"))
