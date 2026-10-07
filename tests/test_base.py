@@ -105,5 +105,40 @@ class FirstSplitsTest(unittest.TestCase):
         self.base.set_split_index(1)
         self.assertEqual(self.as64.previous_split_initial_star, 0)
 
+
+class StarSkipTest(unittest.TestCase):
+    """ Predictions above 120 mean no star count was readable, e.g. during a fade """
+
+    def setUp(self):
+        self.as64 = SimpleNamespace(star_count=119, prediction_info=PredictionInfo(121, 0.99),
+                                    previous_split_initial_star=110, next_split_split_star=120)
+        patcher = mock.patch.object(base, "as64", self.as64, create=True)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        b = self.base = make_base(star_counts=(110, 120), current=1)
+        b._predictions, b._minimum_undo_count = [], 3
+        b._probability_threshold, b._max_star_skip = 0.6, 3
+        # Enough matching predictions in a row to correct the star count
+        b._previous_prediction = PredictionInfo(121, 0.99)
+        b._minimum_consecutive_predictions = b._matching_consecutive_predictions = 4
+        b.set_star_count = mock.Mock()
+        b.undo = mock.Mock()
+
+    def test_disabled_star_skip_does_nothing(self):
+        self.base._star_skip_enabled = False
+        self.base._star_error_check()
+        self.base.set_star_count.assert_not_called()
+
+    def test_star_count_is_never_set_above_120(self):
+        self.base._star_skip_enabled = True
+        self.base._star_error_check()
+        self.base.set_star_count.assert_not_called()
+
+    def test_star_skip_still_corrects_star_counts(self):
+        self.base._star_skip_enabled = True
+        self.as64.prediction_info = self.base._previous_prediction = PredictionInfo(120, 0.99)
+        self.base._star_error_check()
+        self.base.set_star_count.assert_called_once_with(120)
+
 if __name__ == "__main__":
     unittest.main()

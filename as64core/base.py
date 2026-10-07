@@ -416,13 +416,14 @@ class Base(Thread):
                 self._undo_if_below_previous_split()
 
         try:
-            if self._star_skip_enabled and as64.previous_split_initial_star <= as64.prediction_info.prediction <= as64.next_split_split_star or as64.prediction_info.prediction > 120:
+            # Predictions above 120 mean no star count was readable
+            if self._star_skip_enabled and (as64.previous_split_initial_star <= as64.prediction_info.prediction <= as64.next_split_split_star or as64.prediction_info.prediction > 120):
                 if as64.prediction_info.prediction == self._previous_prediction.prediction and as64.prediction_info.probability > self._probability_threshold:
                     self._matching_consecutive_predictions += 1
                 elif self._matching_consecutive_predictions > 0:
                     self._matching_consecutive_predictions = 0
 
-                if self._matching_consecutive_predictions >= self._minimum_consecutive_predictions and 0 < abs(as64.prediction_info.prediction - as64.star_count) <= self._max_star_skip:
+                if self._matching_consecutive_predictions >= self._minimum_consecutive_predictions and 0 < abs(as64.prediction_info.prediction - as64.star_count) <= self._max_star_skip and as64.prediction_info.prediction <= 120:
                     self.set_star_count(as64.prediction_info.prediction)
                     self._undo_if_below_previous_split()
         except AttributeError:
