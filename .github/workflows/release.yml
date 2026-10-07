@@ -1,5 +1,5 @@
-# Pushing a version tag (e.g. v0.4.0) tests and builds AutoSplit64++ for macOS and Windows,
-# and publishes them as a GitHub release.
+# Pushing a version tag (e.g. v0.4.0) tests AutoSplit64++ on macOS and Windows, builds it for both
+# once the tests pass, and publishes them as a GitHub release.
 name: Release
 
 on:
@@ -10,7 +10,11 @@ permissions:
   contents: write
 
 jobs:
+  test:
+    uses: ./.github/workflows/tests.yml
+
   build:
+    needs: test
     strategy:
       matrix:
         include:
@@ -28,9 +32,6 @@ jobs:
       - uses: astral-sh/setup-uv@v10.2.0
         with:
           enable-cache: true
-
-      - name: Test
-        run: uv run python -m unittest -v
 
       - name: Build
         run: uv run build.py

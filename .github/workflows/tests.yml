@@ -1,10 +1,9 @@
-# Runs the tests on macOS and Windows for pushes to main and pull requests.
+# Runs the tests on macOS and Windows. Every release runs them first (see release.yml);
+# they also can be run by hand. They don't run on pushes, to save CI minutes.
 name: Tests
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_call:
   workflow_dispatch:
 
 jobs:
