@@ -1,0 +1,73 @@
+import os
+import shutil
+import tempfile
+import unittest
+from json import JSONDecodeError
+from pathlib import Path
+from unittest import mock
+
+from PyQt6 import QtWidgets
+
+from as64core import route_loader
+from as64gui.app import App
+
+ROUTE = Path(__file__).parent.parent / "routes" / "16_lblj.as64"
+
+_app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+
+
+class LoadTest(unittest.TestCase):
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.dir)
+
+    def test_path_is_kept_whatever_its_characters(self):
+        path = self.dir / 'my "best" route \\ 16.as64'
+        shutil.copy(ROUTE, path)
+        route = route_loader.load(str(path))
+        self.assertEqual(route.file_path, str(path))
+        self.assertEqual(len(route.splits), len(route_loader.load(str(ROUTE)).splits))
+
+    def test_byte_order_mark(self):
+        path = self.dir / "bom.as64"
+        path.write_bytes(b"\xef\xbb\xbf" + ROUTE.read_bytes())
+        self.assertIsNotNone(route_loader.load(str(path)))
+
+    def test_missing_file(self):
+        self.assertIsNone(route_loader.load(str(self.dir / "missing.as64")))
+
+    def test_invalid_file_raises_for_the_route_editor(self):
+        path = self.dir / "broken.as64"
+        path.write_text("{ not json")
+        with self.assertRaises(JSONDecodeError):
+            route_loader.load(str(path))
+
+    def test_load_or_none_on_invalid_file(self):
+        path = self.dir / "broken.as64"
+        for content in ["{ not json", '{"some": "other file"}', '{"__route__": true}']:
+            path.write_text(content)
+            self.assertIsNone(route_loader.load_or_none(str(path)), content)
+
+
+class RouteDirectoryTest(unittest.TestCase):
+    def test_invalid_route_file_is_skipped(self):
+        with mock.patch.object(App, "update_check"):
+            app = App()
+        self.addCleanup(app.close)
+
+        work = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, work)
+        (work / "routes").mkdir()
+        shutil.copy(ROUTE, work / "routes" / "good.as64")
+        (work / "routes" / "broken.as64").write_text("{ not json")
+
+        cwd = os.getcwd()
+        os.chdir(work)
+        self.addCleanup(os.chdir, cwd)
+        app._load_route_dir()
+
+        self.assertEqual([path for routes in app._routes.values() for _, path in routes], ["routes/good.as64"])
+
+
+if __name__ == "__main__":
+    unittest.main()

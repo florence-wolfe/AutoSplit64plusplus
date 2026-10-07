@@ -9,7 +9,7 @@ from . import config, livesplit
 from .game_capture import GameCapture
 from .model import Model, PredictionInfo
 from .image_utils import is_black, is_white, convert_to_cv2
-from .route_loader import load as load_route
+from .route_loader import load_or_none as load_route
 from .processing import ProcessorSwitch
 
 from .constants import (

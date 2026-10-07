@@ -258,7 +258,7 @@ class App(QtWidgets.QMainWindow):
             return
 
         #try:
-        route = route_loader.load(config.get("route", "path"))
+        route = route_loader.load_or_none(config.get("route", "path"))
         # except KeyError:
         #     self.display_error_message("Key Error", "Route Error")
         #     return False
@@ -489,7 +489,7 @@ class App(QtWidgets.QMainWindow):
 
         for file in os.listdir("routes"):
             if file.endswith(".as64"):
-                route = route_loader.load("routes/" + file)
+                route = route_loader.load_or_none("routes/" + file)
 
                 if route:
                     category = route.category

@@ -1,4 +1,5 @@
 import json
+import logging
 
 from .route import (
     Route,
@@ -29,13 +30,29 @@ from .constants import (
 
 
 def load(file_path):
+    """
+    Returns the route in file_path, or None if there's no such file.
+    Raises JSONDecodeError or KeyError for an invalid route file.
+    """
     try:
-        with open(file_path) as route_data:
-            data = route_data.read()
-            new_data = data[:1] + '"file_path": ' + '"' + file_path + '",' + data[1:]
-            decoded_route = RouteDecoder().decode(new_data)
-            return decoded_route
+        # utf-8-sig also reads files starting with a byte order mark
+        with open(file_path, encoding="utf-8-sig") as route_data:
+            data = json.load(route_data)
     except FileNotFoundError:
+        return None
+
+    if not isinstance(data, dict) or not data.get(ROUTE):
+        raise KeyError(ROUTE)
+    data[FILE_PATH] = file_path
+    return RouteDecoder.route_hook(data)
+
+
+def load_or_none(file_path):
+    """ Like load, but also returns None for an invalid route file """
+    try:
+        return load(file_path)
+    except (ValueError, KeyError, TypeError, OSError):
+        logging.getLogger(".log").warning("Could not load route %s", file_path, exc_info=True)
         return None
 
 
