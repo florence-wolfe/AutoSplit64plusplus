@@ -8,6 +8,7 @@ from PyQt6.QtTest import QTest
 
 from as64gui import app as app_module
 from as64gui.app import App
+from tests.qt import close_window
 
 _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
@@ -18,7 +19,7 @@ class StartButtonTest(unittest.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
         self.app = App()
-        self.addCleanup(self.app.close)
+        self.addCleanup(close_window, self.app)
         self.stopped = mock.Mock()
         self.app.stop.connect(self.stopped)
 
@@ -55,7 +56,7 @@ class UpdateCheckTest(unittest.TestCase):
              mock.patch.object(App, "display_update_message", lambda self, version: calls.append((version, threading.current_thread()))):
             started = time.time()
             app = App()
-            self.addCleanup(app.close)
+            self.addCleanup(close_window, app)
             self.assertLess(time.time() - started, 2)
 
             self.release.set()

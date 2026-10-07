@@ -7,6 +7,7 @@ from PyQt6.QtTest import QTest
 
 import AutoSplit64
 from as64gui.app import App
+from tests.qt import close_window
 
 _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
@@ -28,7 +29,7 @@ class ListenerThreadTest(unittest.TestCase):
             p.start()
             self.addCleanup(p.stop)
         self.autosplit64 = AutoSplit64.AutoSplit64()
-        self.addCleanup(self.autosplit64.app.close)
+        self.addCleanup(close_window, self.autosplit64.app)
         # Only record what the listeners cause
         QTest.qWait(50)
         self.calls.clear()

@@ -11,6 +11,7 @@ from PyQt6 import QtWidgets
 
 from as64core import route_loader
 from as64gui.app import App
+from tests.qt import close_window
 
 ROUTE = Path(__file__).parent.parent / "routes" / "16_lblj.as64"
 
@@ -76,7 +77,7 @@ class RouteDirectoryTest(unittest.TestCase):
     def test_invalid_route_file_is_skipped(self):
         with mock.patch.object(App, "update_check"):
             app = App()
-        self.addCleanup(app.close)
+        self.addCleanup(close_window, app)
 
         work = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, work)
