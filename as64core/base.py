@@ -241,10 +241,7 @@ class Base(Thread):
                 try:
                     self._game_capture.capture()
 
-                    ls_index = max(livesplit.split_index(self._ls_socket), 0)
-                    
-                    if ls_index != self.split_index():
-                        self.set_split_index(ls_index)
+                    self._sync_split_index(livesplit.split_index(self._ls_socket))
 
                     self.analyze_fade_status()
                     if self._make_predictions:
@@ -271,6 +268,14 @@ class Base(Thread):
                 
         except Exception:
             self.logger.error("Fatal Error", exc_info=True)
+
+    def _sync_split_index(self, ls_index):
+        """ Follow the timer's split index. False means the timer didn't answer this time. """
+        if ls_index is False:
+            return
+        ls_index = max(ls_index, 0)
+        if ls_index != self.split_index():
+            self.set_split_index(ls_index)
 
     def analyze_xcam_status(self):
         xcam = self._game_capture.get_region(XCAM_REGION)
