@@ -1,5 +1,6 @@
 import os
 import logging
+import threading
 from functools import partial
 import re
 import requests
@@ -15,6 +16,8 @@ class App(QtWidgets.QMainWindow):
     start = QtCore.pyqtSignal()
     stop = QtCore.pyqtSignal()
     closed = QtCore.pyqtSignal()
+    # The update check runs on its own thread and reports a new version through this
+    update_available = QtCore.pyqtSignal(str)
 
     def __init__(self, parent=None):
         self.autostarter_active = False
@@ -79,7 +82,8 @@ class App(QtWidgets.QMainWindow):
         self.show()
         
         if config.get("general", "update_check"):
-            self.update_check()
+            self.update_available.connect(self.display_update_message)
+            threading.Thread(target=self.update_check, daemon=True).start()
         
         # Handle splash screen closure
         try:
@@ -471,13 +475,13 @@ class App(QtWidgets.QMainWindow):
     def update_check(self):
 
         try:
-            response = requests.get(f"https://api.github.com/repos/{constants.GITHUB_REPO}/releases/latest")
+            response = requests.get(f"https://api.github.com/repos/{constants.GITHUB_REPO}/releases/latest", timeout=10)
             response.raise_for_status()
             data = json.loads(response.text)
             latest_version = data["tag_name"]
 
             if self.parse_version(latest_version) > self.parse_version(constants.VERSION):
-                self.display_update_message(latest_version)
+                self.update_available.emit(latest_version)
             else:
                 return None
         except Exception as e:
