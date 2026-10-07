@@ -25,7 +25,6 @@ from as64processes.standard import (
     ProcessFlashCheck,
     ProcessPostFadeout,
     ProcessReset,
-    ProcessResetNoStart,
     ProcessRunStart,
     ProcessRunStartUpSegment,
     ProcessStarCount,
@@ -103,11 +102,9 @@ class AutoSplit64(QtCore.QObject):
         timing = route_timing()
 
         if timing == as64core.TIMING_UP_RTA:
-            register_process("RESET", ProcessResetNoStart())
             as64core.start_on_reset = False
             initial_processor = ProcessorGenerator.generate("logic/up_rta/initial_up_rta.processor")
         elif timing == as64core.TIMING_FILE_SELECT:
-            register_process("RESET", ProcessResetNoStart())
             as64core.start_on_reset = False
             initial_processor = ProcessorGenerator.generate("logic/file_select/initial_file_select_start.processor")
         else:
