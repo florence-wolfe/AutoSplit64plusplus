@@ -1,6 +1,7 @@
 [project]
 name = "autosplit64plusplus"
-version = "0.3.1"
+# Unused: releases are versioned by their git tag (see build.py)
+version = "0"
 description = "Automatic splitting for Super Mario 64 speedruns, based on AutoSplit64+"
 requires-python = ">=3.12,<3.13"
 dependencies = [

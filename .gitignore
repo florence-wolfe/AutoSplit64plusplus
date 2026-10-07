@@ -38,6 +38,7 @@ MANIFEST
 
 # Custom
 config.ini
+as64gui/_version.py
 .master_version
 misc/
 resources/game_preview.png

@@ -473,6 +473,9 @@ class App(QtWidgets.QMainWindow):
         return [int(x) for x in version.split('.')]
 
     def update_check(self):
+        # Running from source, or a local build, isn't a release to update
+        if constants.VERSION == "dev" or "-" in constants.VERSION:
+            return
 
         try:
             response = requests.get(f"https://api.github.com/repos/{constants.GITHUB_REPO}/releases/latest", timeout=10)

@@ -1,4 +1,8 @@
-VERSION = "0.3.1"
+try:
+    # Written by build.py from the release's git tag
+    from ._version import VERSION
+except ImportError:
+    VERSION = "dev"
 TITLE = "AutoSplit64++"
 AUTHOR = "Davi Be\nSynozure"
 

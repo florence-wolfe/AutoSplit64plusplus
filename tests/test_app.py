@@ -50,7 +50,8 @@ class UpdateCheckTest(unittest.TestCase):
 
     def test_window_opens_without_waiting_for_the_network(self):
         calls = []
-        with mock.patch.object(app_module.requests, "get", side_effect=self.slow_github), \
+        with mock.patch.object(app_module.constants, "VERSION", "0.4.0"), \
+             mock.patch.object(app_module.requests, "get", side_effect=self.slow_github), \
              mock.patch.object(App, "display_update_message", lambda self, version: calls.append((version, threading.current_thread()))):
             started = time.time()
             app = App()

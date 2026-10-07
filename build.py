@@ -3,7 +3,10 @@ Builds AutoSplit64++ with PyInstaller: `uv run build.py`
 
 - Windows: dist/AutoSplit64++/ with AutoSplit64++.exe and its resources next to it
 - macOS: dist/AutoSplit64++.app, which includes its resources and can be installed anywhere
+
+The version comes from the release's git tag (AS64_VERSION, set in CI), or git describe.
 """
+import contextlib
 import os
 import plistlib
 import shutil
@@ -18,6 +21,24 @@ DATA_DIRS = ["logic", "resources", "routes", "templates"]
 # Files the app writes at runtime, which don't belong in a build
 IGNORE = shutil.ignore_patterns("game_preview.png", ".DS_Store")
 OBS_PLUGIN = Path("obs-plugin/build_x64/RelWithDebInfo/autosplit64plus-framegrabber.dll")
+VERSION_FILE = Path("as64gui/_version.py")
+
+
+def release_version():
+    """ The version to build, e.g. 0.4.0 for the tag v0.4.0 """
+    version = os.environ.get("AS64_VERSION") or subprocess.run(
+        ["git", "describe", "--tags", "--match", "v[0-9]*", "--dirty"], capture_output=True, text=True).stdout.strip()
+    return version.removeprefix("v") or "dev"
+
+
+@contextlib.contextmanager
+def version_file(version):
+    """ Puts the version in the app while it's built """
+    VERSION_FILE.write_text(f'VERSION = "{version}"\n')
+    try:
+        yield
+    finally:
+        VERSION_FILE.unlink()
 
 
 def build_windows():
@@ -99,11 +120,11 @@ def build_macos():
 if __name__ == "__main__":
     os.chdir(Path(__file__).parent)
 
-    if sys.platform == "win32":
-        built = build_windows()
-    elif sys.platform == "darwin":
-        built = build_macos()
-    else:
+    if sys.platform not in ("win32", "darwin"):
         sys.exit("AutoSplit64++ can be built on Windows and macOS")
 
-    print(f"Built {built}")
+    version = release_version()
+    with version_file(version):
+        built = build_windows() if sys.platform == "win32" else build_macos()
+
+    print(f"Built {built} {version}")
