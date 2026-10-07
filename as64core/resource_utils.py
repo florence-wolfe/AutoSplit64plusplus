@@ -4,10 +4,15 @@ from pathlib import Path
 
 
 def base_path(relative_path=None):
+    directory = os.path.dirname(sys.argv[0])
+    # A macOS .app runs from <name>.app/Contents/MacOS, and its resources are next to the .app
+    if getattr(sys, "frozen", False) and sys.platform == "darwin":
+        directory = os.path.abspath(os.path.join(directory, "..", "..", ".."))
+
     if not relative_path:
-        return os.path.dirname(sys.argv[0])
+        return directory
     else:
-        return os.path.join(os.path.dirname(sys.argv[0]), relative_path).replace('\\', '/')
+        return os.path.join(directory, relative_path).replace('\\', '/')
 
 
 def absolute_path(relative_path=None):

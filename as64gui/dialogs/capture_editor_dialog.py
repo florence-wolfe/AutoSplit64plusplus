@@ -89,7 +89,8 @@ class CaptureEditor(QtWidgets.QDialog):
         self.auto_region_btn.setAutoDefault(False)
         self.process_combo.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.Minimum)
 
-        self._refresh_process_list()
+        # Filled when the editor is shown, so macOS doesn't ask for Screen Recording at launch
+        self._process_list = []
 
         self.left_layout.addWidget(self.use_obs_cb, 0, 0, 1, 2)
         # The OBS Plugin is only available on Windows

@@ -47,7 +47,8 @@ class ServerStatusIndicator(QtWidgets.QWidget):
         if error is not None:
             reason = f"port {port} is already in use" if error.errno == errno.EADDRINUSE else str(error)
             tooltip = f"{DESCRIPTIONS[state]}: {reason}\n{self._url}"
-        self.setToolTip(tooltip)
+        if tooltip != self.toolTip():
+            self.setToolTip(tooltip)
         self.update()
 
     def paintEvent(self, event):

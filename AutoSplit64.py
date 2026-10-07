@@ -4,7 +4,8 @@ import os
 # A macOS .app starts with "/" as its working directory. Run from the folder containing
 # the .app instead, where the resources and config live, like the Windows build.
 if getattr(sys, "frozen", False) and sys.platform == "darwin":
-    os.chdir(os.path.abspath(os.path.join(os.path.dirname(sys.executable), "..", "..", "..")))
+    from as64core.resource_utils import base_path
+    os.chdir(base_path())
 
 from threading import Thread
 import logging
@@ -141,7 +142,7 @@ if __name__ == "__main__":
     palette.setColor(QtGui.QPalette.ColorRole.Link, QtGui.QColor(88, 157, 246))
     palette.setColor(QtGui.QPalette.ColorRole.Base, QtGui.QColor(23, 25, 27))
     palette.setColor(QtGui.QPalette.ColorRole.AlternateBase, QtGui.QColor(53, 55, 57))
-    palette.setColor(QtGui.QPalette.ColorRole.ToolTipBase, QtGui.QColor(255, 255, 255))
+    palette.setColor(QtGui.QPalette.ColorRole.ToolTipBase, QtGui.QColor(53, 55, 57))
     palette.setColor(QtGui.QPalette.ColorRole.ToolTipText, QtGui.QColor(255, 255, 255))
     palette.setColor(QtGui.QPalette.ColorRole.Text, QtGui.QColor(200, 203, 207))
     palette.setColor(QtGui.QPalette.ColorRole.Button, QtGui.QColor(53, 55, 57))

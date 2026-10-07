@@ -23,6 +23,8 @@ class App(QtWidgets.QMainWindow):
         # Window Properties
         self.title = constants.TITLE
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+        # macOS only shows tooltips in the active app otherwise
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_AlwaysShowToolTips, True)
         self.width = 365
         self.height = 259
         self.setWindowIcon(QtGui.QIcon(base_path(constants.ICON_PATH)))
