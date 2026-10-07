@@ -28,5 +28,21 @@ class RouteTimingTest(unittest.TestCase):
         self.assertIsNone(self.timing_of_route_file(b"{ not json"))
 
 
+
+class TimingSetupTest(unittest.TestCase):
+    def test_each_timing(self):
+        self.assertEqual(AutoSplit64.timing_setup("RTA"), ("logic/standard/initial.processor", True))
+        self.assertEqual(AutoSplit64.timing_setup("Up RTA"), ("logic/up_rta/initial_up_rta.processor", False))
+        self.assertEqual(AutoSplit64.timing_setup("File Select"), ("logic/file_select/initial_file_select_start.processor", False))
+        self.assertEqual(AutoSplit64.timing_setup(None), ("logic/standard/initial.processor", True))
+
+    def test_switching_back_to_rta_restarts_on_reset_again(self):
+        # Start with an Up RTA route, then with an RTA route, in the same session
+        for timing, start_on_reset in [("Up RTA", False), ("RTA", True)]:
+            with mock.patch.object(AutoSplit64, "route_timing", return_value=timing), \
+                 mock.patch.object(AutoSplit64.ProcessorGenerator, "generate"):
+                AutoSplit64.set_up_timing()
+            self.assertIs(AutoSplit64.as64core.start_on_reset, start_on_reset)
+
 if __name__ == "__main__":
     unittest.main()

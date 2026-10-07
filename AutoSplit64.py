@@ -40,6 +40,21 @@ def route_timing():
     return route.timing if route else None
 
 
+def timing_setup(timing):
+    """ The initial processor for a route's timing, and whether a console reset restarts the timer """
+    if timing == as64core.TIMING_UP_RTA:
+        return "logic/up_rta/initial_up_rta.processor", False
+    if timing == as64core.TIMING_FILE_SELECT:
+        return "logic/file_select/initial_file_select_start.processor", False
+    return "logic/standard/initial.processor", True
+
+
+def set_up_timing():
+    """ Set up the configured route's timing, and return its initial processor """
+    path, as64core.start_on_reset = timing_setup(route_timing())
+    return ProcessorGenerator.generate(path)
+
+
 class AutoSplit64(QtCore.QObject):
     error = QtCore.pyqtSignal(str)
     update_found = QtCore.pyqtSignal(dict)
@@ -99,16 +114,7 @@ class AutoSplit64(QtCore.QObject):
         register_process("FINAL_DETECT_SPAWN", ProcessFinalStarSpawn())  # TODO: RENAME
         register_process("FINAL_STAR_SPLIT", ProcessFinalStarGrab())  # TODO: RENAME to FINAL_STAR_SPLIT
 
-        timing = route_timing()
-
-        if timing == as64core.TIMING_UP_RTA:
-            as64core.start_on_reset = False
-            initial_processor = ProcessorGenerator.generate("logic/up_rta/initial_up_rta.processor")
-        elif timing == as64core.TIMING_FILE_SELECT:
-            as64core.start_on_reset = False
-            initial_processor = ProcessorGenerator.generate("logic/file_select/initial_file_select_start.processor")
-        else:
-            initial_processor = ProcessorGenerator.generate("logic/standard/initial.processor")
+        initial_processor = set_up_timing()
 
         standard_processor = ProcessorGenerator.generate("logic/standard/star_fade.processor")
         fade_only_processor = ProcessorGenerator.generate("logic/standard/fade_only.processor")
