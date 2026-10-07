@@ -10,8 +10,41 @@ if sys.platform == "win32":
 
 from . import config, livesplit_one
 
+# In TCP and named pipe mode, whether split detection is connected to LiveSplit, or its last attempt failed
+_connected = False
+_connect_failed = False
+
+
+def connect():
+    """ Connect to LiveSplit, returning the connection or False """
+    global _connected, _connect_failed
+    ls_socket = _connect()
+    if config.get("connection", "ls_connection_type") in (0, 1):
+        _connected = ls_socket is not False
+        _connect_failed = ls_socket is False
+    return ls_socket
+
+
+def client_status():
+    """ (state, address, error) of the connection to LiveSplit in TCP or named pipe mode, with state "connected", "stopped" or "error" """
+    if config.get("connection", "ls_connection_type") == 1:
+        address = f"{config.get('connection', 'ls_host')}:{config.get('connection', 'ls_port')}"
+        hint = "Is LiveSplit's server started?"
+    else:
+        address = "\\\\" + config.get("connection", "ls_pipe_host") + "\\pipe\\LiveSplit"
+        hint = "Is LiveSplit running?"
+        if sys.platform != "win32":
+            return "error", address, "Named pipes are only available on Windows"
+
+    if _connected:
+        return "connected", address, None
+    if _connect_failed:
+        return "error", address, hint
+    return "stopped", address, None
+
+
 # Connect to LiveSplit and return socket
-def connect() -> object:
+def _connect() -> object:
     # Get connection type from config
     ls_connection_type = config.get("connection", "ls_connection_type")
 
@@ -49,12 +82,14 @@ def connect() -> object:
 
 
 def disconnect(ls_socket) -> None:
+    global _connected
     # Check if connection even exists
     if ls_socket is False:
         return
     # Keep the LiveSplit One server running so it stays connected between runs
     if isinstance(ls_socket, livesplit_one.LiveSplitOneServer):
         return
+    _connected = False
     ls_socket.close()
 
 

@@ -64,6 +64,8 @@ All windows and options are accessed via the right-click menu, which the menu bu
 
 AutoSplit64++ directly communicates with LiveSplit using a Named Pipe. There is no need to manually start the LiveSplit Server.
 
+The dot in the top right corner shows the connection to LiveSplit: green while split detection is connected, grey until it starts, and red if connecting failed. Hover it for the address, and click it to copy the address.
+
 Since AS64+ recognizes the reset only when the Super Mario 64 logo appears, we need to set the Timer to Start at 1.36 seconds.
 
 In LiveSplit `Right-Click -> Edit Splits...` &rarr; Set `Start Timer at:` to **1.36**

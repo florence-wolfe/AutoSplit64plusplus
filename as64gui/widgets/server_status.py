@@ -2,7 +2,7 @@ import errno
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 
-from as64core import config, livesplit_one
+from as64core import config, livesplit, livesplit_one
 
 COLORS = {
     "connected": QtGui.QColor(76, 175, 80),
@@ -14,6 +14,13 @@ COLORS = {
 # How long the "Copied" message stays up, in milliseconds
 COPIED_MESSAGE_TIME = 2500
 
+# TCP and named pipe mode, where split detection connects to LiveSplit
+CLIENT_DESCRIPTIONS = {
+    "connected": "Connected to LiveSplit",
+    "stopped": "Connects to LiveSplit when split detection starts",
+    "error": "Couldn't connect to LiveSplit",
+}
+
 DESCRIPTIONS = {
     "connected": "LiveSplit One connected",
     "waiting": "Waiting for LiveSplit One to connect",
@@ -23,7 +30,7 @@ DESCRIPTIONS = {
 
 
 class ServerStatusIndicator(QtWidgets.QWidget):
-    """ Dot showing the LiveSplit One server state. Clicking it copies the server URL. """
+    """ Dot showing the state of the connection to LiveSplit. Clicking it copies the address. """
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -40,8 +47,14 @@ class ServerStatusIndicator(QtWidgets.QWidget):
         self.refresh()
 
     def refresh(self):
-        # The server only exists in LiveSplit One mode (2)
-        self.setVisible(config.get("connection", "ls_connection_type") == 2)
+        # LiveSplit One mode (2) runs a server; TCP and named pipe mode connect to LiveSplit's
+        if config.get("connection", "ls_connection_type") != 2:
+            self._state, self._url, error = livesplit.client_status()
+            tooltip = CLIENT_DESCRIPTIONS[self._state] + (f": {error}" if error else "") + f"\n{self._url}\nClick to copy"
+            if tooltip != self.toolTip():
+                self.setToolTip(tooltip)
+            self.update()
+            return
 
         state, port, error = livesplit_one.status()
         self._state = state
