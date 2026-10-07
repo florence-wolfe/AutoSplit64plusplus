@@ -2,6 +2,7 @@ import sys
 
 from . import capture_shmem
 if sys.platform == "darwin":
+    from . import capture_device_mac as capture_device
     from . import capture_window_mac as capture_window
 else:
     from . import capture_window
@@ -35,16 +36,21 @@ from .constants import (
 
 
 class GameCapture(object):
-    def __init__(self, use_obs, vc_fix, process_name, game_region, version):
+    def __init__(self, use_obs, vc_fix, process_name, game_region, version, device=None):
         # Initialize GameCapture
         # The OBS Plugin is only available on Windows
         self._use_obs = use_obs and sys.platform == "win32"
         self._process_name = process_name
         self._vc_fix = vc_fix
         
+        # Unique id of the video device to capture on macOS, instead of a window
+        self._device = device
+
         if self._use_obs:
         # Initialize SharedMemoryCapture
             self._shmem = capture_shmem.SharedMemoryCapture()
+        elif self._device:
+            pass
         else:
             self._hwnd: int = capture_window.get_hwnd_from_list(process_name, capture_window.get_visible_processes())
         
@@ -91,6 +97,11 @@ class GameCapture(object):
                 self._shmem.open_shmem()
             except Exception as e:
                 raise Exception(str(e))    
+        elif self._device:
+            if not capture_device.has_permission():
+                raise Exception("AutoSplit64++ needs the Camera permission to capture the video device.\n\nOpen Edit Coordinates to allow it.")
+            if self._device not in [device[0] for device in capture_device.get_devices()]:
+                raise Exception("Could not find the video device\n\nMake sure it is connected!")
         else:
             if not bool(self._hwnd) and sys.platform == "darwin" and not capture_window.has_permission():
                 raise Exception("AutoSplit64++ needs the Screen Recording permission to capture the game.\n\nOpen Edit Coordinates to allow it.")
@@ -100,7 +111,8 @@ class GameCapture(object):
     def capture(self) -> None:
         if self._use_obs:
             self._window_image = self._shmem.capture()
-
+        elif self._device:
+            self._window_image = capture_device.capture(self._device)
         else:
             self._window_image = capture_window.capture(self._hwnd) 
             
@@ -113,6 +125,8 @@ class GameCapture(object):
     def get_capture_size(self):
         if self._use_obs:
             return self._shmem.get_capture_size()
+        elif self._device:
+            return capture_device.get_capture_size(self._device)
         else:
             return capture_window.get_capture_size(self._hwnd)
 
@@ -144,4 +158,5 @@ class GameCapture(object):
             self._shmem.close_shmem()
         elif sys.platform == "darwin":
             capture_window.stop()
+            capture_device.stop()
 

@@ -135,10 +135,13 @@ When capturing another progamm or the region was not detected poperly, adjust th
 **NOTE:**
 If you are using a correctly configured version of AmaRecTV as shown (with windows size at 100% `Right-Click AmaRecTV -> 100%`), the default settings should already be set appropriately.
 
-#### Window Capture on macOS
-On macOS, Window Capture streams the emulator window directly with ScreenCaptureKit (the same API used by screen sharing apps), so neither OBS nor a virtual camera is needed. The window can be behind other windows, but not minimized.
+#### Capture on macOS
+On macOS, the Capture Editor's `Source` chooses what to capture. Each source needs its own permission, and the editor only asks for the one of the selected source. While it's missing, the editor shows a button that asks macOS for it, and an `Open System Settings` button in case it was denied before. When running from source, the permissions are for your terminal app instead.
 
-- Capturing needs the Screen Recording permission. While it's missing, the Capture Editor shows an `Allow Screen Recording` button, which asks macOS for it, and an `Open System Settings` button for `Privacy & Security -> Screen & System Audio Recording`, in case it was denied before. After allowing it, restart AutoSplit64++ if the editor doesn't pick it up. When running from source, the permission is for your terminal app instead.
+**Video Device** captures a capture card, the OBS Virtual Camera or a webcam. Select it in the `Device` drop-down. It needs the Camera permission.
+
+**Window** streams the emulator window directly with ScreenCaptureKit (the same API used by screen sharing apps), so neither OBS nor a virtual camera is needed. It needs the Screen Recording permission; restart AutoSplit64++ after allowing it if the editor doesn't pick it up.
+- The window can be behind other windows, but not minimized.
 - Select your emulator in the `Process` drop-down. The capture includes the window's title bar, so make sure the `Game Region` only covers the game.
 - Don't resize the emulator window after setting the region. If you do, set the region again.
 

@@ -36,24 +36,32 @@ class _StreamOutput(NSObject, protocols=[objc.protocolNamed("SCStreamOutput"), o
         if output_type != SCK.SCStreamOutputTypeScreen:
             return
         # Frames sent while the window is unchanged carry no image
-        image_buffer = CMSampleBufferGetImageBuffer(sample_buffer)
-        if image_buffer is None:
+        frame = bgr_frame(sample_buffer)
+        if frame is None:
             return
-
-        Quartz.CVPixelBufferLockBaseAddress(image_buffer, Quartz.kCVPixelBufferLock_ReadOnly)
-        try:
-            width = Quartz.CVPixelBufferGetWidth(image_buffer)
-            height = Quartz.CVPixelBufferGetHeight(image_buffer)
-            bytes_per_row = Quartz.CVPixelBufferGetBytesPerRow(image_buffer)
-            data = Quartz.CVPixelBufferGetBaseAddress(image_buffer).as_buffer(height * bytes_per_row)
-            # BGRA rows may be padded; keep BGR like the Windows capture
-            self.frame = np.frombuffer(data, dtype=np.uint8).reshape(height, bytes_per_row // 4, 4)[:, :width, :3].copy()
-        finally:
-            Quartz.CVPixelBufferUnlockBaseAddress(image_buffer, Quartz.kCVPixelBufferLock_ReadOnly)
+        self.frame = frame
         self.frame_received.set()
 
     def stream_didStopWithError_(self, stream, error):
         self.error = error
+
+
+def bgr_frame(sample_buffer):
+    """ Returns a BGRA sample buffer as a BGR image like the Windows capture, or None without an image """
+    image_buffer = CMSampleBufferGetImageBuffer(sample_buffer)
+    if image_buffer is None:
+        return None
+
+    Quartz.CVPixelBufferLockBaseAddress(image_buffer, Quartz.kCVPixelBufferLock_ReadOnly)
+    try:
+        width = Quartz.CVPixelBufferGetWidth(image_buffer)
+        height = Quartz.CVPixelBufferGetHeight(image_buffer)
+        bytes_per_row = Quartz.CVPixelBufferGetBytesPerRow(image_buffer)
+        data = Quartz.CVPixelBufferGetBaseAddress(image_buffer).as_buffer(height * bytes_per_row)
+        # Rows may be padded
+        return np.frombuffer(data, dtype=np.uint8).reshape(height, bytes_per_row // 4, 4)[:, :width, :3].copy()
+    finally:
+        Quartz.CVPixelBufferUnlockBaseAddress(image_buffer, Quartz.kCVPixelBufferLock_ReadOnly)
 
 
 def _wait(start):

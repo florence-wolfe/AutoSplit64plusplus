@@ -60,7 +60,7 @@ class Base(Thread):
                 version = config.get("route", "path")
 
         # Initialize the Game Capture
-        self._game_capture = GameCapture(config.get("game", "use_obs"), config.get("game", "vc_fix"), config.get("game", "process_name"), config.get("game", "game_region"), version)
+        self._game_capture = GameCapture(config.get("game", "use_obs"), config.get("game", "vc_fix"), config.get("game", "process_name"), config.get("game", "game_region"), version, config.get("game", "capture_device") if config.get("game", "capture_source") == "device" else None)
 
         # Initialise Prediction Model
         if config.get("model", "legacy"):

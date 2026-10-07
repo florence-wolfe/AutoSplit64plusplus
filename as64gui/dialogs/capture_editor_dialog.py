@@ -7,6 +7,7 @@ import numpy as np
 
 from as64core import capture_shmem, config
 if sys.platform == "darwin":
+    from as64core import capture_device_mac as capture_device
     from as64core import capture_window_mac as capture_window
 else:
     from as64core import capture_window
@@ -97,7 +98,7 @@ class CaptureEditor(QtWidgets.QDialog):
         # The OBS Plugin is only available on Windows
         self.use_obs_cb.setVisible(sys.platform == "win32")
         if sys.platform == "darwin":
-            self._add_permission_panel()
+            self._add_mac_capture_widgets()
         self.left_layout.addWidget(self.process_lb, 1, 0)
         self.left_layout.addWidget(self.process_combo, 1, 1)
         self.left_layout.addWidget(self.capture_btn, 2, 0, 1, 2)
@@ -148,38 +149,114 @@ class CaptureEditor(QtWidgets.QDialog):
         self._process_list = capture_window.get_visible_processes()
         self.process_combo.addItems([proc[0].name() for proc in self._process_list])
 
-    def _add_permission_panel(self):
-        """ Shown on macOS while the Screen Recording permission is missing """
+    def _add_mac_capture_widgets(self):
+        """ On macOS, choose between a video device and a window, each with its own permission """
+        mac_panel = QtWidgets.QWidget()
+        mac_layout = QtWidgets.QVBoxLayout(mac_panel)
+        mac_layout.setContentsMargins(0, 0, 0, 0)
+
+        source_layout = QtWidgets.QHBoxLayout()
+        self.source_combo = QtWidgets.QComboBox()
+        self.source_combo.addItems(["Video Device", "Window"])
+        source_layout.addWidget(QtWidgets.QLabel("Source:"))
+        source_layout.addWidget(self.source_combo, 1)
+        mac_layout.addLayout(source_layout)
+
+        # Shown while the permission for the selected source is missing
         self.permission_panel = QtWidgets.QWidget()
         permission_layout = QtWidgets.QVBoxLayout(self.permission_panel)
-        permission_layout.setContentsMargins(0, 0, 0, 8)
-
-        permission_lb = QtWidgets.QLabel("Screen Recording permission is needed to capture the emulator window.\n\n"
-                                         "If it's already on in System Settings, it may belong to an earlier build. "
-                                         "Allow Screen Recording asks macOS again for this one.\n\n"
-                                         "After allowing it, you may need to restart AutoSplit64++.")
-        permission_lb.setWordWrap(True)
-        allow_btn = QtWidgets.QPushButton("Allow Screen Recording")
+        permission_layout.setContentsMargins(0, 8, 0, 8)
+        self.permission_lb = QtWidgets.QLabel()
+        self.permission_lb.setWordWrap(True)
+        self.allow_btn = QtWidgets.QPushButton()
         settings_btn = QtWidgets.QPushButton("Open System Settings")
-        for btn in (allow_btn, settings_btn):
+        for btn in (self.allow_btn, settings_btn):
             btn.setAutoDefault(False)
-        allow_btn.clicked.connect(capture_window.request_permission)
-        settings_btn.clicked.connect(capture_window.open_permission_settings)
-
-        permission_layout.addWidget(permission_lb)
-        permission_layout.addWidget(allow_btn)
+        self.allow_btn.clicked.connect(lambda: self._capture_module().request_permission())
+        settings_btn.clicked.connect(lambda: self._capture_module().open_permission_settings())
+        permission_layout.addWidget(self.permission_lb)
+        permission_layout.addWidget(self.allow_btn)
         permission_layout.addWidget(settings_btn)
+        mac_layout.addWidget(self.permission_panel)
+
         # Shares the row of the OBS Plugin checkbox, which is hidden on macOS
-        self.left_layout.addWidget(self.permission_panel, 0, 0, 1, 2)
+        self.left_layout.addWidget(mac_panel, 0, 0, 1, 2)
+
+        # Takes the place of the process selector when capturing a video device
+        self.device_lb = QtWidgets.QLabel("Device:")
+        self.device_combo = QtWidgets.QComboBox()
+        self.device_combo.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.Minimum)
+        self.left_layout.addWidget(self.device_lb, 1, 0)
+        self.left_layout.addWidget(self.device_combo, 1, 1)
+        self._devices = []
 
         # Check again while the editor is open, to notice when the permission is granted
         self._permission_timer = QtCore.QTimer(self)
         self._permission_timer.timeout.connect(self._update_permission)
 
-    def _update_permission(self):
-        granted = capture_window.has_permission()
-        if granted and not self.permission_panel.isHidden():
+        self.source_combo.currentIndexChanged.connect(self._on_source_changed)
+        self.device_combo.currentIndexChanged.connect(self.refresh_graphics_scene)
+
+    def _use_device(self):
+        return sys.platform == "darwin" and self.source_combo.currentText() == "Video Device"
+
+    def _capture_module(self):
+        return capture_device if self._use_device() else capture_window
+
+    def _refresh_device_list(self):
+        self._devices = capture_device.get_devices()
+        self.device_combo.blockSignals(True)
+        self.device_combo.clear()
+        self.device_combo.addItems([name for _, name in self._devices])
+        for i, (unique_id, _) in enumerate(self._devices):
+            if unique_id == config.get("game", "capture_device"):
+                self.device_combo.setCurrentIndex(i)
+        self.device_combo.blockSignals(False)
+
+    def _capture_device(self):
+        """ The selected video device's latest frame, or None """
+        # Opening the device would ask for the permission by itself, or wait for frames that never come
+        if not capture_device.has_permission():
+            return None
+        try:
+            return capture_device.capture(self._devices[self.device_combo.currentIndex()][0])
+        except Exception:
+            return None
+
+    def _on_source_changed(self):
+        device = self._use_device()
+        self.process_lb.setVisible(not device)
+        self.process_combo.setVisible(not device)
+        self.device_lb.setVisible(device)
+        self.device_combo.setVisible(device)
+
+        # Only capture, and ask for the permission of, the selected source
+        capture_window.stop()
+        capture_device.stop()
+        if device:
+            self._refresh_device_list()
+        elif not self._process_list:
             self._refresh_process_list()
+        self._update_permission()
+        self.refresh_graphics_scene()
+
+    def _update_permission(self):
+        if self._use_device():
+            self.permission_lb.setText("Camera permission is needed to capture the video device.\n\n"
+                                       "If it's already on in System Settings, it may belong to an earlier build. "
+                                       "Allow Camera asks macOS again for this one.")
+            self.allow_btn.setText("Allow Camera")
+        else:
+            self.permission_lb.setText("Screen Recording permission is needed to capture the emulator window.\n\n"
+                                       "If it's already on in System Settings, it may belong to an earlier build. "
+                                       "Allow Screen Recording asks macOS again for this one.\n\n"
+                                       "After allowing it, you may need to restart AutoSplit64++.")
+            self.allow_btn.setText("Allow Screen Recording")
+
+        granted = self._capture_module().has_permission()
+        if granted and not self.permission_panel.isHidden():
+            if not self._use_device():
+                self._refresh_process_list()
             self.refresh_graphics_scene()
         self.permission_panel.setVisible(not granted)
         if granted:
@@ -189,7 +266,9 @@ class CaptureEditor(QtWidgets.QDialog):
 
     def show(self):
         if sys.platform == "darwin":
-            self._update_permission()
+            self.source_combo.blockSignals(True)
+            self.source_combo.setCurrentText("Video Device" if config.get("game", "capture_source") == "device" else "Window")
+            self.source_combo.blockSignals(False)
 
         # Load game_region from preferences
         game_region = config.get('game', 'game_region')
@@ -198,7 +277,9 @@ class CaptureEditor(QtWidgets.QDialog):
 
         self.game_region_panel.update_text(*[str(v) for v in game_region])
 
-        self._refresh_process_list()
+        # A video device source doesn't need windows, nor their permission
+        if not self._use_device():
+            self._refresh_process_list()
 
         p_name = config.get("game", "process_name")
 
@@ -210,6 +291,8 @@ class CaptureEditor(QtWidgets.QDialog):
         use_obs = config.get("game", "use_obs") and sys.platform == "win32"
         self.use_obs_cb.setChecked(use_obs)
         self.toggle_capture_method(use_obs)
+        if sys.platform == "darwin":
+            self._on_source_changed()
         
         vc_fix = config.get("game", "vc_fix")
         self.vc_fix_cb.setChecked(vc_fix)
@@ -231,12 +314,18 @@ class CaptureEditor(QtWidgets.QDialog):
         # Config
         config.set_key("game", "use_obs", self.use_obs_cb.isChecked())
         config.set_key("game", "game_region", self.game_region_panel.get_data())
-        if not self.use_obs_cb.isChecked():
+        if sys.platform == "darwin":
+            config.set_key("game", "capture_source", "device" if self._use_device() else "window")
+            if self._use_device() and self._devices:
+                config.set_key("game", "capture_device", self._devices[self.device_combo.currentIndex()][0])
+        if not self.use_obs_cb.isChecked() and not self._use_device():
             config.set_key("game", "process_name", self.process_combo.currentText())
 
         try:
             if self.use_obs_cb.isChecked():
                 config.set_key("game", "capture_size", self.shmem_capture.get_capture_size())
+            elif self._use_device():
+                config.set_key("game", "capture_size", capture_device.get_capture_size(self._devices[self.device_combo.currentIndex()][0]))
             else:
                 config.set_key("game", "capture_size", capture_window.get_capture_size(self._process_list[self.process_combo.currentIndex()][1]))
         except:
@@ -287,6 +376,12 @@ class CaptureEditor(QtWidgets.QDialog):
                 cv2.imwrite(resource_utils.resource_path(PREVIEW_PATH), cv2.imread(resource_utils.resource_path(PLACEHOLDER_PATH)))                
                 
                 pass
+        elif self._use_device():
+            preview_image = self._capture_device()
+            # Never show an earlier capture when nothing could be captured now
+            if preview_image is None:
+                preview_image = np.zeros((480, 640, 3), np.uint8)
+            cv2.imwrite(resource_utils.resource_path(PREVIEW_PATH), preview_image)
         else:
             # Update screen capture
             selected_hwnd = 0
@@ -341,6 +436,7 @@ class CaptureEditor(QtWidgets.QDialog):
             pass  # Ignore any errors during close
         if sys.platform == "darwin":
             capture_window.stop()
+            capture_device.stop()
             self._permission_timer.stop()
         config.rollback()
         super().closeEvent(e)
@@ -371,6 +467,8 @@ class CaptureEditor(QtWidgets.QDialog):
                     preview_image = self.shmem_capture.capture()
                 except:
                     pass
+            elif self._use_device():
+                preview_image = self._capture_device()
             else:
                 selected_hwnd = 0
                 try:

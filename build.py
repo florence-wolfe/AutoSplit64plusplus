@@ -5,6 +5,7 @@ Builds AutoSplit64++ with PyInstaller: `uv run build.py`
 - macOS: dist/AutoSplit64++.app, which includes its resources and can be installed anywhere
 """
 import os
+import plistlib
 import shutil
 import subprocess
 import sys
@@ -80,9 +81,18 @@ def build_macos():
         "AutoSplit64.py",
     ])
 
+    # macOS stops an app that uses a camera without saying why
+    built = work / "dist" / f"{NAME}.app"
+    info_plist = built / "Contents" / "Info.plist"
+    info = plistlib.loads(info_plist.read_bytes())
+    info["NSCameraUsageDescription"] = "AutoSplit64++ captures the game from your capture card or virtual camera."
+    info_plist.write_bytes(plistlib.dumps(info))
+    # Changing Info.plist invalidates the signature
+    subprocess.run(["codesign", "--force", "--deep", "--sign", "-", str(built)], check=True)
+
     app = Path("dist") / f"{NAME}.app"
     shutil.rmtree(app, ignore_errors=True)
-    shutil.copytree(work / "dist" / f"{NAME}.app", app, symlinks=True)
+    shutil.copytree(built, app, symlinks=True)
     return app
 
 
