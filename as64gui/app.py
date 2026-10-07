@@ -136,9 +136,9 @@ class App(QtWidgets.QMainWindow):
         self.start_btn.move(self.start_btn_initial_x, self.start_btn_initial_y)
         # self.start_btn.setFont(self.button_font)
         # self.start_btn.setStyleSheet("font-weight: bold; color: black; font-size: 32px;")
-        self.start_btn.add_state("start", self.start_pixmap, "")
-        self.start_btn.add_state("stop", self.stop_pixmap, "")
-        self.start_btn.add_state("init", self.init_pixmap, "")
+        self.start_btn.add_state("start", self.start_pixmap, "", "Start split detection")
+        self.start_btn.add_state("stop", self.stop_pixmap, "", "Stop split detection. Your timer isn't affected.")
+        self.start_btn.add_state("init", self.init_pixmap, "", "Starting split detection... Click to cancel.")
         self.start_btn.set_state("start")
         
         # Add hover effects
@@ -153,6 +153,8 @@ class App(QtWidgets.QMainWindow):
         # Connections
         self.start_btn.clicked.connect(self.start_clicked)
         self.star_btn.clicked.connect(self._reset)
+        self.star_btn.setToolTip("Restart split detection, which picks up from your timer's current split. "
+                                 "The timer itself isn't affected.")
         self.dialogs["route_editor"].route_updated.connect(self._on_route_update)
         self.dialogs["settings_dialog"].applied.connect(self.settings_updated)
         self.dialogs["capture_editor"].applied.connect(self._reset)
@@ -316,11 +318,15 @@ class App(QtWidgets.QMainWindow):
     def _populate_menu(self, menu):
         """ Fill menu with the app's actions. Used by the right-click menu and the menu bar. """
         route_menu = QtWidgets.QMenu("Open Route", menu)
+        # Qt menus only show tooltips when asked to
+        menu.setToolTipsVisible(True)
+        route_menu.setToolTipsVisible(True)
 
         # SRL MODE Action
         srl_action = QtGui.QAction("SRL Mode", menu, checkable=True)
         menu.addAction(srl_action)
         srl_action.setChecked(config.get("general", "srl_mode"))
+        srl_action.setToolTip("Don't reset the timer when you reset the console, e.g. in races")
         srl_action.triggered.connect(self._set_srl_mode)
         menu.addSeparator()
 
@@ -336,28 +342,45 @@ class App(QtWidgets.QMainWindow):
                     category_menu.addAction(route[0]).triggered.connect(partial(self._save_open_route, route[1]))
 
         route_menu.addSeparator()
-        route_menu.addAction("From File").triggered.connect(self.open_route_browser)
+        from_file_action = route_menu.addAction("From File")
+        from_file_action.setToolTip("Open a route (.as64) from anywhere")
+        from_file_action.triggered.connect(self.open_route_browser)
 
         # Actions
-        menu.addAction("Edit Route").triggered.connect(self.dialogs["route_editor"].show)
-        menu.addMenu(route_menu)
+        action = menu.addAction("Edit Route")
+        action.setToolTip("Edit the splits of the current route, or create or open another route")
+        action.triggered.connect(self.dialogs["route_editor"].show)
+        menu.addMenu(route_menu).setToolTip("Switch to another route")
         menu.addSeparator()
-        menu.addAction("Edit Coordinates").triggered.connect(self._edit_coordinates)
+        action = menu.addAction("Edit Coordinates")
+        action.setToolTip("Choose what to capture and where the game is in it")
+        action.triggered.connect(self._edit_coordinates)
         menu.addSeparator()
-        menu.addAction("Settings").triggered.connect(self.dialogs["settings_dialog"].show)
+        action = menu.addAction("Settings")
+        action.setToolTip("Connection to LiveSplit, detection thresholds and other settings")
+        action.triggered.connect(self.dialogs["settings_dialog"].show)
         menu.addSeparator()
-        menu.addAction("Generate Reset Templates").triggered.connect(self.dialogs["reset_dialog"].show)
+        action = menu.addAction("Generate Reset Templates")
+        action.setToolTip("Record what a console reset looks like in your capture, so resets are detected")
+        action.triggered.connect(self.dialogs["reset_dialog"].show)
         menu.addSeparator()
-        menu.addAction("Show Output").triggered.connect(self.dialogs["output_dialog"].show)
+        action = menu.addAction("Show Output")
+        action.setToolTip("Show what split detection sees: fades, X-Cams and star predictions")
+        action.triggered.connect(self.dialogs["output_dialog"].show)
         menu.addSeparator()
         autostart_action = QtGui.QAction("Autostart", menu, checkable=True)
         menu.addAction(autostart_action)
         autostart_action.setChecked(config.get("general", "auto_start"))
+        autostart_action.setToolTip("Start split detection when AutoSplit64++ opens, trying for up to 5 minutes")
         autostart_action.triggered.connect(self._set_autostart)
         menu.addSeparator()
-        menu.addAction("About").triggered.connect(self.dialogs["about_dialog"].show)
+        action = menu.addAction("About")
+        action.setToolTip("Version and credits")
+        action.triggered.connect(self.dialogs["about_dialog"].show)
         menu.addSeparator()
-        menu.addAction("Exit").triggered.connect(self.close)
+        action = menu.addAction("Exit")
+        action.setToolTip("Quit AutoSplit64++")
+        action.triggered.connect(self.close)
 
         # Keep About, Settings and Exit in this menu instead of macOS moving them to the application menu
         for action in menu.actions() + route_menu.actions():

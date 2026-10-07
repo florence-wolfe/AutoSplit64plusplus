@@ -93,8 +93,8 @@ class StateButton(QtWidgets.QAbstractButton):
     def sizeHint(self):
         return self.pixmap.size()
 
-    def add_state(self, state, pixmap, text):
-        self._states[state] = [pixmap, text]
+    def add_state(self, state, pixmap, text, tooltip=None):
+        self._states[state] = [pixmap, text, tooltip]
 
     def get_state(self):
         return self._current_state
@@ -105,4 +105,5 @@ class StateButton(QtWidgets.QAbstractButton):
             self.pixmap = self._states[state][0]
             self.pixmap_pressed = self._states[state][0]
             self.setText(self._states[state][1])
+            self.setToolTip(self._states[state][2])
             self.repaint()

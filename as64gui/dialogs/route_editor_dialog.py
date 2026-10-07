@@ -214,7 +214,7 @@ class RouteEditor(QtWidgets.QMainWindow):
 
         for text, tooltip, shortcut, slot in [
             ("New", "Create new route", QtGui.QKeySequence.StandardKey.New, self.new),
-            ("Open", "Open a route or LiveSplit splits (.lss)", QtGui.QKeySequence.StandardKey.Open, self.open),
+            ("Open", "Open a route (.as64), or LiveSplit splits (.lss) to convert to a route", QtGui.QKeySequence.StandardKey.Open, self.open),
             ("Save", "Save route", QtGui.QKeySequence.StandardKey.Save, self.save),
             ("Save As...", "Save route as", None, self.save_as),
         ]:
