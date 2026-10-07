@@ -23,15 +23,15 @@ class VersionTest(unittest.TestCase):
             self.assertEqual(build.release_version(), described.removeprefix("v") or "dev")
 
     def test_version_file_exists_only_for_the_build(self):
-        path = Path("as64gui/_version.py")
+        path = Path("src/autosplit64/gui/_version.py")
         self.assertFalse(path.exists())
         with build.version_file("0.4.0"):
             self.assertEqual(path.read_text(), 'VERSION = "0.4.0"\n')
-            import as64gui.constants
-            self.assertEqual(importlib.reload(as64gui.constants).VERSION, "0.4.0")
+            import autosplit64.gui.constants
+            self.assertEqual(importlib.reload(autosplit64.gui.constants).VERSION, "0.4.0")
         self.assertFalse(path.exists())
-        sys.modules.pop("as64gui._version", None)
-        self.assertEqual(importlib.reload(as64gui.constants).VERSION, "dev")
+        sys.modules.pop("autosplit64.gui._version", None)
+        self.assertEqual(importlib.reload(autosplit64.gui.constants).VERSION, "dev")
 
 
 if __name__ == "__main__":

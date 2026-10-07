@@ -1,6 +1,6 @@
 import unittest
 
-from as64core.route import Route, Split
+from autosplit64.core.route import Route, Split
 
 
 class RouteTest(unittest.TestCase):

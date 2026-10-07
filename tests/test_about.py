@@ -4,7 +4,7 @@ from unittest import mock
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtTest import QTest
 
-from as64gui.dialogs.about_dialog import AboutDialog
+from autosplit64.gui.dialogs.about_dialog import AboutDialog
 
 _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 

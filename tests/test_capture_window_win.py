@@ -7,7 +7,7 @@ from unittest import mock
 
 import numpy as np
 
-import as64core
+from autosplit64 import core
 
 
 class FakeWindowsCapture:
@@ -43,15 +43,15 @@ class CaptureWindowWinTest(unittest.TestCase):
             get_visible_processes=mock.Mock(), get_hwnd_from_list=mock.Mock(), get_capture_size=mock.Mock(),
             window_title=mock.Mock(return_value="Emulator"))
         modules = {"windows_capture": types.SimpleNamespace(WindowsCapture=FakeWindowsCapture),
-                   "as64core.capture_window": self.print_window}
+                   "autosplit64.core.capture_window": self.print_window}
         # On Windows the real capture_window is already imported, and "from . import" finds it on the package
         for patcher in [mock.patch.dict(sys.modules, modules),
-                        mock.patch.object(as64core, "capture_window", self.print_window, create=True)]:
+                        mock.patch.object(core, "capture_window", self.print_window, create=True)]:
             patcher.start()
             self.addCleanup(patcher.stop)
-        sys.modules.pop("as64core.capture_window_win", None)
-        self.module = importlib.import_module("as64core.capture_window_win")
-        self.addCleanup(sys.modules.pop, "as64core.capture_window_win", None)
+        sys.modules.pop("autosplit64.core.capture_window_win", None)
+        self.module = importlib.import_module("autosplit64.core.capture_window_win")
+        self.addCleanup(sys.modules.pop, "autosplit64.core.capture_window_win", None)
         self.addCleanup(self.module.stop)
         self.module._FRAME_TIMEOUT = 0.05
 

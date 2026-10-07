@@ -1,9 +1,9 @@
 import unittest
 from unittest import mock
 
-import as64core
-from as64core.processing import Process
-from as64processes import standard
+from autosplit64 import core
+from autosplit64.core.processing import Process
+from autosplit64.processes import standard
 
 
 def make_process(cls, *signals):
@@ -27,8 +27,8 @@ class FadeoutNoStarResetTest(unittest.TestCase):
         for name, value in [("get_region", mock.Mock(return_value="reset region")),
                             ("incoming_split", mock.Mock(return_value=False)),
                             ("enable_predictions", mock.Mock()),
-                            ("fade_status", as64core.FADEOUT_COMPLETE)]:
-            patcher = mock.patch.object(as64core, name, value, create=True)
+                            ("fade_status", core.FADEOUT_COMPLETE)]:
+            patcher = mock.patch.object(core, name, value, create=True)
             patcher.start()
             self.addCleanup(patcher.stop)
         patcher = mock.patch.object(standard, "is_black", return_value=False)

@@ -4,8 +4,8 @@ from unittest import mock
 from PyQt6 import QtCore, QtWidgets
 from PyQt6.QtTest import QTest
 
-from as64core import config, livesplit
-from as64gui.widgets import ServerStatusIndicator
+from autosplit64.core import config, livesplit
+from autosplit64.gui.widgets import ServerStatusIndicator
 
 _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 

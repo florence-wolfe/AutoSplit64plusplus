@@ -9,8 +9,8 @@ from unittest import mock
 
 from PyQt6 import QtWidgets
 
-from as64core import route_loader
-from as64gui.app import App
+from autosplit64.core import route_loader
+from autosplit64.gui.app import App
 from tests.qt import close_window
 
 ROUTE = Path(__file__).parent.parent / "routes" / "16_lblj.as64"
@@ -76,7 +76,7 @@ class EncoderTest(unittest.TestCase):
 
 class RouteDirectoryTest(unittest.TestCase):
     def test_invalid_route_file_is_skipped(self):
-        with mock.patch("as64gui.updates.Updates.check"):
+        with mock.patch("autosplit64.gui.updates.Updates.check"):
             app = App()
         self.addCleanup(close_window, app)
 

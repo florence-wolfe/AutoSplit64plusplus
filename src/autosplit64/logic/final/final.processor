@@ -1,0 +1,24 @@
+{
+  "name": "final",
+  "initial_process": "FINAL_ENTRY",
+  "inherit": null,
+  "sub_processors": {
+    "FINAL_ENTRY": "final/final_entry.processor",
+    "FINAL_SPAWN": "final/final_spawn.processor",
+    "FINAL_GRAB": "final/final_grab.processor",
+    "IDLE": "standard/idle.processor"
+  },
+  "transitions": {
+    "FINAL_ENTRY": {
+      "FINAL_DETECT_ENTRY.ENTERED": "FINAL_SPAWN"
+    },
+    "FINAL_SPAWN": {
+      "FADEOUT.COMPLETE": "FINAL_ENTRY",
+      "FINAL_DETECT_SPAWN.SPAWNED": "FINAL_GRAB"
+    },
+    "FINAL_GRAB": {
+      "FADEOUT.COMPLETE": "FINAL_ENTRY",
+      "FINAL_STAR_SPLIT.COMPLETE": "IDLE"
+    }
+  }
+}

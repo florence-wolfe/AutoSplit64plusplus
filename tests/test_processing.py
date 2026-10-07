@@ -1,3 +1,4 @@
+import contextlib
 import json
 import shutil
 import tempfile
@@ -5,8 +6,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from as64core import processing
-from as64core.processing import Process, Processor, ProcessorGenerator, ProcessorSwitch
+from autosplit64.core import processing
+from autosplit64.core.processing import LOGIC_DIR, Process, Processor, ProcessorGenerator, ProcessorSwitch
 
 
 class GenerateTest(unittest.TestCase):
@@ -27,7 +28,7 @@ class GenerateTest(unittest.TestCase):
         return str(path)
 
     def test_missing_processor_file(self):
-        self.assertIsNone(ProcessorGenerator.generate("logic/missing.processor"))
+        self.assertIsNone(ProcessorGenerator.generate("missing.processor"))
 
     def test_processor_with_sub_processor(self):
         child = self.write("child", "A", {"A": {"A.DONE": "B"}})
@@ -51,10 +52,10 @@ class GenerateTest(unittest.TestCase):
 
 
 class ShippedProcessorsTest(unittest.TestCase):
-    """ Every processor in logic/ generates, with stand-ins for the processes AutoSplit64.py registers """
+    """ Every processor in logic/ generates, with stand-ins for the processes main.py registers """
 
     def test_all_generate(self):
-        files = sorted(Path("logic").rglob("*.processor"))
+        files = sorted(LOGIC_DIR.rglob("*.processor"))
         names = {}
         for path in files:
             data = json.loads(path.read_text())
@@ -74,10 +75,11 @@ class ShippedProcessorsTest(unittest.TestCase):
             for signal in signals:
                 stand_ins[name].register_signal(signal)
 
-        with mock.patch.dict(processing.processes, stand_ins, clear=True):
+        # Processors are found in the package, whatever the working directory
+        with mock.patch.dict(processing.processes, stand_ins, clear=True), contextlib.chdir(tempfile.gettempdir()):
             for path in files:
                 with self.subTest(str(path)):
-                    self.assertIsNotNone(ProcessorGenerator.generate(str(path)))
+                    self.assertIsNotNone(ProcessorGenerator.generate(path.relative_to(LOGIC_DIR).as_posix()))
 
 
 class ProcessorSwitchTest(unittest.TestCase):

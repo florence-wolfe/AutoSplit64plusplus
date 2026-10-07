@@ -1,7 +1,7 @@
 import unittest
 from unittest import mock
 
-from as64core import config
+from autosplit64.core import config
 
 
 class SetKeyTest(unittest.TestCase):

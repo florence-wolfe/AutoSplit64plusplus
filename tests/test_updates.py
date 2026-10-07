@@ -6,9 +6,9 @@ from unittest import mock
 from PyQt6 import QtWidgets
 from PyQt6.QtTest import QTest
 
-from as64core import updater
-from as64gui import app as app_module, updates
-from as64gui.app import App
+from autosplit64.core import updater
+from autosplit64.gui import app as app_module, updates
+from autosplit64.gui.app import App
 from tests.qt import close_window
 
 _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])

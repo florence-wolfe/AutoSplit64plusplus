@@ -3,7 +3,7 @@ from unittest import mock
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 
-from as64gui.app import App
+from autosplit64.gui.app import App
 from tests.qt import close_window
 
 _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
@@ -11,7 +11,7 @@ _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
 class StartButtonTest(unittest.TestCase):
     def setUp(self):
-        patcher = mock.patch("as64gui.updates.Updates.check")
+        patcher = mock.patch("autosplit64.gui.updates.Updates.check")
         patcher.start()
         self.addCleanup(patcher.stop)
         self.app = App()
@@ -33,7 +33,7 @@ class StartButtonTest(unittest.TestCase):
 
 class MenuTest(unittest.TestCase):
     def test_order(self):
-        with mock.patch("as64gui.updates.Updates.check"):
+        with mock.patch("autosplit64.gui.updates.Updates.check"):
             app = App()
         self.addCleanup(close_window, app)
         menu = QtWidgets.QMenu(app)
@@ -48,7 +48,7 @@ class DragTest(unittest.TestCase):
     """ Dragging the main window anywhere moves it """
 
     def setUp(self):
-        with mock.patch("as64gui.updates.Updates.check"):
+        with mock.patch("autosplit64.gui.updates.Updates.check"):
             self.app = App()
         self.addCleanup(close_window, self.app)
         self.app.move(100, 100)

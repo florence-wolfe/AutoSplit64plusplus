@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from as64core import app_location
+from autosplit64.core import app_location
 
 
 class NeedsMoveTest(unittest.TestCase):

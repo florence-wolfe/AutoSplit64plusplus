@@ -1,0 +1,29 @@
+from ..core.constants import DATA_DIR
+
+try:
+    # Written by build.py from the release's git tag
+    from ._version import VERSION
+except ImportError:
+    VERSION = "dev"
+TITLE = "AutoSplit64++"
+AUTHOR = "Flo Wolfe\nDavi Be\nSynozure"
+
+GITHUB_REPO = "florence-wolfe/AutoSplit64plusplus"
+DISCORD_LINK = "https://discord.gg/VmrQQBpPSK"
+
+WIDTH = 365
+HEIGHT = 259
+
+FONT_PATH = str(DATA_DIR / "font" / "TCM_____.TTF")
+ICON_PATH = "resources/gui/icons/as64plus.png"
+START_PATH = "resources/gui/buttons/pipe_start_btn.png"
+STOP_PATH = "resources/gui/buttons/wall_stop_btn.png"
+INIT_PATH = "resources/gui/buttons/wall_init_btn.png"
+STAR_PATH = "resources/gui/buttons/star.png"
+STAR_HOVER_PATH = "resources/gui/buttons/refresh_pipes_icon.png"
+BACKGROUND_PATH = "resources/gui/gui_bg.png"
+ABOUT_PATH = "resources/gui/about_bg.png"
+ROUTES_DIR = "routes"
+PLACEHOLDER_PATH = "resources/gui/obs_error.png"
+
+

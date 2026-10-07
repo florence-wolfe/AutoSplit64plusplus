@@ -72,7 +72,7 @@ This is only needed once for each version you download yourself: updates install
 
 All windows and options are accessed via the right-click menu, which the menu button (☰) in the bottom right corner also opens. On macOS, the same menu is also available as `Options` in the menu bar:
 
-![Interface](repo/menu_screen.png)
+![Interface](docs/images/menu_screen.png)
 
 ## Usage Guide
 
@@ -113,15 +113,15 @@ The AutoSplit64+ Grabber OBS plugin sends the gameplay directly to AutoSplit64+ 
 - Open OBS
 - Open the Filters Menu of your capture card source (`Right-Click -> Filters`)
 - Add (+) Effects Filter and choose `AS64+ Frame Grabber`
-![OBS Filter Menu](repo/obs_filters_screen.png)
-![OBS Plugin](repo/obs_plugin_screen.png)
+![OBS Filter Menu](docs/images/obs_filters_screen.png)
+![OBS Plugin](docs/images/obs_plugin_screen.png)
 
 - If you have any other Filters applied, make sure `AS64+ Frame Grabber` is at the very top
 - Close Filters Menu
 ##### Setup AutoSplit64++:
 - Open the Capture Editor in AutoSplit64++ (`Right-Click -> Edit Coordinates`):
 
-![OBS Plugin Capture](repo/capture_screen_obs.png)
+![OBS Plugin Capture](docs/images/capture_screen_obs.png)
 
 - Check `Use OBS Plugin`
 - Pressing `Capture Screen` will update the shown frame.
@@ -141,7 +141,7 @@ Window Capture streams the selected program's window with Windows.Graphics.Captu
 - Make sure you have your capture software open (i.e.AmaRecTV)
 - Open the Capture Editor in AutoSplit64++ (`Right-Click -> Edit Coordinates`):
  
-![Window Capture](repo/capture_screen_window.png)
+![Window Capture](docs/images/capture_screen_window.png)
 
 - Uncheck `Use OBS Plugin`
 - Select the desired process from the `Process` drop-down.
@@ -201,7 +201,7 @@ If you encounter any issues, please run through all steps below.
 ## Development
 AutoSplit64++ uses [uv](https://docs.astral.sh/uv/) to manage Python and its dependencies. [Install uv](https://docs.astral.sh/uv/getting-started/installation/), then run these from the repository. uv sets up Python 3.12 and the dependencies from `uv.lock` the first time.
 
-- Start AutoSplit64++: `uv run AutoSplit64.py`
+- Start AutoSplit64++: `uv run python -m autosplit64`
 - Run the tests: `uv run python -m unittest`
 - Add or update a dependency: `uv add <package>`, which updates `pyproject.toml` and `uv.lock`
 

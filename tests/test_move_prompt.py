@@ -6,8 +6,8 @@ from unittest import mock
 from PyQt6 import QtWidgets
 from PyQt6.QtTest import QTest
 
-from as64core import app_location, config
-from as64gui.app import App
+from autosplit64.core import app_location, config
+from autosplit64.gui.app import App
 from tests.qt import close_window
 from tests.test_updates import answering
 
@@ -19,7 +19,7 @@ DOWNLOADED = Path("/private/var/folders/xy/T/AppTranslocation/1234/d/AutoSplit64
 class MovePromptTest(unittest.TestCase):
     def open_app(self, reason, choice=None, move=None):
         texts = []
-        patches = [mock.patch("as64gui.updates.Updates.check"),
+        patches = [mock.patch("autosplit64.gui.updates.Updates.check"),
                    mock.patch.object(app_location, "running_app", return_value=DOWNLOADED),
                    mock.patch.object(app_location, "move_reason", return_value=reason),
                    mock.patch.object(app_location, "applications_folder", return_value=Path("/Applications")),

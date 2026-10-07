@@ -2,9 +2,9 @@ import unittest
 from types import SimpleNamespace
 from unittest import mock
 
-from as64core import base
-from as64core.base import Base
-from as64core.model import PredictionInfo
+from autosplit64.core import base
+from autosplit64.core.base import Base
+from autosplit64.core.model import PredictionInfo
 
 
 def make_base(star_counts=(1, 2, 3, 4, 5, 6), current=3):

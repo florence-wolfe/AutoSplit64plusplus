@@ -9,7 +9,7 @@ import zipfile
 from pathlib import Path
 from unittest import mock
 
-from as64core import updater
+from autosplit64.core import updater
 
 REPO = "florence-wolfe/AutoSplit64plusplus"
 

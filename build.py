@@ -17,11 +17,11 @@ from pathlib import Path
 import PyInstaller.__main__
 
 NAME = "AutoSplit64++"
-DATA_DIRS = ["logic", "resources", "routes", "templates"]
+DATA_DIRS = ["resources", "routes", "templates"]
 # Files the app writes at runtime, which don't belong in a build
 IGNORE = shutil.ignore_patterns("game_preview.png", ".DS_Store")
 OBS_PLUGIN = Path("obs-plugin/build_x64/RelWithDebInfo/autosplit64plus-framegrabber.dll")
-VERSION_FILE = Path("as64gui/_version.py")
+VERSION_FILE = Path("src/autosplit64/gui/_version.py")
 
 
 def release_version():
@@ -51,7 +51,9 @@ def build_windows():
         "--clean",
         "--noupx",
         "--contents-directory", "libraries",
-        "AutoSplit64.py",
+        # The package's processors, models and font
+        "--collect-data", "autosplit64",
+        "src/autosplit64/__main__.py",
     ])
 
     app_dir = Path("dist") / NAME
@@ -98,8 +100,9 @@ def build_macos():
         "--workpath", str(work),
         "--distpath", str(work / "dist"),
         *add_data,
+        "--collect-data", "autosplit64",
         "--add-data", "defaults.ini:.",
-        "AutoSplit64.py",
+        "src/autosplit64/__main__.py",
     ])
 
     # macOS stops an app that uses a camera without saying why

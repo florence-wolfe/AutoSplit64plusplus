@@ -4,8 +4,8 @@ from unittest import mock
 
 import numpy as np
 
-from as64core import game_capture
-from as64core.game_capture import GameCapture
+from autosplit64.core import game_capture
+from autosplit64.core.game_capture import GameCapture
 
 
 class RegionTest(unittest.TestCase):
@@ -38,7 +38,8 @@ class StartWithoutScreenRecordingTest(unittest.TestCase):
         for name, value in [("has_permission_quietly", mock.Mock(return_value=granted)),
                             ("has_permission", mock.Mock(side_effect=AssertionError("would show the prompt"))),
                             ("get_visible_processes", mock.Mock(return_value=[]))]:
-            patcher = mock.patch.object(window, name, value)
+            # has_permission is gone, and must not come back as a way to check
+            patcher = mock.patch.object(window, name, value, create=True)
             patcher.start()
             self.addCleanup(patcher.stop)
         return GameCapture(False, False, "Emulator", [0, 0, 100, 100], "JP")

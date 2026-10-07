@@ -5,8 +5,8 @@ import unittest
 
 from websockets.sync.client import connect
 
-from as64core import livesplit_one
-from as64core.livesplit_one import LiveSplitOneServer
+from autosplit64.core import livesplit_one
+from autosplit64.core.livesplit_one import LiveSplitOneServer
 
 PORT = 16899
 

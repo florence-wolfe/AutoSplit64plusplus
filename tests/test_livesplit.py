@@ -3,7 +3,7 @@ import sys
 import unittest
 from unittest import mock
 
-from as64core import config, livesplit
+from autosplit64.core import config, livesplit
 
 
 class TcpTest(unittest.TestCase):

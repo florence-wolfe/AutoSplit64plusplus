@@ -5,8 +5,8 @@ from unittest import mock
 from PyQt6 import QtWidgets
 from PyQt6.QtTest import QTest
 
-import AutoSplit64
-from as64gui.app import App
+from autosplit64 import main
+from autosplit64.gui.app import App
 from tests.qt import close_window
 
 _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
@@ -19,8 +19,8 @@ class ListenerThreadTest(unittest.TestCase):
         self.calls = []
         record = lambda name: lambda *args: self.calls.append((name, threading.current_thread()))
         patches = [
-            mock.patch("as64gui.updates.Updates.check"),
-            mock.patch.object(AutoSplit64.livesplit, "connect"),
+            mock.patch("autosplit64.gui.updates.Updates.check"),
+            mock.patch.object(main.livesplit, "connect"),
             mock.patch.object(App, "set_started", record("set_started")),
             mock.patch.object(App, "update_display", record("update_display")),
             mock.patch.object(App, "display_error_message", record("display_error_message")),
@@ -28,7 +28,7 @@ class ListenerThreadTest(unittest.TestCase):
         for p in patches:
             p.start()
             self.addCleanup(p.stop)
-        self.autosplit64 = AutoSplit64.AutoSplit64()
+        self.autosplit64 = main.AutoSplit64()
         self.addCleanup(close_window, self.autosplit64.app)
         # Only record what the listeners cause
         QTest.qWait(50)

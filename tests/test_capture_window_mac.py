@@ -6,7 +6,7 @@ import unittest
 if sys.platform == "darwin":
     import Quartz
     from PyQt6 import QtWidgets
-    from as64core import capture_window_mac
+    from autosplit64.core import capture_window_mac
 
     # Capture streams need a window server connection, which the app gets from Qt
     _app = QtWidgets.QApplication([])
