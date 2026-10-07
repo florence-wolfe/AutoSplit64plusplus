@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import tempfile
@@ -47,6 +48,17 @@ class LoadTest(unittest.TestCase):
         for content in ["{ not json", '{"some": "other file"}', '{"__route__": true}']:
             path.write_text(content)
             self.assertIsNone(route_loader.load_or_none(str(path)), content)
+
+
+class EncoderTest(unittest.TestCase):
+    def test_route_round_trip(self):
+        route = route_loader.load(str(ROUTE))
+        decoded = json.loads(json.dumps(route, cls=route_loader.RouteEncoder))
+        self.assertEqual(len(decoded["splits"]), len(route.splits))
+
+    def test_other_objects_are_not_serializable(self):
+        with self.assertRaisesRegex(TypeError, "not JSON serializable"):
+            json.dumps(object(), cls=route_loader.RouteEncoder)
 
 
 class RouteDirectoryTest(unittest.TestCase):

@@ -131,7 +131,7 @@ class RouteEncoder(json.JSONEncoder):
                     TIMING: o.timing,
                     SPLITS: splits}
         else:
-            super().default(self, o)
+            return super().default(o)
 
 
 def validate_route(route):
