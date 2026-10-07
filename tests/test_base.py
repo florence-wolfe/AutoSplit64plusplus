@@ -73,5 +73,37 @@ class RunTest(unittest.TestCase):
         b.logger.error.assert_not_called()
         b.stop.assert_not_called()
 
+
+class FirstSplitsTest(unittest.TestCase):
+    """ Lookups of earlier splits at the start of the route mustn't wrap around to its end """
+
+    def setUp(self):
+        self.as64 = SimpleNamespace(star_count=5, prediction_info=PredictionInfo(4, 0.9), xcam_count=0,
+                                    previous_split_initial_star=0, next_split_split_star=0)
+        patcher = mock.patch.object(base, "as64", self.as64, create=True)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.base = make_base(star_counts=(5, 8, 10, 120), current=0)
+        self.base.undo = mock.Mock()
+        self.base._update_occurred = mock.Mock()
+
+    def test_undo_check_at_first_split(self):
+        b = self.base
+        b._minimum_undo_count, b._undo_prediction_threshold = 3, 0.85
+        b._star_skip_enabled, b._previous_prediction = False, None
+        # Confident predictions of one star less than counted
+        b._predictions = [PredictionInfo(4, 0.95)] * 3
+        b.set_star_count = mock.Mock(side_effect=lambda count: setattr(self.as64, "star_count", count))
+
+        b._star_error_check()
+
+        b.set_star_count.assert_called_once_with(4)
+        b.undo.assert_not_called()
+
+    def test_star_skip_window_at_second_split(self):
+        self.base._reset_fade_count = mock.Mock()
+        self.base.set_split_index(1)
+        self.assertEqual(self.as64.previous_split_initial_star, 0)
+
 if __name__ == "__main__":
     unittest.main()

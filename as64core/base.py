@@ -413,12 +413,7 @@ class Base(Thread):
         if len(prev_star_probabilities) >= self._minimum_undo_count:
             if sum(prev_star_probabilities) / len(prev_star_probabilities) > self._undo_prediction_threshold:
                 self.set_star_count(as64.star_count - 1)
-
-                try:
-                    if as64.star_count < self._route.splits[self.split_index() - 1].star_count:
-                        self.undo()
-                except IndexError:
-                    pass
+                self._undo_if_below_previous_split()
 
         try:
             if self._star_skip_enabled and as64.previous_split_initial_star <= as64.prediction_info.prediction <= as64.next_split_split_star or as64.prediction_info.prediction > 120:
@@ -429,16 +424,17 @@ class Base(Thread):
 
                 if self._matching_consecutive_predictions >= self._minimum_consecutive_predictions and 0 < abs(as64.prediction_info.prediction - as64.star_count) <= self._max_star_skip:
                     self.set_star_count(as64.prediction_info.prediction)
-
-                    try:
-                        if as64.star_count < self._route.splits[self.split_index() - 1].star_count:
-                            self.undo()
-                    except IndexError:
-                        pass
+                    self._undo_if_below_previous_split()
         except AttributeError:
             pass
 
         self._previous_prediction = as64.prediction_info
+
+    def _undo_if_below_previous_split(self):
+        """ Undo the previous split when the star count is now below the star count it split on """
+        index = self.split_index()
+        if index > 0 and as64.star_count < self._route.splits[index - 1].star_count:
+            self.undo()
 
     def get_region(self, region):
         return self._game_capture.get_region(region)
@@ -560,10 +556,11 @@ class Base(Thread):
             self._reset_fade_count()
             as64.xcam_count = 0
 
-            try:
-                as64.previous_split_initial_star = self._route.splits[self.split_index() - 2].star_count
-            except IndexError:
-                pass
+            # The star count the previous split started from
+            if index >= 2:
+                as64.previous_split_initial_star = self._route.splits[index - 2].star_count
+            else:
+                as64.previous_split_initial_star = self._route.initial_star
 
             try:
                 as64.next_split_split_star = self._route.splits[self.split_index() + 1].star_count
