@@ -3,7 +3,7 @@ import logging
 from functools import partial
 import re
 from PyQt6 import QtCore, QtGui, QtWidgets
-from as64core import route_loader, config, livesplit, livesplit_one
+from as64core import app_location, route_loader, config, livesplit, livesplit_one
 from as64core.resource_utils import base_path, resource_path, absolute_path, rel_to_abs
 from . import constants
 from .widgets import PictureButton, StateButton, StarCountDisplay, SplitListWidget, ServerStatusIndicator, MenuButton, UpdateBadge
@@ -82,6 +82,10 @@ class App(QtWidgets.QMainWindow):
         
         if config.get("general", "update_check"):
             self.updates.check()
+
+        # macOS: offer to move the app out of Downloads, where updates may not install
+        if app_location.move_reason(app_location.running_app()):
+            QtCore.QTimer.singleShot(0, self._offer_move_to_applications)
         
         # Handle splash screen closure
         try:
@@ -92,6 +96,34 @@ class App(QtWidgets.QMainWindow):
         
         QtCore.QTimer.singleShot(100, self.autostart)
         
+
+    def _offer_move_to_applications(self):
+        app = app_location.running_app()
+        box = QtWidgets.QMessageBox(self)
+        box.setWindowTitle("Move to Applications")
+        if app_location.move_reason(app) == app_location.TRANSLOCATED:
+            box.setText("AutoSplit64++ is running from where it was downloaded. Move it to your Applications folder?")
+            box.setInformativeText("Until it's moved, macOS runs it from a temporary read-only copy, "
+                                   "where updates can't be installed. It reopens from Applications, "
+                                   "and you can delete the downloaded copy.")
+        else:
+            box.setText("AutoSplit64++ is running from your Downloads folder. Move it to your Applications folder?")
+            box.setInformativeText("It reopens from Applications, and you can delete the copy in Downloads.")
+        move = box.addButton("Move to Applications", QtWidgets.QMessageBox.ButtonRole.AcceptRole)
+        box.addButton("Not Now", QtWidgets.QMessageBox.ButtonRole.RejectRole)
+        box.exec()
+        if box.clickedButton() is not move:
+            return
+
+        try:
+            moved = app_location.move_to(app, app_location.applications_folder())
+        except Exception as e:
+            logging.getLogger(".log").warning("Moving to Applications failed", exc_info=True)
+            QtWidgets.QMessageBox.warning(self, "Move to Applications", f"Couldn't move AutoSplit64++:\n\n{e}")
+            return
+        app_location.reopen_after_exit(moved)
+        self.close()
+        QtWidgets.QApplication.quit()
 
     def set_always_on_top(self, on_top):
         if on_top:
