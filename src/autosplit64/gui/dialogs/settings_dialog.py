@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import QSizePolicy
 
 from autosplit64.core import resource_utils
 from autosplit64.core import config
+from autosplit64.gui import theme
 from autosplit64.gui.widgets import HLine
 from autosplit64.gui.constants import (
     ICON_PATH
@@ -95,6 +96,12 @@ class SettingsDialog(QtWidgets.QDialog):
             menu.load_preferences()
 
         super().show()
+
+    def hideEvent(self, event):
+        # Applying saved the theme shown, otherwise go back to the saved one
+        if not event.spontaneous():
+            GeneralMenu._show_theme(config.get("general", "theme"))
+        super().hideEvent(event)
 
     def apply_clicked(self):
         # Update and save preferences
@@ -194,6 +201,18 @@ class BaseMenu(QtWidgets.QWidget):
         self.bind(section, key, combo.setCurrentIndex, combo.currentIndex)
         return combo
 
+    def choice_box(self, section, key, choices, default):
+        """ A choice of (text, value) items, the setting is the chosen one's value, default's if it isn't one """
+        combo = QtWidgets.QComboBox()
+        for text, value in choices:
+            combo.addItem(text, value)
+
+        def load(value):
+            index = combo.findData(value)
+            combo.setCurrentIndex(index if index >= 0 else combo.findData(default))
+        self.bind(section, key, load, combo.currentData)
+        return combo
+
     def spin_box(self, section, key, minimum):
         box = QtWidgets.QSpinBox()
         box.setMaximumWidth(50)
@@ -233,16 +252,27 @@ class GeneralMenu(BaseMenu):
         self.add_row(label("Override Game Version:"), self.override_ver_cb)
         self.add_row(None, None, spacer(10, 5, Policy.Expanding))
         self.add_row(None, self.override_ver_combo)
+        self.add_separator(3)
+        self.theme_combo = self.choice_box("general", "theme", [(theme.display_name(name), name) for name in theme.themes()],
+                                           theme.DEFAULT)
+        self.add_row(label("Theme:"), self.theme_combo)
         self.add_stretch()
 
         # Connections
         self.override_ver_cb.clicked.connect(lambda checked: self.override_ver_combo.setDisabled(not checked))
+        # Show the theme right away. Applying the settings keeps it, see SettingsDialog.hideEvent.
+        self.theme_combo.currentIndexChanged.connect(lambda: self._show_theme(self.theme_combo.currentData()))
 
         self.load_preferences()
 
     def load_preferences(self):
         super().load_preferences()
         self.override_ver_combo.setDisabled(not self.override_ver_cb.isChecked())
+
+    @staticmethod
+    def _show_theme(name):
+        if name != theme.current():
+            theme.apply(name)
 
 
 class ThresholdsMenu(BaseMenu):

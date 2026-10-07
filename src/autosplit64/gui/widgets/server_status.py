@@ -3,13 +3,10 @@ import errno
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 from autosplit64.core import config, livesplit, livesplit_one
+from autosplit64.gui import theme
 
-COLORS = {
-    "connected": QtGui.QColor(76, 175, 80),
-    "waiting": QtGui.QColor(255, 193, 7),
-    "error": QtGui.QColor(244, 67, 54),
-    "stopped": QtGui.QColor(120, 123, 127),
-}
+# Each state's theme color, muted text for none
+STATUS_COLORS = {"connected": "green", "waiting": "yellow", "error": "red", "stopped": None}
 
 # How long the "Copied" message stays up, in milliseconds
 COPIED_MESSAGE_TIME = 2500
@@ -71,8 +68,9 @@ class ServerStatusIndicator(QtWidgets.QWidget):
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
         painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
-        painter.setPen(QtGui.QPen(QtGui.QColor(12, 12, 12), 1))
-        painter.setBrush(COLORS[self._state])
+        painter.setPen(QtGui.QPen(self.palette().color(QtGui.QPalette.ColorRole.Dark), 1))
+        status = STATUS_COLORS[self._state]
+        painter.setBrush(theme.status_color(status) if status else theme.muted(self.palette()))
         painter.drawEllipse(QtCore.QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5))
 
     def mousePressEvent(self, event):

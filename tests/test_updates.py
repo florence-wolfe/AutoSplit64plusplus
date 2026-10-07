@@ -79,7 +79,9 @@ class LaunchCheckTest(UpdatesTestCase):
             app = self.open_app()
             QTest.qWait(100)
         newer_release.assert_not_called()
-        self.assertEqual(app.update_badge.text(), "v0.4.0")
+        # The version, without the update dot
+        self.assertIn(">v0.4.0<", app.update_badge.text())
+        self.assertNotIn("&#9679;", app.update_badge.text())
 
 
 class BadgeTest(UpdatesTestCase):

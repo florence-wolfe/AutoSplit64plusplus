@@ -1,6 +1,6 @@
 from PyQt6.QtCore import Qt, QRectF, QPointF
-from PyQt6.QtGui import QBrush, QPainterPath, QPainter, QColor, QPen
-from PyQt6.QtWidgets import QGraphicsRectItem, QGraphicsItem
+from PyQt6.QtGui import QBrush, QPainterPath, QPainter, QColor, QPalette, QPen
+from PyQt6.QtWidgets import QApplication, QGraphicsRectItem, QGraphicsItem
 
 
 class RectangleSelector(QGraphicsRectItem):
@@ -273,13 +273,17 @@ class RectangleSelector(QGraphicsRectItem):
         """
         Paint the node in the graphic view.
         """
-        painter.setBrush(QBrush(QColor(0, 0, 255, 25)))
-        painter.setPen(QPen(QColor(0, 0, 0), 1.0, Qt.PenStyle.SolidLine))
+        palette = QApplication.palette()
+        fill = QColor(palette.color(QPalette.ColorRole.Highlight))
+        fill.setAlpha(25)
+        outline = palette.color(QPalette.ColorRole.Dark)
+        painter.setBrush(QBrush(fill))
+        painter.setPen(QPen(outline, 1.0, Qt.PenStyle.SolidLine))
         painter.drawRect(self.rect())
 
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.setBrush(QBrush(QColor(255, 0, 0, 255)))
-        painter.setPen(QPen(QColor(0, 0, 0, 255), 1.0, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+        painter.setBrush(QBrush(palette.color(QPalette.ColorRole.Highlight)))
+        painter.setPen(QPen(outline, 1.0, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
         for handle, rect in self.handles.items():
             if self.handleSelected is None or handle == self.handleSelected:
                 painter.drawEllipse(rect)

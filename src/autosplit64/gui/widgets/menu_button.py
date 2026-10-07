@@ -1,5 +1,7 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
 
+from autosplit64.gui import theme
+
 
 class MenuButton(QtWidgets.QAbstractButton):
     """ Hamburger button: three horizontal lines """
@@ -13,7 +15,7 @@ class MenuButton(QtWidgets.QAbstractButton):
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
         painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
-        color = QtGui.QColor(230, 232, 235) if self.underMouse() else QtGui.QColor(150, 153, 157)
+        color = self.palette().color(QtGui.QPalette.ColorRole.Text) if self.underMouse() else theme.muted(self.palette())
         pen = QtGui.QPen(color, 2)
         pen.setCapStyle(QtCore.Qt.PenCapStyle.RoundCap)
         painter.setPen(pen)

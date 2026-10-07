@@ -5,13 +5,14 @@ from autosplit64.gui import constants
 
 
 class HLine(QtWidgets.QFrame):
+    """ A divider: a line a little darker than the background """
     def __init__(self, parent=None):
         super().__init__(parent)
-
         self.setFrameShape(QtWidgets.QFrame.Shape.HLine)
-        palette = QtGui.QPalette()
-        palette.setColor(QtGui.QPalette.ColorRole.WindowText, QtGui.QColor(43, 45, 47))
-        self.setPalette(palette)
+
+    def paintEvent(self, event):
+        painter = QtGui.QPainter(self)
+        painter.fillRect(0, self.height() // 2, self.width(), 1, self.palette().color(QtGui.QPalette.ColorRole.Window).darker(140))
 
 
 class StarCountDisplay(QtWidgets.QWidget):

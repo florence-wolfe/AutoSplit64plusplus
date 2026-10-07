@@ -19,6 +19,8 @@ dependencies = [
     "pyobjc-framework-AVFoundation==12.2.2; sys_platform == 'darwin'",
     "pyobjc-framework-libdispatch==12.2.2; sys_platform == 'darwin'",
     "windows-capture==2.0.1; sys_platform == 'win32'",
+    "qt-themes==0.4.1",
+    "qtpy==2.4.3",
 ]
 
 [dependency-groups]

@@ -1,8 +1,8 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 
-# Rows alternate between these colors, starting with the first
-ROW_COLORS = (QtGui.QColor(20, 22, 24), QtGui.QColor(15, 17, 19))
+# Rows alternate between the background darkened by these amounts, starting with the first
+ROW_SHADES = (3, 8)
 ROW_HEIGHT = 37
 
 
@@ -27,17 +27,21 @@ class SplitListWidget(QtWidgets.QWidget):
         pixmap_spacing = int((split_height - pixmap_dimension) / 2)
 
         painter.begin(self)
+        palette = self.palette()
+        painter.setPen(palette.color(QtGui.QPalette.ColorRole.Text))
+        base = palette.color(QtGui.QPalette.ColorRole.Base).getRgb()[:3]
+        row_colors = [QtGui.QColor(*(max(0, c - shade) for c in base)) for shade in ROW_SHADES]
 
         for i in range(self._display_count):
             try:
                 split_index = i + self._display_index
                 y_pos = split_height * i
 
-                painter.fillRect(0, int(y_pos), int(split_width), int(split_height), ROW_COLORS[i % 2])
+                painter.fillRect(0, int(y_pos), int(split_width), int(split_height), row_colors[i % 2])
 
                 if split_index == self._selected_index:
-                    painter.fillRect(0, int(y_pos), int(split_width), int(split_height), 
-                                     QtWidgets.QApplication.palette().color(QtGui.QPalette.ColorRole.Highlight))
+                    painter.fillRect(0, int(y_pos), int(split_width), int(split_height),
+                                     palette.color(QtGui.QPalette.ColorRole.Highlight))
 
                 if self.splits[split_index].pixmap:
                     painter.drawPixmap(int(pixmap_spacing), int(split_height * i + pixmap_spacing), int(pixmap_dimension), int(pixmap_dimension), self.splits[split_index].pixmap)

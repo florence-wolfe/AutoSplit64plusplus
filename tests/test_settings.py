@@ -5,6 +5,7 @@ from unittest import mock
 from PyQt6 import QtWidgets
 
 from autosplit64.core import config
+from autosplit64.gui import theme
 from autosplit64.gui.dialogs.settings_dialog import ConnectionMenu, SettingsDialog
 
 _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
@@ -33,7 +34,7 @@ class SettingsDialogTest(unittest.TestCase):
     # A value for every setting the dialog edits, each different from the defaults and its neighbours
     SETTINGS = {
         "general": {"operation_mode": 1, "mid_run_start_enabled": False, "on_top": False, "update_check": True,
-                    "auto_start": True},
+                    "auto_start": True, "theme": "dracula"},
         "game": {"override_version": True, "version": "US"},
         "connection": {"ls_host": "host.example", "ls_port": 1234, "ls_pipe_host": "pipe.example", "lso_port": 5678,
                        "ls_connection_type": 2},
@@ -71,6 +72,51 @@ class SettingsDialogTest(unittest.TestCase):
             for key, value in values.items():
                 with self.subTest(f"{section}.{key}"):
                     self.assertIs(type(settings[section][key]), type(value))
+
+
+
+class ThemeSettingTest(unittest.TestCase):
+    """ Choosing a theme shows it right away, but only Apply keeps it """
+
+    def setUp(self):
+        palette = _app.palette()
+        self.addCleanup(_app.setPalette, palette)
+        self.settings = copy.deepcopy(SettingsDialogTest.SETTINGS)
+        for patcher in [mock.patch.object(config, "_config", self.settings), mock.patch.object(config, "save_config")]:
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        theme.apply("dracula")
+        self.dialog = SettingsDialog()
+        self.addCleanup(self.dialog.deleteLater)
+        self.dialog.show()
+        self.combo = self.dialog.menus[0].theme_combo
+
+    def test_shows_the_saved_theme(self):
+        self.assertEqual(self.combo.currentText(), "Dracula")
+        self.assertEqual(self.combo.itemText(0), "Default")
+
+    def test_choosing_shows_the_theme_without_saving_it(self):
+        self.combo.setCurrentText("Nord")
+        self.assertEqual(theme.current(), "nord")
+        self.assertEqual(self.settings["general"]["theme"], "dracula")
+
+    def test_apply_keeps_it(self):
+        self.combo.setCurrentText("Nord")
+        self.dialog.apply_clicked()
+        self.assertEqual((theme.current(), self.settings["general"]["theme"]), ("nord", "nord"))
+
+    def test_cancel_close_and_escape_go_back_to_the_saved_theme(self):
+        for close in (self.dialog.cancel_btn.click, self.dialog.close, self.dialog.reject):
+            with self.subTest(close.__name__):
+                self.dialog.show()
+                self.combo.setCurrentText("Nord")
+                close()
+                self.assertEqual((theme.current(), self.settings["general"]["theme"]), ("dracula", "dracula"))
+
+    def test_theme_that_doesnt_exist_shows_the_default(self):
+        self.settings["general"]["theme"] = "removed_theme"
+        self.dialog.show()
+        self.assertEqual(self.combo.currentText(), "Default")
 
 
 if __name__ == "__main__":

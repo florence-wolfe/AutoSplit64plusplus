@@ -3,6 +3,7 @@ import os
 from threading import Thread
 import logging
 from PyQt6 import QtCore, QtWidgets, QtGui
+from autosplit64.gui import theme
 from autosplit64.gui.app import App
 from autosplit64.gui.constants import FONT_PATH
 from autosplit64 import core
@@ -154,27 +155,8 @@ def main():
     # Create QT Application
     qt_app = QtWidgets.QApplication(sys.argv)
 
-    # Configure QT Application Style
-    qt_app.setStyle('Fusion')
-
-    palette = QtGui.QPalette()
-    palette.setColor(QtGui.QPalette.ColorRole.Window, QtGui.QColor(60, 63, 65))
-    palette.setColor(QtGui.QPalette.ColorRole.WindowText, QtGui.QColor(200, 203, 207))
-    palette.setColor(QtGui.QPalette.ColorRole.Link, QtGui.QColor(88, 157, 246))
-    palette.setColor(QtGui.QPalette.ColorRole.Base, QtGui.QColor(23, 25, 27))
-    palette.setColor(QtGui.QPalette.ColorRole.AlternateBase, QtGui.QColor(53, 55, 57))
-    palette.setColor(QtGui.QPalette.ColorRole.ToolTipBase, QtGui.QColor(53, 55, 57))
-    palette.setColor(QtGui.QPalette.ColorRole.ToolTipText, QtGui.QColor(255, 255, 255))
-    palette.setColor(QtGui.QPalette.ColorRole.Text, QtGui.QColor(200, 203, 207))
-    palette.setColor(QtGui.QPalette.ColorRole.Button, QtGui.QColor(53, 55, 57))
-    palette.setColor(QtGui.QPalette.ColorRole.ButtonText, QtGui.QColor(200, 203, 207))
-    palette.setColor(QtGui.QPalette.ColorRole.BrightText, QtGui.QColor(255, 0, 0))
-    palette.setColor(QtGui.QPalette.ColorRole.Highlight, QtGui.QColor(75, 110, 175))
-    palette.setColor(QtGui.QPalette.ColorRole.HighlightedText, QtGui.QColor(0, 0, 0))
-    palette.setColor(QtGui.QPalette.ColorRole.Light, QtGui.QColor(105, 108, 112))
-    palette.setColor(QtGui.QPalette.ColorRole.Dark, QtGui.QColor(12, 12, 12))
-
-    qt_app.setPalette(palette)
+    qt_app.setStyle("Fusion")
+    theme.apply(config.get("general", "theme"))
 
     # Add font to database
     QtGui.QFontDatabase.addApplicationFont(FONT_PATH)

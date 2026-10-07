@@ -143,8 +143,8 @@ class App(QtWidgets.QMainWindow):
         self.resize(constants.WIDTH, constants.HEIGHT)
 
         # Configure Central Widget
-        self.central_widget.setObjectName("central_widget")
-        self.central_widget.setStyleSheet("QWidget#central_widget{background-color: rgb(23, 25, 27);}")
+        self.central_widget.setBackgroundRole(QtGui.QPalette.ColorRole.Base)
+        self.central_widget.setAutoFillBackground(True)
         self.setCentralWidget(self.central_widget)
 
         # The split list takes up all extra space, the right panel stays centered

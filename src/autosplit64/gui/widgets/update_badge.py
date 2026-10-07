@@ -1,8 +1,6 @@
 from PyQt6 import QtCore, QtWidgets
 
-_STYLE = "QLabel { color: rgb(150, 153, 157); font-size: 11px; }"
-# The same green as the server status when LiveSplit One is connected
-_DOT = "<span style='color: rgb(76, 175, 80);'>&#9679;</span>"
+from autosplit64.gui import theme
 
 
 class UpdateBadge(QtWidgets.QLabel):
@@ -13,20 +11,38 @@ class UpdateBadge(QtWidgets.QLabel):
     def __init__(self, version, parent=None):
         super().__init__(parent=parent)
         self.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
-        self.setStyleSheet(_STYLE)
+        # Not with a style sheet, which would keep theme changes from reaching it
+        font = self.font()
+        font.setPixelSize(11)
+        self.setFont(font)
         self.setTextFormat(QtCore.Qt.TextFormat.RichText)
+        self._update = None
         self.show_version(version)
 
     def show_version(self, version):
         self._version = f"v{version}" if version[0].isdigit() else version
-        self.setText(self._version)
         self.setToolTip("Click to check for updates")
-        self.adjustSize()
+        self._show()
 
     def show_update(self, version):
-        self.setText(f"{self._version} {_DOT}")
+        self._update = version
         self.setToolTip(f"Update available: v{version}\nClick to update")
+        self._show()
+
+    def _show(self):
+        """ The version in the theme's muted text color, and a green dot when there's an update """
+        text = f"<span style='color: {theme.muted(self.palette()).name()};'>{self._version}</span>"
+        if self._update:
+            # The same green as the server status when LiveSplit One is connected
+            text += f" <span style='color: {theme.status_color('green').name()};'>&#9679;</span>"
+        self.setText(text)
         self.adjustSize()
+
+    def changeEvent(self, event):
+        # e.g. another theme
+        if event.type() == QtCore.QEvent.Type.PaletteChange:
+            self._show()
+        super().changeEvent(event)
 
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.MouseButton.LeftButton:

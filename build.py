@@ -51,8 +51,9 @@ def build_windows():
         "--clean",
         "--noupx",
         "--contents-directory", "libraries",
-        # The package's processors, models and font
+        # The package's processors, models and font, and the themes' colors
         "--collect-data", "autosplit64",
+        "--collect-data", "qt_themes",
         "src/autosplit64/__main__.py",
     ])
 
@@ -101,6 +102,7 @@ def build_macos():
         "--distpath", str(work / "dist"),
         *add_data,
         "--collect-data", "autosplit64",
+        "--collect-data", "qt_themes",
         "--add-data", "defaults.ini:.",
         "src/autosplit64/__main__.py",
     ])
