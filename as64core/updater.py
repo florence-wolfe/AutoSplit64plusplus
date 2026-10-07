@@ -94,8 +94,6 @@ def download(release, directory, progress=None):
 
 # Waits for AutoSplit64++ to quit, then swaps the app for the update, keeping the old one if that fails
 _MACOS_INSTALL = """#!/bin/sh
-# Log what happens, as nobody sees this script run
-exec >"$AS64_WORK/install.log" 2>&1
 set -x
 while kill -0 "$AS64_PID" 2>/dev/null; do sleep 0.2; done
 staging="$AS64_WORK/update"
@@ -119,8 +117,6 @@ if [ "$AS64_RELAUNCH" = 1 ]; then open "$AS64_APP"; fi
 _WINDOWS_INSTALL = r"""
 param([int]$AppPid, [string]$Zip, [string]$InstallDir, [string]$Work, [int]$Relaunch)
 $ErrorActionPreference = "Stop"
-# Log what happens, as nobody sees this script run
-Start-Transcript -Path (Join-Path $Work "install.log") | Out-Null
 try {
     Wait-Process -Id $AppPid -ErrorAction SilentlyContinue
     $staging = Join-Path $Work "update"
@@ -157,9 +153,6 @@ catch {
     "Install failed: $($_ | Out-String)"
     exit 1
 }
-finally {
-    Stop-Transcript | Out-Null
-}
 """
 
 
@@ -175,6 +168,9 @@ def install_on_exit(zip_path, relaunch, pid=None, install_path=None):
     """
     pid = pid or os.getpid()
     work = tempfile.mkdtemp(prefix="as64-update-")
+    # Nobody sees the script run, so log all its output, including errors starting it
+    log_path = Path(work) / "install.log"
+    log = open(log_path, "w")
 
     if sys.platform == "darwin":
         # This app is <name>.app/Contents/MacOS/<name>
@@ -183,7 +179,7 @@ def install_on_exit(zip_path, relaunch, pid=None, install_path=None):
         script.write_text(_MACOS_INSTALL)
         env = dict(os.environ, AS64_PID=str(pid), AS64_ZIP=str(zip_path), AS64_APP=str(install_path),
                    AS64_WORK=work, AS64_RELAUNCH="1" if relaunch else "0")
-        process = subprocess.Popen(["/bin/sh", str(script)], env=env, start_new_session=True)
+        process = subprocess.Popen(["/bin/sh", str(script)], env=env, start_new_session=True, stdout=log, stderr=subprocess.STDOUT)
 
     elif sys.platform == "win32":
         install_path = install_path or Path(sys.executable).parent
@@ -193,10 +189,14 @@ def install_on_exit(zip_path, relaunch, pid=None, install_path=None):
             ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script),
              "-AppPid", str(pid), "-Zip", str(zip_path), "-InstallDir", str(install_path), "-Work", work,
              "-Relaunch", "1" if relaunch else "0"],
-            creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP)
+            stdout=log, stderr=subprocess.STDOUT,
+            creationflags=subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP)
     else:
+        log.close()
         raise UpdateError(f"Updates can't be installed on {sys.platform}")
 
-    process.log_path = Path(work) / "install.log"
+    # The script has its own handle on the log
+    log.close()
+    process.log_path = log_path
     logging.getLogger(".log").info("Installing the update after AutoSplit64++ quits, logging to %s", process.log_path)
     return process
