@@ -665,6 +665,8 @@ class ConnectionMenu(BaseMenu):
         self.port_le = QtWidgets.QLineEdit("")
         self.ls_pipe_host_lb = QtWidgets.QLabel("LiveSplit Pipe Host:")
         self.ls_pipe_host_le = QtWidgets.QLineEdit("")
+        self.lso_port_lb = QtWidgets.QLabel("LiveSplit One Port:")
+        self.lso_port_le = QtWidgets.QLineEdit("")
 
         self.int_validator = QtGui.QIntValidator()
 
@@ -679,17 +681,20 @@ class ConnectionMenu(BaseMenu):
         self.port_lb.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.ls_mode_lb.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.ls_pipe_host_lb.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        self.lso_port_lb.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
 
         self.host_le.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         self.port_le.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         self.ls_pipe_host_le.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        self.lso_port_le.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
 
         self.host_le.setMaximumWidth(150)
         self.port_le.setMaximumWidth(150)
         self.ls_pipe_host_le.setMaximumWidth(150)
+        self.lso_port_le.setMaximumWidth(150)
 
         self.ls_mode_combo.setMaximumWidth(120)
-        self.ls_mode_combo.addItems(["Named Pipe", "TCP"])
+        self.ls_mode_combo.addItems(["Named Pipe", "TCP", "LiveSplit One"])
 
         # Add Widgets
 
@@ -723,10 +728,22 @@ class ConnectionMenu(BaseMenu):
         self.menu_layout.addWidget(self.ls_pipe_host_lb, 10, 0)
         self.menu_layout.addWidget(self.ls_pipe_host_le, 10, 1)        
 
+        self.menu_layout.addItem(
+            QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Minimum), 11, 0)
+
+        self.menu_layout.addWidget(HLine(), 12, 0, 1, 3)
+
+        self.menu_layout.addItem(
+            QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Minimum), 13, 0)
+
+        self.menu_layout.addWidget(self.lso_port_lb, 14, 0)
+        self.menu_layout.addWidget(self.lso_port_le, 14, 1)
+
 
         self.menu_layout.addItem(QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Expanding), 15, 0)
 
         self.port_le.setValidator(self.int_validator)
+        self.lso_port_le.setValidator(self.int_validator)
 
         self.load_preferences()
 
@@ -734,12 +751,14 @@ class ConnectionMenu(BaseMenu):
         self.host_le.setText(str(config.get('connection', 'ls_host')))
         self.port_le.setText(str(config.get('connection', 'ls_port')))
         self.ls_pipe_host_le.setText(str(config.get('connection', 'ls_pipe_host')))
+        self.lso_port_le.setText(str(config.get('connection', 'lso_port')))
         self.ls_mode_combo.setCurrentIndex(config.get('connection', 'ls_connection_type'))
 
     def update_preferences(self):
         config.set_key('connection', 'ls_host', self.host_le.text())
         config.set_key('connection', 'ls_port', int(self.port_le.text()))
         config.set_key('connection', 'ls_pipe_host', self.ls_pipe_host_le.text())
+        config.set_key('connection', 'lso_port', int(self.lso_port_le.text()))
         config.set_key("connection", "ls_connection_type", self.ls_mode_combo.currentIndex())
 
 

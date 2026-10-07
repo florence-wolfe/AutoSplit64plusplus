@@ -4,7 +4,7 @@ import win32file
 import win32pipe
 import time
 
-from . import config
+from . import config, livesplit_one
 
 # Connect to LiveSplit and return socket
 def connect() -> object:
@@ -33,6 +33,13 @@ def connect() -> object:
             return ls_socket
         except:
             return False
+    # Check if connection type is LiveSplit One (2 indicates LiveSplit One)
+    elif ls_connection_type == 2:
+        try:
+            ls_server = livesplit_one.get_server(config.get("connection", "lso_port"))
+        except OSError:
+            return False
+        return ls_server if ls_server.connected() else False
     else:
         return False
 
@@ -40,6 +47,9 @@ def connect() -> object:
 def disconnect(ls_socket) -> None:
     # Check if connection even exists
     if ls_socket is False:
+        return
+    # Keep the LiveSplit One server running so it stays connected between runs
+    if isinstance(ls_socket, livesplit_one.LiveSplitOneServer):
         return
     ls_socket.close()
 
@@ -56,6 +66,9 @@ def check_connection(ls_socket) -> bool:
 
 
 def send(ls_socket, command) -> None:
+    if isinstance(ls_socket, livesplit_one.LiveSplitOneServer):
+        ls_socket.send_classic(command)
+        return
     # Check if connection type is pipe or socket
     # If it is a socket:
     if isinstance(ls_socket, socket.socket):
@@ -88,6 +101,8 @@ def undo(ls_socket) -> None:
 
 
 def split_index(ls_socket):
+    if isinstance(ls_socket, livesplit_one.LiveSplitOneServer):
+        return ls_socket.split_index()
     # Check if connection type is pipe or socket
     # If it is a socket:
     if isinstance(ls_socket, socket.socket):

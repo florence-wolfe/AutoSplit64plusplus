@@ -66,6 +66,16 @@ Since AS64+ recognizes the reset only when the Super Mario 64 logo appears, we n
 
 In LiveSplit `Right-Click -> Edit Splits...` &rarr; Set `Start Timer at:` to **1.36**
 
+#### LiveSplit One
+
+AutoSplit64+ can also control [LiveSplit One](https://one.livesplit.org) (the web timer):
+
+1. In AutoSplit64+, `Settings -> Connection` &rarr; set `Connection Mode` to **LiveSplit One** and restart AutoSplit64+. It listens on port `16835` by default.
+2. In LiveSplit One, `Settings -> Server Connection -> Connect` &rarr; enter `ws://localhost:16835`.
+3. Click `OK` to leave LiveSplit One's settings. LiveSplit One ignores timer commands while its settings are open.
+
+In LiveSplit One, `Splits -> Edit` &rarr; Set `Start Timer at` to **1.36**.
+
 ### Game Capture
 
 There are 2 options to capture the game:

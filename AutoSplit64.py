@@ -7,6 +7,7 @@ from as64gui.app import App
 import as64core
 from as64core.processing import register_process, insert_global_hook, insert_global_processor_hook, ProcessorGenerator
 from as64core.route_loader import load
+from as64core import config, livesplit
 from as64processes.standard import *
 from as64processes.xcam import *
 from as64processes.ddd import *
@@ -27,6 +28,10 @@ class AutoSplit64(QtCore.QObject):
         self.app.stop.connect(self.stop)
         self.app.destroyed.connect(lambda: self.stop())
         self.error.connect(self.app.display_error_message)
+
+        # Start the LiveSplit One server so LiveSplit One can connect before a run is started
+        if config.get("connection", "ls_connection_type") == 2:
+            livesplit.connect()
 
     def start(self):
         as64core.init()

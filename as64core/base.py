@@ -180,7 +180,7 @@ class Base(Thread):
     def validity_check(self):
 
         if not livesplit.check_connection(self._ls_socket):
-            self._error_occurred("Could not connect to LiveSplit.\nIs LiveSplit running?\nIf Connection mode is TCP, ensure the LiveSplit Server is started.")
+            self._error_occurred("Could not connect to LiveSplit.\nIs LiveSplit running?\nIf Connection mode is TCP, ensure the LiveSplit Server is started.\nIf Connection mode is LiveSplit One, connect it to ws://localhost:" + str(config.get("connection", "lso_port")) + " via Settings > Connect to Server.")
             return False
         
         try:
