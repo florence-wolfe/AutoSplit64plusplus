@@ -23,7 +23,7 @@ def move_reason(app):
     """ Why the app should be moved to Applications (TRANSLOCATED or DOWNLOADS), or None """
     if not (getattr(sys, "frozen", False) and sys.platform == "darwin"):
         return None
-    if "/AppTranslocation/" in str(app):
+    if "AppTranslocation" in Path(app).parts:
         return TRANSLOCATED
     if Path(app).is_relative_to(Path.home() / "Downloads"):
         return DOWNLOADS
