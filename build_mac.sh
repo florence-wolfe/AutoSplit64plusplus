@@ -2,7 +2,6 @@
 # Builds dist/AutoSplit64++.app, which includes its resources and can be installed anywhere.
 set -e
 cd "$(dirname "$0")"
-. .venv/bin/activate
 
 NAME="AutoSplit64++"
 WORK=build/mac
@@ -18,7 +17,7 @@ iconutil -c icns "$WORK/as64plus.iconset" -o "$WORK/as64plus.icns"
 rm -rf "$WORK/resources"
 rsync -a --exclude game_preview.png resources/ "$WORK/resources/"
 
-pyinstaller \
+uv run --group build pyinstaller \
     --noconfirm \
     --name "$NAME" \
     --icon "$WORK/as64plus.icns" \

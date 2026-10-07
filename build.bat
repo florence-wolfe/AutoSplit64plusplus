@@ -1,6 +1,4 @@
-call .venv\Scripts\activate.bat
-
-pyinstaller ^
+uv run --group build pyinstaller ^
 --noconfirm ^
 --name "AutoSplit64plus" ^
 --splash "resources\gui\icons\as64plus.png" ^

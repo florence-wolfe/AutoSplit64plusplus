@@ -168,27 +168,18 @@ If you encounter any issues, please run through all steps below.
 - Ensure your capture is set to a 4:3 aspect ratio (or close to)
 
 ## Development
-### Requirements
-- Python 3.12.8
-- Dependencies listed in `requirements.txt`
+AutoSplit64++ uses [uv](https://docs.astral.sh/uv/) to manage Python and its dependencies. [Install uv](https://docs.astral.sh/uv/getting-started/installation/), then run these from the repository. uv sets up Python 3.12 and the dependencies from `uv.lock` the first time.
+
+- Start AutoSplit64++: `uv run AutoSplit64.py`
+- Run the tests: `uv run python -m unittest`
+- Add or update a dependency: `uv add <package>`, which updates `pyproject.toml` and `uv.lock`
 
 ### Building
-1. Clone the repository
-2. Install dependencies: `pip install -r requirements.txt`
-3. Run `build.bat` to create executable
+- Windows: run `build.bat`
+- macOS: run `./build_mac.sh`. The app is created as `dist/AutoSplit64++.app`. Move it to `Applications` (or anywhere else) to install it.
 
 ### macOS (Apple Silicon)
 On macOS, the Named Pipe connection and the OBS Plugin are not available. Use the LiveSplit One (or TCP) connection mode.
-
-Run from source:
-1. Create a Python 3.12 virtual environment in the repository: `python3.12 -m venv .venv`
-2. Install dependencies: `.venv/bin/pip install -r requirements.txt`
-3. Start AutoSplit64++: `.venv/bin/python AutoSplit64.py`
-
-Build the app:
-1. Set up the virtual environment as above
-2. Run `./build_mac.sh`
-3. The app is created as `dist/AutoSplit64++.app`. Move it to `Applications` (or anywhere else) to install it.
 
 The app stores its settings, log, routes and reset templates in `~/Library/Application Support/AutoSplit64++/`. Installing a new build keeps them.
 
