@@ -54,7 +54,7 @@ The project's main objectives are to simplify setup and enhance reliability.
 
 ### Interface
 
-All windows and options are accessed via the right-click menu. On macOS, the same menu is also available as `Options` in the menu bar:
+All windows and options are accessed via the right-click menu, which the menu button (☰) in the bottom right corner also opens. On macOS, the same menu is also available as `Options` in the menu bar:
 
 ![Interface](repo/menu_screen.png)
 

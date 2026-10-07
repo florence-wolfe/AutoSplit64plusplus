@@ -8,7 +8,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 from as64core import route_loader, config, livesplit, livesplit_one
 from as64core.resource_utils import base_path, resource_path, absolute_path, rel_to_abs
 from . import constants
-from .widgets import PictureButton, StateButton, StarCountDisplay, SplitListWidget, ServerStatusIndicator
+from .widgets import PictureButton, StateButton, StarCountDisplay, SplitListWidget, ServerStatusIndicator, MenuButton
 from .dialogs import AboutDialog, CaptureEditor, SettingsDialog, RouteEditor, ResetGeneratorDialog, OutputDialog
 
 class App(QtWidgets.QMainWindow):
@@ -53,6 +53,7 @@ class App(QtWidgets.QMainWindow):
         self.start_btn = StateButton(self.start_pixmap, self.start_pixmap, parent=self.right_panel)
         self.split_list = SplitListWidget(self.central_widget)
         self.server_status = ServerStatusIndicator(self.central_widget)
+        self.menu_button = MenuButton(self.central_widget)
 
         # Font
         self.button_font = QtGui.QFont("Tw Cen MT", 14)
@@ -155,6 +156,7 @@ class App(QtWidgets.QMainWindow):
         self.dialogs["route_editor"].route_updated.connect(self._on_route_update)
         self.dialogs["settings_dialog"].applied.connect(self.settings_updated)
         self.dialogs["capture_editor"].applied.connect(self._reset)
+        self.menu_button.clicked.connect(self._show_button_menu)
 
         # On macOS, the right-click menu is also in the menu bar
         if self.menuBar().isNativeMenuBar():
@@ -173,10 +175,21 @@ class App(QtWidgets.QMainWindow):
         self._reset()
 
     def resizeEvent(self, event):
-        # Keep the server status in the top right corner, above the other widgets
-        self.server_status.move(self.central_widget.size().width() - self.server_status.size().width() - 6, 6)
+        # Keep the server status in the top right corner and the menu button in the bottom right,
+        # above the other widgets
+        size = self.central_widget.size()
+        self.server_status.move(size.width() - self.server_status.size().width() - 6, 6)
         self.server_status.raise_()
+        self.menu_button.move(size.width() - self.menu_button.size().width() - 8, size.height() - self.menu_button.size().height() - 8)
+        self.menu_button.raise_()
         super().resizeEvent(event)
+
+    def _show_button_menu(self):
+        """ The right-click menu, opened from the menu button """
+        menu = QtWidgets.QMenu(self)
+        self._populate_menu(menu)
+        # Open upwards from the button, which is in the bottom corner
+        menu.exec(self.menu_button.mapToGlobal(QtCore.QPoint(self.menu_button.size().width() - menu.sizeHint().width(), -menu.sizeHint().height())))
 
     def update_display(self, split_index, current_star, split_star):
         if split_index > len(self.split_list.splits) - 1:
