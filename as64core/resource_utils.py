@@ -63,13 +63,10 @@ def resource_path(relative_path):
 
 
 def abs_to_rel(p):
-    # Convert to relative path, if possible
-    rel_path = p.replace(absolute_path(), "")
-
-    # Store Path
-    if rel_path != p:
-        return rel_path[1:]
-    else:
+    """ p relative to the working directory if it's inside it, otherwise unchanged """
+    try:
+        return Path(p).relative_to(Path.cwd()).as_posix()
+    except ValueError:
         return p
 
 
