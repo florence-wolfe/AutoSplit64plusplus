@@ -12,7 +12,7 @@ from PyQt6 import QtCore, QtWidgets, QtGui
 from as64gui.app import App
 import as64core
 from as64core.processing import register_process, ProcessorGenerator
-from as64core.route_loader import load
+from as64core.route_loader import load_or_none
 from as64core import config, livesplit
 from as64core.resource_utils import resource_path
 from as64processes.standard import (
@@ -34,6 +34,12 @@ from as64processes.standard import (
 from as64processes.xcam import ProcessXCam, ProcessXCamStartUpSegment
 from as64processes.ddd import ProcessDDDEntry, ProcessDDDEntryX, ProcessFindDDDPortal
 from as64processes.final import ProcessFinalStageEntry, ProcessFinalStarGrab, ProcessFinalStarSpawn
+
+def route_timing():
+    """ The configured route's timing, or None without a valid route """
+    route = load_or_none(config.get("route", "path"))
+    return route.timing if route else None
+
 
 class AutoSplit64(QtCore.QObject):
     error = QtCore.pyqtSignal(str)
@@ -94,10 +100,7 @@ class AutoSplit64(QtCore.QObject):
         register_process("FINAL_DETECT_SPAWN", ProcessFinalStarSpawn())  # TODO: RENAME
         register_process("FINAL_STAR_SPLIT", ProcessFinalStarGrab())  # TODO: RENAME to FINAL_STAR_SPLIT
 
-        try:
-            timing = load(config.get("route", "path")).timing
-        except AttributeError:
-            timing = None
+        timing = route_timing()
 
         if timing == as64core.TIMING_UP_RTA:
             register_process("RESET", ProcessResetNoStart())
