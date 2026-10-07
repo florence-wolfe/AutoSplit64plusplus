@@ -66,7 +66,7 @@ Alternatively, remove the flag macOS puts on downloaded files in Terminal, which
 xattr -dr com.apple.quarantine /Applications/AutoSplit64++.app
 ```
 
-This is only needed once for each version you download yourself: updates installed by AutoSplit64++ open without it. If you open AutoSplit64++ before moving it, it offers to move itself to Applications: until it's moved, macOS may run it from a temporary read-only copy, where updates can't be installed.
+This is only needed once for each version you download yourself: updates installed by AutoSplit64++ open without it. If you open AutoSplit64++ before moving it, it offers to move itself to Applications: until it's moved, macOS may run it from a temporary read-only copy, where updates can't be installed. Choose `Don't Ask Again` if you keep it elsewhere on purpose.
 
 ### Interface
 

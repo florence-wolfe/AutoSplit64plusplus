@@ -84,7 +84,7 @@ class App(QtWidgets.QMainWindow):
             self.updates.check()
 
         # macOS: offer to move the app out of Downloads, where updates may not install
-        if app_location.move_reason(app_location.running_app()):
+        if config.get("general", "ask_to_move") and app_location.move_reason(app_location.running_app()):
             QtCore.QTimer.singleShot(0, self._offer_move_to_applications)
         
         # Handle splash screen closure
@@ -111,7 +111,11 @@ class App(QtWidgets.QMainWindow):
             box.setInformativeText("It reopens from Applications, and you can delete the copy in Downloads.")
         move = box.addButton("Move to Applications", QtWidgets.QMessageBox.ButtonRole.AcceptRole)
         box.addButton("Not Now", QtWidgets.QMessageBox.ButtonRole.RejectRole)
+        never = box.addButton("Don't Ask Again", QtWidgets.QMessageBox.ButtonRole.DestructiveRole)
         box.exec()
+        if box.clickedButton() is never:
+            config.set_key("general", "ask_to_move", False)
+            config.save_config()
         if box.clickedButton() is not move:
             return
 

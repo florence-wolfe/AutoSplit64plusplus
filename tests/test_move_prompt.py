@@ -1,3 +1,4 @@
+import copy
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -5,7 +6,7 @@ from unittest import mock
 from PyQt6 import QtWidgets
 from PyQt6.QtTest import QTest
 
-from as64core import app_location
+from as64core import app_location, config
 from as64gui.app import App
 from tests.qt import close_window
 from tests.test_updates import answering
@@ -25,7 +26,10 @@ class MovePromptTest(unittest.TestCase):
                    mock.patch.object(app_location, "move_to", side_effect=move or (lambda app, folder: folder / app.name)),
                    mock.patch.object(app_location, "reopen_after_exit"),
                    mock.patch.object(QtWidgets.QApplication, "quit"),
-                   mock.patch.object(QtWidgets.QMessageBox, "warning")]
+                   mock.patch.object(QtWidgets.QMessageBox, "warning"),
+                   # Settings changes stay in this test
+                   mock.patch.object(config, "_config", copy.deepcopy(config._config)),
+                   mock.patch.object(config, "save_config")]
         if choice:
             def exec_(box):
                 texts.append(box.text() + "\n" + box.informativeText())
@@ -61,6 +65,18 @@ class MovePromptTest(unittest.TestCase):
         self.assertIn("Permission denied", QtWidgets.QMessageBox.warning.call_args.args[2])
         app_location.reopen_after_exit.assert_not_called()
         QtWidgets.QApplication.quit.assert_not_called()
+
+    def test_dont_ask_again(self):
+        self.open_app(app_location.TRANSLOCATED, "Don't Ask Again")
+        app_location.move_to.assert_not_called()
+        self.assertIs(config.get("general", "ask_to_move"), False)
+        config.save_config.assert_called()
+
+        with mock.patch.object(QtWidgets.QMessageBox, "exec") as exec_:
+            app = App()
+            self.addCleanup(close_window, app)
+            QTest.qWait(50)
+        exec_.assert_not_called()
 
     def test_no_prompt_elsewhere(self):
         with mock.patch.object(QtWidgets.QMessageBox, "exec") as exec_:
