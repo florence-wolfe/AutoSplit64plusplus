@@ -175,8 +175,9 @@ AutoSplit64++ uses [uv](https://docs.astral.sh/uv/) to manage Python and its dep
 - Add or update a dependency: `uv add <package>`, which updates `pyproject.toml` and `uv.lock`
 
 ### Building
-- Windows: run `build.bat`
-- macOS: run `./build_mac.sh`. The app is created as `dist/AutoSplit64++.app`. Move it to `Applications` (or anywhere else) to install it.
+Run `uv run build.py` on the platform you're building for:
+- Windows: creates `dist/AutoSplit64++/` with `AutoSplit64++.exe`. Keep the exe together with the other files in that folder.
+- macOS: creates `dist/AutoSplit64++.app`. Move it to `Applications` (or anywhere else) to install it.
 
 ### macOS (Apple Silicon)
 On macOS, the Named Pipe connection and the OBS Plugin are not available. Use the LiveSplit One (or TCP) connection mode.

@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-build = ["pyinstaller==6.11.1"]
+dev = ["pyinstaller==6.11.1"]
 
 [tool.uv]
 # An application, not a package to install

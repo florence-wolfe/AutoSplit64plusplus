@@ -38,7 +38,7 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
-build = [
+dev = [
     { name = "pyinstaller", marker = "sys_platform == 'darwin' or sys_platform == 'win32'" },
 ]
 
@@ -58,7 +58,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-build = [{ name = "pyinstaller", specifier = "==6.11.1" }]
+dev = [{ name = "pyinstaller", specifier = "==6.11.1" }]
 
 [[package]]
 name = "certifi"
