@@ -187,6 +187,7 @@ Build the app:
 1. Set up the virtual environment as above
 2. Run `./build_mac.sh`
 3. The app is created in `dist/AutoSplit64plusplus/`. Keep `AutoSplit64plusplus.app` together with the other files in that folder, since it reads its resources and stores its settings there. Move the whole folder if you want it somewhere else, e.g. `~/Applications`.
+4. Running `./build_mac.sh` again updates the app and keeps your settings, routes and reset templates.
 
 ## Support
 - For help join our [Discord](https://discord.gg/VmrQQBpPSK)
