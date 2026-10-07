@@ -106,6 +106,14 @@ def has_permission():
     return _shareable_content() is not None
 
 
+def has_permission_quietly():
+    """
+    Whether the app has the Screen Recording permission, without macOS ever asking for it like
+    has_permission may. It may only see a newly granted permission once the app restarts.
+    """
+    return Quartz.CGPreflightScreenCaptureAccess()
+
+
 def request_permission():
     """
     Show macOS's Screen Recording prompt. macOS only shows it once per app, and keeps a grant
