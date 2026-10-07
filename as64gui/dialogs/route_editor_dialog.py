@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 from functools import partial
 
 from PyQt6 import QtWidgets, QtCore, QtGui
-from PyQt6.QtGui import QIcon, QIntValidator, QAction
+from PyQt6.QtGui import QIcon, QIntValidator
 
 from as64core import resource_utils
 from as64core import route_loader, config
@@ -46,6 +46,8 @@ class RouteEditor(QtWidgets.QMainWindow):
         # Route
         self.route = None
         self.route_path = None
+        # Name of the LiveSplit splits the route was converted from, if any
+        self._lss_name = None
 
         self.window_title = "Route Editor"
         self.width = 780
@@ -64,7 +66,6 @@ class RouteEditor(QtWidgets.QMainWindow):
         }
 
         # Menu Bar
-        self.menu_bar = None
 
         # Layouts
         self.main_layout = QtWidgets.QVBoxLayout()
@@ -104,9 +105,8 @@ class RouteEditor(QtWidgets.QMainWindow):
         self.setWindowTitle(self.window_title)
         self.resize(self.width, self.height)
 
-        # Menu Bar
-        self.menu_bar = self.menuBar()
-        self.file_menu()
+        # File buttons
+        self.file_buttons()
 
         # Main Widget
         main_widget = QtWidgets.QWidget()
@@ -202,52 +202,36 @@ class RouteEditor(QtWidgets.QMainWindow):
         self.cancel_btn.clicked.connect(self.cancel_clicked)
         self.split_table.cellDoubleClicked.connect(self.double_clicked)
 
-    def file_menu(self):
-        """Create file menu"""
-        file_sub_menu = self.menu_bar.addMenu('File')
+    def file_buttons(self):
+        """ New, Open, Save and Save As buttons above the route """
+        file_layout = QtWidgets.QHBoxLayout()
 
-        # Create Actions
-        new_action = QAction('New', self)
-        open_action = QAction('Open', self)
-        save_action = QAction('Save', self)
-        save_as_action = QAction('Save As..', self)
-        convert_action = QAction('Convert LSS', self)
-        exit_action = QAction('Exit', self)
+        for text, tooltip, shortcut, slot in [
+            ("New", "Create new route", QtGui.QKeySequence.StandardKey.New, self.new),
+            ("Open", "Open a route or LiveSplit splits (.lss)", QtGui.QKeySequence.StandardKey.Open, self.open),
+            ("Save", "Save route", QtGui.QKeySequence.StandardKey.Save, self.save),
+            ("Save As...", "Save route as", None, self.save_as),
+        ]:
+            button = QtWidgets.QPushButton(text)
+            button.setToolTip(tooltip)
+            button.setAutoDefault(False)
+            if shortcut is not None:
+                button.setShortcut(QtGui.QKeySequence(shortcut))
+            button.clicked.connect(slot)
+            file_layout.addWidget(button)
+        file_layout.addStretch()
 
-        # Configure ToolTips
-        new_action.setStatusTip('Create new route')
-        open_action.setStatusTip('Open route from file')
-        save_action.setStatusTip('Save route')
-        save_as_action.setStatusTip('Save route as')
-        convert_action.setStatusTip('Convert LiveSplit route')
-        exit_action.setStatusTip('Exit Application')
+        QtGui.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.StandardKey.Close), self, self.close)
 
-        # Set Shortcuts
-        new_action.setShortcut('CTRL+N')
-        open_action.setShortcut('CTRL+O')
-        save_action.setShortcut('CTRL+S')
-        exit_action.setShortcut('CTRL+W')
-
-        # Connections
-        new_action.triggered.connect(self.new)
-        open_action.triggered.connect(self.open)
-        save_action.triggered.connect(self.save)
-        save_as_action.triggered.connect(self.save_as)
-        convert_action.triggered.connect(self.convert_lss)
-        exit_action.triggered.connect(self.close)
-
-        # Add Actions
-        file_sub_menu.addAction(new_action)
-        file_sub_menu.addAction(open_action)
-        file_sub_menu.addSeparator()
-        file_sub_menu.addAction(save_action)
-        file_sub_menu.addAction(save_as_action)
-        file_sub_menu.addSeparator()
-        file_sub_menu.addAction(convert_action)
-        file_sub_menu.addSeparator()
-        file_sub_menu.addAction(exit_action)
+        self.main_layout.insertLayout(0, file_layout)
+        self.main_layout.insertWidget(1, HLine())
 
     def show(self):
+        # Already open: bring it to the front, keeping unsaved changes
+        if self.isVisible():
+            self.raise_()
+            self.activateWindow()
+            return
         self.load_route()
         super().show()
 
@@ -434,6 +418,7 @@ class RouteEditor(QtWidgets.QMainWindow):
     def new(self):
         self.route = None
         self.route_path = None
+        self._lss_name = None
 
         self.split_table.setRowCount(0)
 
@@ -442,11 +427,15 @@ class RouteEditor(QtWidgets.QMainWindow):
         self.version_combo.setCurrentIndex(0)
 
     def open(self):
-        """ Show native file dialog to select a .route file for use. """
+        """ Show native file dialog to select a route, or LiveSplit splits to convert to one. """
         file_name, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Open Route", resource_utils.absolute_path("routes"),
-                                                             "AS64 Route Files (*.as64)")
+                                                             "Routes and LiveSplit Splits (*.as64 *.lss)")
 
-        if file_name:
+        if not file_name:
+            return
+        if file_name.lower().endswith(".lss"):
+            self.convert_lss(file_name)
+        else:
             self.load_route(file_name)
 
     def save_as(self):
@@ -559,7 +548,8 @@ class RouteEditor(QtWidgets.QMainWindow):
             return -1
 
         if not self.route_path:
-            file_name, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save Route", resource_utils.base_path() + "/routes", "AS64 Route Files (*.as64)")
+            suggested = resource_utils.base_path() + "/routes" + (f"/{self._lss_name}.as64" if self._lss_name else "")
+            file_name, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save Route", suggested, "AS64 Route Files (*.as64)")
 
             if file_name != '':
                 self.route_path = file_name
@@ -571,14 +561,11 @@ class RouteEditor(QtWidgets.QMainWindow):
         config.save_config()
         self.route_updated.emit()
 
-    def convert_lss(self):
-        file_name, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Open Route", "",
-                                                             "Livesplit (*.lss)")
-
-        if not file_name:
-            return
-
+    def convert_lss(self, file_name):
+        """ Fill in a new route from LiveSplit splits, guessing each split's details from its name """
         self.new()
+        # Suggested name when saving the converted route
+        self._lss_name = path.splitext(path.basename(file_name))[0]
 
         tree = ET.parse(file_name)
         root = tree.getroot()

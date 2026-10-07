@@ -154,7 +154,7 @@ A regular split will trigger when the specified number of stars have been collec
 Every time a star is collected, or a split, undo or skip is triggered, the fadeout and fadein count are reset to 0.
 The Route Editor has been designed to look and function similar to the split editor found in LiveSplit to make it as familiar as possible.
 
-**The easiest method of creating routes is to import your splits you use for LiveSplit. To do this, in the Route Editor, nagivate to `File -> Convert LSS`. Open the `.lss` file you use with LiveSplit. AutoSplit 64 will attempt to fill in as many details as possible to simplify the route creation process, however it is important you check each split to make sure it is correct.**
+**The easiest method of creating routes is to import your splits you use for LiveSplit. To do this, press `Open` in the Route Editor and select the `.lss` file you use with LiveSplit. AutoSplit 64 will attempt to fill in as many details as possible to simplify the route creation process, however it is important you check each split to make sure it is correct.**
 
 ## Troubleshooting
 
