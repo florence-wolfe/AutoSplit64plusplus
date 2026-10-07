@@ -1,0 +1,27 @@
+# Runs the tests on macOS and Windows for pushes to main and pull requests.
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      # See every platform's failures, not only the first one's
+      fail-fast: false
+      matrix:
+        os: [macos-26, windows-2025]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # setup-uv only publishes exact version tags
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          enable-cache: true
+
+      - name: Test
+        run: uv run python -m unittest -v
