@@ -74,7 +74,7 @@ In LiveSplit `Right-Click -> Edit Splits...` &rarr; Set `Start Timer at:` to **1
 
 AutoSplit64++ can also control [LiveSplit One](https://one.livesplit.org) (the web timer):
 
-1. In AutoSplit64++, `Settings -> Connection` &rarr; set `Connection Mode` to **LiveSplit One**. It listens on port `16835` by default. The dot in the top right corner shows the server state (green: connected, amber: waiting for LiveSplit One, red: could not start). Hover it for the URL and click it to copy the URL.
+1. In AutoSplit64++, `Settings -> Connection` &rarr; set `Connection Mode` to **LiveSplit One** (the default on macOS). It listens on port `16835` by default. The dot in the top right corner shows the server state (green: connected, amber: waiting for LiveSplit One, red: could not start). Hover it for the URL and click it to copy the URL.
 2. In LiveSplit One, `Settings -> Server Connection -> Connect` &rarr; enter `ws://localhost:16835`.
 3. Click `OK` to leave LiveSplit One's settings. LiveSplit One ignores timer commands while its settings are open.
 

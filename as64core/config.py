@@ -1,5 +1,6 @@
 import json
 import copy
+import sys
 
 
 _config = {}
@@ -111,6 +112,10 @@ def load_defaults():
     with open(_DEFAULTS_FILE_NAME) as file:
         data = json.load(file)
         _defaults = data
+
+    # Named pipes and LiveSplit desktop are Windows only; elsewhere connect to LiveSplit One
+    if sys.platform != "win32":
+        _defaults["connection"]["ls_connection_type"] = 2
 
 
 def save_config():

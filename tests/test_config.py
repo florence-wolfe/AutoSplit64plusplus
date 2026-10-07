@@ -23,5 +23,20 @@ class SetKeyTest(unittest.TestCase):
         self.assertEqual(config.get("new_section", "key"), "value")
 
 
+
+class DefaultConnectionModeTest(unittest.TestCase):
+    """ Named pipes only exist on Windows, and LiveSplit desktop only runs there """
+
+    def default_mode(self, platform):
+        with mock.patch.object(config, "_defaults", None), mock.patch.object(config.sys, "platform", platform):
+            return config.get_default("connection", "ls_connection_type")
+
+    def test_windows_uses_named_pipe(self):
+        self.assertEqual(self.default_mode("win32"), 0)
+
+    def test_elsewhere_uses_livesplit_one(self):
+        self.assertEqual(self.default_mode("darwin"), 2)
+        self.assertEqual(self.default_mode("linux"), 2)
+
 if __name__ == "__main__":
     unittest.main()
