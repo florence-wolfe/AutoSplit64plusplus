@@ -39,18 +39,19 @@ class ProcessorGenerator(object):
 
             sub_processors[sub_processor_key] = sub_processor
 
+        def find(name):
+            """ A registered process, or a sub-processor of this file """
+            return processes.get(name) or sub_processors.get(name)
+
         # Create blank processor instance
         processor = Processor()
 
         # Set initial process
-        try:
-            processor.initial_process = processes[file[ProcessorGenerator.INITIAL_PROCESS]]
-        except KeyError:
-            try:
-                processor.initial_process = sub_processors[file[ProcessorGenerator.INITIAL_PROCESS]]
-            except KeyError:
-                print(file["name"], "3: [KeyError] Unable to set initial process")
-                return None
+        initial_process = find(file[ProcessorGenerator.INITIAL_PROCESS])
+        if not initial_process:
+            print(file["name"], "3: [KeyError] Unable to set initial process")
+            return None
+        processor.initial_process = initial_process
 
         # Copy all transitions from inherited processor (single inheritance only)
         if file[ProcessorGenerator.INHERIT]:
@@ -73,32 +74,21 @@ class ProcessorGenerator(object):
                 signal_value = signal.split(".")[1]
 
                 # Define Transition
-                try:
-                    t_process = processes[process_key]
-                except KeyError:
-                    try:
-                        t_process = sub_processors[process_key]
-                    except KeyError:
-                        print(file["name"], "5")
-                        return None
+                t_process = find(process_key)
+                if not t_process:
+                    print(file["name"], "5")
+                    return None
 
-                try:
-                    t_signal = processes[signal_location].signals[signal_value]
-                except KeyError:
-                    try:
-                        t_signal = sub_processors[signal_location].signals[signal_value]
-                    except KeyError:
-                        print(file["name"], "6")
-                        return None
+                signal_process = find(signal_location)
+                t_signal = signal_process.signals.get(signal_value) if signal_process else None
+                if not t_signal:
+                    print(file["name"], "6")
+                    return None
 
-                try:
-                    t_next = processes[transitions[process_key][signal]]
-                except KeyError:
-                    try:
-                        t_next = sub_processors[transitions[process_key][signal]]
-                    except KeyError:
-                        print(file["name"], "7")
-                        return None
+                t_next = find(transitions[process_key][signal])
+                if not t_next:
+                    print(file["name"], "7")
+                    return None
 
                 t = Transition(t_process, t_signal, t_next)
 

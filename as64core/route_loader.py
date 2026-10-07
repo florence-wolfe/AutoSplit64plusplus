@@ -44,7 +44,7 @@ def load(file_path):
     if not isinstance(data, dict) or not data.get(ROUTE):
         raise KeyError(ROUTE)
     data[FILE_PATH] = file_path
-    return RouteDecoder.route_hook(data)
+    return _decode(data)
 
 
 def load_or_none(file_path):
@@ -61,53 +61,24 @@ def save(route_data, file):
         json.dump(route_data, write_file, indent=4, cls=RouteEncoder)
 
 
-class RouteDecoder(json.JSONDecoder):
-    def __init__(self, *args, **kargs):
-        super().__init__(object_hook=RouteDecoder.route_hook, *args, **kargs)
+def _decode(data):
+    """ The Route of a route file's data """
+    # Routes from v0.1.x have no X-Cam counts or timing
+    splits = [Split(split[TITLE],
+                    split[STAR_COUNT],
+                    split[FADEOUT],
+                    split[FADEIN],
+                    split.get(XCAM, -1),
+                    split[SPLIT_TYPE],
+                    split[ICON]) for split in data[SPLITS]]
 
-    @staticmethod
-    def route_hook(data):
-        if ROUTE not in data:
-            return data
-
-        if data[ROUTE]:
-
-            if CATEGORY not in data:
-                data[CATEGORY] = ""
-
-            splits = []
-            for split_dict in data[SPLITS]:
-                # TODO: Separated to keep backwards compatibility with v0.1.x routes. Remove this in next version.
-                try:
-                    xcam = split_dict[XCAM]
-                except KeyError:
-                    xcam = -1
-
-                splits.append(Split(split_dict[TITLE],
-                                    split_dict[STAR_COUNT],
-                                    split_dict[FADEOUT],
-                                    split_dict[FADEIN],
-                                    xcam,
-                                    split_dict[SPLIT_TYPE],
-                                    split_dict[ICON]))
-
-            # TODO: Separated to keep backwards compatibility with v0.1.x routes. Remove this in next version.
-            try:
-                timing = data[TIMING]
-            except KeyError:
-                timing = TIMING_RTA
-
-            route = Route(data[FILE_PATH],
-                          data[TITLE],
-                          splits,
-                          data[INITIAL_STAR],
-                          data[VERSION],
-                          data[CATEGORY],
-                          timing)
-
-            return route
-        else:
-            return data
+    return Route(data[FILE_PATH],
+                 data[TITLE],
+                 splits,
+                 data[INITIAL_STAR],
+                 data[VERSION],
+                 data.get(CATEGORY, ""),
+                 data.get(TIMING, TIMING_RTA))
 
 
 class RouteEncoder(json.JSONEncoder):

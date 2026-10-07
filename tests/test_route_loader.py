@@ -34,6 +34,17 @@ class LoadTest(unittest.TestCase):
         path.write_bytes(b"\xef\xbb\xbf" + ROUTE.read_bytes())
         self.assertIsNotNone(route_loader.load(str(path)))
 
+    def test_route_from_before_x_cam_and_timing(self):
+        data = json.loads(ROUTE.read_text())
+        del data["timing"]
+        for split in data["splits"]:
+            del split["xcam"]
+        path = self.dir / "old.as64"
+        path.write_text(json.dumps(data))
+        route = route_loader.load(str(path))
+        self.assertEqual(route.timing, "RTA")
+        self.assertEqual({split.on_xcam for split in route.splits}, {-1})
+
     def test_missing_file(self):
         self.assertIsNone(route_loader.load(str(self.dir / "missing.as64")))
 

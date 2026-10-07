@@ -134,20 +134,14 @@ class GameCapture(object):
         if self._window_image is None:
             self.capture()
 
-        try:
-            return self._region_images[region]
-        except KeyError:
-            try:
-                self._region_images[region] = self._crop(*self._regions[region])
-                return self._region_images[region]
-            except KeyError:
-                return None
+        if region not in self._regions:
+            return None
+        if region not in self._region_images:
+            self._region_images[region] = self._crop(*self._regions[region])
+        return self._region_images[region]
 
     def get_region_rect(self, region):
-        try:
-            return self._regions[region]
-        except KeyError:
-            return None
+        return self._regions.get(region)
 
     def _crop(self, x, y, width, height):
         return self._window_image[y:y + height, x:x + width]

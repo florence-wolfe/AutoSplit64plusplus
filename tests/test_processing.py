@@ -1,12 +1,83 @@
+import json
+import shutil
+import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
-from as64core.processing import ProcessorGenerator, ProcessorSwitch
+from as64core import processing
+from as64core.processing import Process, Processor, ProcessorGenerator, ProcessorSwitch
 
 
 class GenerateTest(unittest.TestCase):
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.dir)
+        self.a, self.b = Process(), Process()
+        self.a.register_signal("DONE")
+        self.b.register_signal("NEXT")
+        patcher = mock.patch.dict(processing.processes, {"A": self.a, "B": self.b}, clear=True)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def write(self, name, initial, transitions, sub_processors=None):
+        path = self.dir / f"{name}.processor"
+        path.write_text(json.dumps({"name": name, "initial_process": initial, "inherit": None,
+                                    "sub_processors": sub_processors or {}, "transitions": transitions}))
+        return str(path)
+
     def test_missing_processor_file(self):
         self.assertIsNone(ProcessorGenerator.generate("logic/missing.processor"))
+
+    def test_processor_with_sub_processor(self):
+        child = self.write("child", "A", {"A": {"A.DONE": "B"}})
+        parent = self.write("parent", "CHILD", {"CHILD": {"B.NEXT": "A"}}, {"CHILD": child})
+
+        processor = ProcessorGenerator.generate(parent)
+
+        sub_processor = processor.initial_process
+        self.assertIsInstance(sub_processor, Processor)
+        self.assertIs(sub_processor.initial_process, self.a)
+        [(process, signal, next_process)] = [(t.process, t.signal, t.next_process) for t in sub_processor._transitions]
+        self.assertEqual((process, signal, next_process), (self.a, self.a.signals["DONE"], self.b))
+        [(process, signal, next_process)] = [(t.process, t.signal, t.next_process) for t in processor._transitions]
+        self.assertEqual((process, signal, next_process), (sub_processor, self.b.signals["NEXT"], self.a))
+
+    def test_unknown_names(self):
+        for transitions in [{"UNKNOWN": {"A.DONE": "B"}}, {"A": {"A.UNKNOWN": "B"}}, {"A": {"A.DONE": "UNKNOWN"}}]:
+            with self.subTest(transitions):
+                self.assertIsNone(ProcessorGenerator.generate(self.write("p", "A", transitions)))
+        self.assertIsNone(ProcessorGenerator.generate(self.write("p", "UNKNOWN", {})))
+
+
+class ShippedProcessorsTest(unittest.TestCase):
+    """ Every processor in logic/ generates, with stand-ins for the processes AutoSplit64.py registers """
+
+    def test_all_generate(self):
+        files = sorted(Path("logic").rglob("*.processor"))
+        names = {}
+        for path in files:
+            data = json.loads(path.read_text())
+            for process, signals in data["transitions"].items():
+                names.setdefault(process, set())
+                for signal in signals:
+                    owner, name = signal.split(".")
+                    names.setdefault(owner, set()).add(name)
+                    names.setdefault(signals[signal], set())
+        sub_processor_names = {key for path in files for key in json.loads(path.read_text())["sub_processors"]}
+
+        stand_ins = {}
+        for name, signals in names.items():
+            if name in sub_processor_names:
+                continue
+            stand_ins[name] = Process()
+            for signal in signals:
+                stand_ins[name].register_signal(signal)
+
+        with mock.patch.dict(processing.processes, stand_ins, clear=True):
+            for path in files:
+                with self.subTest(str(path)):
+                    self.assertIsNotNone(ProcessorGenerator.generate(str(path)))
 
 
 class ProcessorSwitchTest(unittest.TestCase):

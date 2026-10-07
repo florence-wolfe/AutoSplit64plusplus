@@ -498,11 +498,7 @@ class App(QtWidgets.QMainWindow):
                 if route:
                     category = route.category
 
-                    try:
-                        self._routes[category].append([route.title, "routes/" + file])
-                    except KeyError:
-                        self._routes[category] = []
-                        self._routes[category].append([route.title, "routes/" + file])
+                    self._routes.setdefault(category, []).append([route.title, "routes/" + file])
 
     def _on_route_update(self):
         self._load_route_dir()
