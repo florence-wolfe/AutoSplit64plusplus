@@ -1,5 +1,11 @@
 import sys
 import os
+
+# A macOS .app starts with "/" as its working directory. Run from the folder containing
+# the .app instead, where the resources and config live, like the Windows build.
+if getattr(sys, "frozen", False) and sys.platform == "darwin":
+    os.chdir(os.path.abspath(os.path.join(os.path.dirname(sys.executable), "..", "..", "..")))
+
 from threading import Thread
 import logging
 from PyQt6 import QtCore, QtWidgets, QtGui

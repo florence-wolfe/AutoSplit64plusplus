@@ -1,8 +1,11 @@
 import socket
 import select
-import win32file
-import win32pipe
+import sys
 import time
+
+if sys.platform == "win32":
+    import win32file
+    import win32pipe
 
 from . import config, livesplit_one
 
@@ -12,7 +15,7 @@ def connect() -> object:
     ls_connection_type = config.get("connection", "ls_connection_type")
 
     # Check if connection type is named pipe (0 indicates named pipe)
-    if ls_connection_type == 0:
+    if ls_connection_type == 0 and sys.platform == "win32":
         # Get named pipe host from config. Name is always LiveSplit
         ls_pipe_path = "\\\\" + config.get("connection", "ls_pipe_host") + "\\pipe\\LiveSplit"
         try:

@@ -168,6 +168,19 @@ If you encounter any issues, please run through all steps below.
 2. Install dependencies: `pip install -r requirements.txt`
 3. Run `build.bat` to create executable
 
+### macOS (Apple Silicon)
+On macOS, the Named Pipe connection and the OBS Plugin are not available. Use the LiveSplit One (or TCP) connection mode.
+
+Run from source:
+1. Create a Python 3.12 virtual environment in the repository: `python3.12 -m venv .venv`
+2. Install dependencies: `.venv/bin/pip install -r requirements.txt`
+3. Start AutoSplit64+: `.venv/bin/python AutoSplit64.py`
+
+Build the app:
+1. Set up the virtual environment as above
+2. Run `./build_mac.sh`
+3. The app is created in `dist/AutoSplit64plusplus/`. Keep `AutoSplit64plusplus.app` together with the other files in that folder, since it reads its resources and stores its settings there. Move the whole folder if you want it somewhere else, e.g. `~/Applications`.
+
 ## Support
 - For help join our [Discord](https://discord.gg/VmrQQBpPSK)
 
