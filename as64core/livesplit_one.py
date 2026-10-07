@@ -24,17 +24,40 @@ _COMMANDS = {
 }
 
 _server = None
+# (port, error) of the last failed attempt to start the server
+_start_error = None
 
 
 def get_server(port):
     """ Return the running server, (re)starting it if the port changed """
-    global _server
+    global _server, _start_error
     if _server is not None and _server.port != port:
+        stop_server()
+    if _server is None:
+        try:
+            _server = LiveSplitOneServer(port)
+        except OSError as e:
+            _start_error = (port, e)
+            raise
+        _start_error = None
+    return _server
+
+
+def stop_server():
+    global _server, _start_error
+    if _server is not None:
         _server.close()
         _server = None
-    if _server is None:
-        _server = LiveSplitOneServer(port)
-    return _server
+    _start_error = None
+
+
+def status():
+    """ Returns (state, port, error) with state "stopped", "error", "waiting" or "connected" """
+    if _server is not None:
+        return ("connected" if _server.connected() else "waiting", _server.port, None)
+    if _start_error is not None:
+        return ("error", *_start_error)
+    return ("stopped", None, None)
 
 
 class LiveSplitOneServer:

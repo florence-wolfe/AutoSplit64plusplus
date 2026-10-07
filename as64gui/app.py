@@ -5,10 +5,10 @@ import re
 import requests
 import json
 from PyQt6 import QtCore, QtGui, QtWidgets
-from as64core import route_loader, config
+from as64core import route_loader, config, livesplit, livesplit_one
 from as64core.resource_utils import base_path, resource_path, absolute_path, rel_to_abs
 from . import constants
-from .widgets import PictureButton, StateButton, StarCountDisplay, SplitListWidget
+from .widgets import PictureButton, StateButton, StarCountDisplay, SplitListWidget, ServerStatusIndicator
 from .dialogs import AboutDialog, CaptureEditor, SettingsDialog, RouteEditor, ResetGeneratorDialog, OutputDialog
 
 class App(QtWidgets.QMainWindow):
@@ -50,6 +50,7 @@ class App(QtWidgets.QMainWindow):
         self.start_btn_initial_y = 180
         self.start_btn = StateButton(self.start_pixmap, self.start_pixmap, parent=self.right_panel)
         self.split_list = SplitListWidget(self.central_widget)
+        self.server_status = ServerStatusIndicator(self.central_widget)
 
         # Font
         self.button_font = QtGui.QFont("Tw Cen MT", 14)
@@ -161,7 +162,19 @@ class App(QtWidgets.QMainWindow):
  
     def settings_updated(self):
         self.set_always_on_top(config.get("general", "on_top"))
+        # Start the LiveSplit One server right away, or stop it when switching modes
+        if config.get("connection", "ls_connection_type") == 2:
+            livesplit.connect()
+        else:
+            livesplit_one.stop_server()
+        self.server_status.refresh()
         self._reset()
+
+    def resizeEvent(self, event):
+        # Keep the server status in the top right corner, above the other widgets
+        self.server_status.move(self.central_widget.size().width() - self.server_status.size().width() - 6, 6)
+        self.server_status.raise_()
+        super().resizeEvent(event)
 
     def update_display(self, split_index, current_star, split_star):
         if split_index > len(self.split_list.splits) - 1:

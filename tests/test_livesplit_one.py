@@ -5,6 +5,7 @@ import unittest
 
 from websockets.sync.client import connect
 
+from as64core import livesplit_one
 from as64core.livesplit_one import LiveSplitOneServer
 
 PORT = 16899
@@ -98,6 +99,35 @@ class LiveSplitOneServerTest(unittest.TestCase):
         first.close()
         time.sleep(0.1)
         self.assertTrue(self.server.connected())
+
+
+class StatusTest(unittest.TestCase):
+    def tearDown(self):
+        livesplit_one.stop_server()
+
+    def test_status_follows_server_lifecycle(self):
+        self.assertEqual(livesplit_one.status(), ("stopped", None, None))
+
+        server = livesplit_one.get_server(PORT)
+        self.assertEqual(livesplit_one.status(), ("waiting", PORT, None))
+
+        client = FakeLiveSplitOne(PORT, {"state": "NotRunning"})
+        self.addCleanup(client.close)
+        self.assertTrue(wait_for(server.connected))
+        self.assertEqual(livesplit_one.status(), ("connected", PORT, None))
+
+        livesplit_one.stop_server()
+        self.assertEqual(livesplit_one.status(), ("stopped", None, None))
+
+    def test_status_reports_port_in_use(self):
+        blocker = LiveSplitOneServer(PORT)
+        self.addCleanup(blocker.close)
+
+        with self.assertRaises(OSError):
+            livesplit_one.get_server(PORT)
+        state, port, error = livesplit_one.status()
+        self.assertEqual((state, port), ("error", PORT))
+        self.assertIsInstance(error, OSError)
 
 
 if __name__ == "__main__":
