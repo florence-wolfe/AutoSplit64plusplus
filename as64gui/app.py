@@ -408,25 +408,25 @@ class App(QtWidgets.QMainWindow):
 
     def mousePressEvent(self, event):
         if event.buttons() == QtCore.Qt.MouseButton.LeftButton:
+            # Let the window manager move the window: smoother, and the only way on Wayland
+            if self.windowHandle().startSystemMove():
+                event.accept()
+                return
             self._drag = True
             self._drag_position = event.globalPosition().toPoint() - self.pos()
             event.accept()
 
     def mouseReleaseEvent(self, event):
-        if event.buttons() == QtCore.Qt.MouseButton.LeftButton:
+        # buttons() no longer has the released button
+        if event.button() == QtCore.Qt.MouseButton.LeftButton:
             self._drag = False
             event.accept()
 
     def mouseMoveEvent(self, event):
-        try:
-            if event.buttons() == QtCore.Qt.MouseButton.LeftButton:
-                try:
-                    self.move(event.globalPosition().toPoint() - self._drag_position)
-                except TypeError:
-                    pass
-                event.accept()
-        except AttributeError:
-            pass
+        # Only drags that started on the window move it
+        if event.buttons() == QtCore.Qt.MouseButton.LeftButton and self._drag:
+            self.move(event.globalPosition().toPoint() - self._drag_position)
+            event.accept()
 
     def display_error_message(self, message, title="Error"):
         """
