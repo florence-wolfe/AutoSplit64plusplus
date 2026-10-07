@@ -4,6 +4,7 @@ import sys
 import time
 
 if sys.platform == "win32":
+    import pywintypes
     import win32file
     import win32pipe
 
@@ -24,7 +25,7 @@ def connect() -> object:
             # Set the pipe to byte mode
             win32pipe.SetNamedPipeHandleState(ls_socket, win32pipe.PIPE_READMODE_BYTE, None, None)
             return ls_socket
-        except:
+        except pywintypes.error:
             return False
     # Check if connection type is TCP (1 indicates TCP)
     elif ls_connection_type == 1:
@@ -34,7 +35,7 @@ def connect() -> object:
             # Get host and port from config and connect to host via TCP
             ls_socket.connect((config.get("connection", "ls_host"), config.get("connection", "ls_port")))
             return ls_socket
-        except:
+        except OSError:
             return False
     # Check if connection type is LiveSplit One (2 indicates LiveSplit One)
     elif ls_connection_type == 2:
@@ -82,7 +83,7 @@ def send(ls_socket, command) -> None:
         # Send the command to the pipe
         try:
             win32file.WriteFile(ls_socket, command.encode('utf-8'))
-        except:
+        except pywintypes.error:
             raise Exception("LiveSplit connection lost")
 
 def split(ls_socket) -> None:
@@ -112,7 +113,7 @@ def split_index(ls_socket):
         # Send the command to the socket
         try:
             ls_socket.send("getsplitindex\r\n".encode('utf-8'))
-        except:
+        except OSError:
             return False
         
         # Wait for response
@@ -120,7 +121,7 @@ def split_index(ls_socket):
         if readable[0]:
             try:
                 return int(ls_socket.recv(1000).decode("utf-8"))
-            except:
+            except (OSError, ValueError):
                 return False
         else:
             return False
@@ -129,7 +130,7 @@ def split_index(ls_socket):
         # Send the command to the pipe
         try:
             win32file.WriteFile(ls_socket, "getsplitindex\r\n".encode('utf-8'))
-        except:
+        except pywintypes.error:
             return False
         # Get current time
         start_time = time.time()
@@ -143,7 +144,7 @@ def split_index(ls_socket):
             # Peek at the pipe to see if there is data as it is non-blocking
             try:
                 peek_data, available , _ = win32pipe.PeekNamedPipe(ls_socket, 1000)
-            except:
+            except pywintypes.error:
                 raise Exception("LiveSplit connection lost")
             # If there is data available:
             if available > 0:
