@@ -18,7 +18,7 @@ class VersionTest(unittest.TestCase):
         described = subprocess.run(["git", "describe", "--tags", "--match", "v[0-9]*", "--dirty"],
                                    capture_output=True, text=True).stdout.strip()
         with mock.patch.dict(os.environ, {}, clear=True):
-            self.assertEqual(build.release_version(), described.removeprefix("v"))
+            self.assertEqual(build.release_version(), described.removeprefix("v") or "dev")
 
     def test_version_file_exists_only_for_the_build(self):
         path = Path("as64gui/_version.py")

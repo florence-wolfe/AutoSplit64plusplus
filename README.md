@@ -180,6 +180,16 @@ AutoSplit64++ uses [uv](https://docs.astral.sh/uv/) to manage Python and its dep
 - Run the tests: `uv run python -m unittest`
 - Add or update a dependency: `uv add <package>`, which updates `pyproject.toml` and `uv.lock`
 
+### Releases
+Releases are versioned by their git tag. Pushing a tag like `v0.4.0` runs the tests and builds the macOS app and the Windows app on GitHub Actions, then publishes them as a GitHub release, with a `SHA256SUMS` file for the updater:
+
+```
+git tag v0.4.0
+git push origin v0.4.0
+```
+
+Tags with a suffix, like `v0.4.0-rc.1`, are published as pre-releases.
+
 ### Building
 Run `uv run build.py` on the platform you're building for:
 - Windows: creates `dist/AutoSplit64++/` with `AutoSplit64++.exe`. Keep the exe together with the other files in that folder.

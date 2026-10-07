@@ -24,7 +24,8 @@ class LoadTest(unittest.TestCase):
         self.addCleanup(shutil.rmtree, self.dir)
 
     def test_path_is_kept_whatever_its_characters(self):
-        path = self.dir / 'my "best" route \\ 16.as64'
+        # Windows doesn't allow " or \ in file names, but its paths are full of \
+        path = self.dir / ("my best route.as64" if os.name == "nt" else 'my "best" route \\ 16.as64')
         shutil.copy(ROUTE, path)
         route = route_loader.load(str(path))
         self.assertEqual(route.file_path, str(path))
