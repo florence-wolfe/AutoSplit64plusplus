@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 import onnxruntime as ort
 import numpy as np
 import logging
@@ -8,10 +10,10 @@ def softmax(x):
     exp_x = np.exp(x - np.max(x))  # Subtract max for numerical stability
     return exp_x / exp_x.sum()
 
-class PredictionInfo(object):
-    def __init__(self, prediction, probability):
-        self.prediction = prediction
-        self.probability = probability
+@dataclass
+class PredictionInfo:
+    prediction: int
+    probability: float
 
 
 class Model(object):

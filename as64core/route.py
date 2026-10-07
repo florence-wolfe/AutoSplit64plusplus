@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from .constants import SPLIT_NORMAL, TIMING_RTA
 
 FILE_PATH = "file_path"
@@ -19,30 +21,34 @@ TIMEOUT = "timeout"
 ICON = "icon_path"
 
 
-class Route(object):
-    def __init__(self, file_path, title, splits, initial_star=0, version="JP", category="", timing=TIMING_RTA):
-        self.file_path = file_path
-        self.title = title
-        self.category = category
-        self.splits = splits
-        self.length = len(self.splits)
-        self.initial_star = initial_star
-        self.version = version
-        self.timing = timing
+# Splits and routes compare by identity: split detection finds the current split with list.index
+@dataclass(eq=False)
+class Split:
+    title: str = ""
+    star_count: int = 0
+    on_fadeout: int = 0
+    on_fadein: int = 0
+    on_xcam: int = -1
+    split_type: str = SPLIT_NORMAL
+    icon_path: str | None = None
+
+
+@dataclass(eq=False)
+class Route:
+    file_path: str
+    title: str
+    splits: list[Split]
+    initial_star: int = 0
+    version: str = "JP"
+    category: str = ""
+    timing: str = TIMING_RTA
+
+    @property
+    def length(self):
+        return len(self.splits)
 
     def insert_split(self, index):
         self.splits.insert(index, Split())
 
     def remove_split(self, index):
         self.splits.pop(index)
-
-
-class Split(object):
-    def __init__(self, title: str = "", star_count: int = 0, on_fadeout: int = 0, on_fadein: int = 0, on_xcam: int = -1, split_type: str = SPLIT_NORMAL, icon_path: str = None):
-        self.title: str = title
-        self.star_count: int = star_count
-        self.on_fadeout: int = on_fadeout
-        self.on_fadein: int = on_fadein
-        self.on_xcam: int = on_xcam
-        self.split_type: str = split_type
-        self.icon_path: str = icon_path
