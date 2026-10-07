@@ -22,6 +22,9 @@ from as64processes.final import *
 class AutoSplit64(QtCore.QObject):
     error = QtCore.pyqtSignal(str)
     update_found = QtCore.pyqtSignal(dict)
+    # Split detection reports from its own thread, and only the GUI thread may change widgets
+    started_changed = QtCore.pyqtSignal(bool)
+    display_updated = QtCore.pyqtSignal(object, object, object)
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -34,6 +37,8 @@ class AutoSplit64(QtCore.QObject):
         self.app.stop.connect(self.stop)
         self.app.destroyed.connect(lambda: self.stop())
         self.error.connect(self.app.display_error_message)
+        self.started_changed.connect(self.app.set_started)
+        self.display_updated.connect(self.app.update_display)
 
         # Start the LiveSplit One server so LiveSplit One can connect before a run is started
         if config.get("connection", "ls_connection_type") == 2:
@@ -114,14 +119,14 @@ class AutoSplit64(QtCore.QObject):
         as64core.stop()
 
     def on_start(self):
-        self.app.set_started(True)
+        self.started_changed.emit(True)
 
     def on_update(self, index, star_count, split_star):
-        self.app.update_display(index, star_count, split_star)
+        self.display_updated.emit(index, star_count, split_star)
 
     def on_error(self, error):
         self.error.emit(error)
-        self.app.set_started(False)
+        self.started_changed.emit(False)
 
     def exit(self):
         self.stop()
