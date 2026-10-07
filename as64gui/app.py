@@ -229,8 +229,10 @@ class App(QtWidgets.QMainWindow):
             self.autostarter_active = False
             self.start_btn.set_state("start")
             self.split_list.set_selected_index(0)
-            self.star_count.star_count = self.route.initial_star
-            self.star_count.split_star = self.route.splits[0].star_count
+            # No route is loaded when e.g. autostart is retrying without one
+            if self.route:
+                self.star_count.star_count = self.route.initial_star
+                self.star_count.split_star = self.route.splits[0].star_count
             self.stop.emit()
         elif self.start_btn.get_state() == "start":
             
