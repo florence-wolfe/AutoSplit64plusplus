@@ -106,7 +106,10 @@ class ResetGeneratorDialog(QtWidgets.QDialog):
         return f"{cls.TEMPLATE_DIR}generated_temp_{number}.jpg"
 
     def _show_frame(self, label, number):
-        label.setPixmap(QtGui.QPixmap(self._temp_path(number)).scaledToWidth(self.FRAME_WIDTH).scaledToHeight(self.FRAME_HEIGHT))
+        self._show_image(label, self._temp_path(number))
+
+    def _show_image(self, label, path):
+        label.setPixmap(QtGui.QPixmap(path).scaledToWidth(self.FRAME_WIDTH).scaledToHeight(self.FRAME_HEIGHT))
 
     def _remove_temp_files(self):
         for number in range(1, ResetGenerator.CAPTURE_COUNT + 1):
@@ -118,8 +121,9 @@ class ResetGeneratorDialog(QtWidgets.QDialog):
         self._reset_generator.generated.connect(self.on_generate)
         self._reset_generator.error.connect(self.on_error)
 
-        self.gen_1_px.clear()
-        self.gen_2_px.clear()
+        # The templates in use until new ones are generated
+        self._show_image(self.gen_1_px, config.get("advanced", "reset_frame_one"))
+        self._show_image(self.gen_2_px, config.get("advanced", "reset_frame_two"))
         self.generate_btn.setText("Generate")
         self.generate_btn.setEnabled(True)
         self.apply_btn.setEnabled(False)

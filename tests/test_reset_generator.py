@@ -6,7 +6,7 @@ from unittest import mock
 
 import cv2
 import numpy as np
-from PyQt6 import QtWidgets
+from PyQt6 import QtGui, QtWidgets
 
 from autosplit64.core import config
 from autosplit64.gui.dialogs.reset_generator_dialog import ResetGenerator, ResetGeneratorDialog
@@ -50,6 +50,22 @@ class ResetGeneratorDialogTest(unittest.TestCase):
         self.assertEqual(config.get("advanced", "reset_frame_one"), str(self.dir) + "/generated_reset_one.jpg")
         self.assertEqual(config.get("advanced", "reset_frame_two"), str(self.dir) + "/generated_reset_two.jpg")
         config.save_config.assert_called_once()
+
+    def test_opening_shows_the_templates_in_use(self):
+        # Templates applied earlier, not the temporary frames of a generation
+        for name, i in (("one", 1), ("two", 4)):
+            path = str(self.dir / f"generated_reset_{name}.jpg")
+            cv2.imwrite(path, np.full((137, 251, 3), i * 40, np.uint8))
+            config.set_key("advanced", f"reset_frame_{name}", path)
+        with mock.patch("autosplit64.gui.dialogs.reset_generator_dialog.ResetGenerator"):
+            self.dialog.show()
+        self.addCleanup(self.dialog.close)
+
+        def shade(label):
+            image = label.pixmap().toImage()
+            return round(QtGui.QColor(image.pixel(image.width() // 2, image.height() // 2)).red() / 40)
+        self.assertEqual((shade(self.dialog.gen_1_px), shade(self.dialog.gen_2_px)), (1, 4))
+        self.assertFalse(self.dialog.apply_btn.isEnabled())
 
     def test_cancel_removes_the_generated_frames(self):
         (self.dir / "generated_reset_one.jpg").write_bytes(b"earlier")
