@@ -39,9 +39,10 @@ class SplitListWidget(QtWidgets.QWidget):
 
                 painter.fillRect(0, int(y_pos), int(split_width), int(split_height), row_colors[i % 2])
 
+                # The current split, also while another window has focus, as during a run
                 if split_index == self._selected_index:
                     painter.fillRect(0, int(y_pos), int(split_width), int(split_height),
-                                     palette.color(QtGui.QPalette.ColorRole.Highlight))
+                                     palette.color(QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorRole.Highlight))
 
                 if self.splits[split_index].pixmap:
                     painter.drawPixmap(int(pixmap_spacing), int(split_height * i + pixmap_spacing), int(pixmap_dimension), int(pixmap_dimension), self.splits[split_index].pixmap)

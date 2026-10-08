@@ -93,11 +93,24 @@ class ThemedWidgetsTest(unittest.TestCase):
     def test_main_window_background(self):
         self.assertEqual(self.pixel(self.window.right_panel, 2, 2), self.color(Role.Base))
 
+    def split_list_pixel(self, group, x, y):
+        """ A pixel of the split list, painted as when its window has focus or not: the Active or Inactive group """
+        from unittest import mock
+        rows = self.window.split_list
+        palette = QtGui.QPalette(rows.palette())
+        palette.setCurrentColorGroup(group)
+        with mock.patch.object(rows, "palette", return_value=palette):
+            return self.pixel(rows, x, y)
+
+    def test_current_split_is_the_themes_highlight_with_or_without_focus(self):
+        # During a run, the game or LiveSplit has focus, not AutoSplit64++
+        highlight = self.palette.color(QtGui.QPalette.ColorGroup.Active, Role.Highlight).getRgb()[:3]
+        for group in (QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorGroup.Inactive):
+            with self.subTest(group):
+                self.assertEqual(self.split_list_pixel(group, 2, 2), highlight)
+
     def test_split_list(self):
         rows = self.window.split_list
-        # The window may or may not have the focus, which has its own highlight
-        group = QtGui.QPalette.ColorGroup.Active if self.window.isActiveWindow() else QtGui.QPalette.ColorGroup.Inactive
-        self.assertEqual(self.pixel(rows, 2, 2), self.palette.color(group, Role.Highlight).getRgb()[:3])
         second, third = self.pixel(rows, 2, 37 + 2), self.pixel(rows, 2, 2 * 37 + 2)
         self.assertNotEqual(second, third)
         # Both rows are shades of the theme's background

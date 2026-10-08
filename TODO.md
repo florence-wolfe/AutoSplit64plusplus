@@ -19,5 +19,3 @@ Ranked by what matters most to a runner, then by what makes the rest safer to do
 8. **Keep the macOS permissions across updates.** Every update needs the Screen Recording and Camera permissions again. macOS probably ties them to the code signature, so signing every release with the same self-signed certificate in CI may keep them, without an Apple developer account. Unverified: try it with two builds first.
 
 9. **The updater's log line is never written.** `main.py` sets the log level to `WARNING`, but `updater.py` logs where the installer's log is with `.info(...)`.
-
-10. **`test_split_list` in `tests/test_theme.py` is flaky.** It fails about one in three runs of the whole suite: the selected row is sometimes drawn in the inactive highlight colour (grey), probably because the window doesn't have focus. Releases run the tests first, so it can fail a release.
