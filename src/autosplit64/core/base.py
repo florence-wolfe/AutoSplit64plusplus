@@ -247,7 +247,9 @@ class Base(Thread):
                     if self._count_xcams:
                         self.analyze_xcam_status()
                 except Exception as e:
+                    # Reporting the error stops split detection, so don't run the processes on this frame
                     self._error_occurred(str(e))
+                    continue
 
                 try:
                     if self._in_game:

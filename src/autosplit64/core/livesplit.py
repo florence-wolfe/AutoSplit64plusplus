@@ -93,15 +93,23 @@ def disconnect(ls_socket) -> None:
     ls_socket.close()
 
 
+def _lost():
+    """ The error for LiveSplit's end of the connection being gone, which the status dot shows """
+    global _connected, _connect_failed
+    _connected = False
+    _connect_failed = True
+    return ConnectionAbortedError("LiveSplit connection lost")
+
+
 def check_connection(ls_socket) -> bool:
     # Check if connection has been established
     if (ls_socket == False):
         return False
     # Check if communication is possible and response is received
-    if split_index(ls_socket) is False:
+    try:
+        return split_index(ls_socket) is not False
+    except ConnectionAbortedError:
         return False
-    else:
-        return True
 
 
 def send(ls_socket, command) -> None:
@@ -112,14 +120,17 @@ def send(ls_socket, command) -> None:
     # If it is a socket:
     if isinstance(ls_socket, socket.socket):
         # Send the command to the socket
-        ls_socket.send(command.encode('utf-8'))
+        try:
+            ls_socket.send(command.encode('utf-8'))
+        except OSError:
+            raise _lost()
     # If it is a pipe:
     else:
         # Send the command to the pipe
         try:
             win32file.WriteFile(ls_socket, command.encode('utf-8'))
         except pywintypes.error:
-            raise Exception("LiveSplit connection lost")
+            raise _lost()
 
 def split(ls_socket) -> None:
     send(ls_socket, "startorsplit\r\n")
@@ -149,14 +160,21 @@ def split_index(ls_socket):
         try:
             ls_socket.send("getsplitindex\r\n".encode('utf-8'))
         except OSError:
-            return False
+            raise _lost()
         
         # Wait for response
         readable = select.select([ls_socket], [], [], 0.5)
         if readable[0]:
             try:
-                return int(ls_socket.recv(1000).decode("utf-8"))
-            except (OSError, ValueError):
+                answer = ls_socket.recv(1000)
+            except OSError:
+                raise _lost()
+            # LiveSplit closed the connection
+            if not answer:
+                raise _lost()
+            try:
+                return int(answer.decode("utf-8"))
+            except ValueError:
                 return False
         else:
             return False
@@ -166,7 +184,7 @@ def split_index(ls_socket):
         try:
             win32file.WriteFile(ls_socket, "getsplitindex\r\n".encode('utf-8'))
         except pywintypes.error:
-            return False
+            raise _lost()
         # Get current time
         start_time = time.time()
         # Set timeout to 0.5 seconds
@@ -180,7 +198,7 @@ def split_index(ls_socket):
             try:
                 peek_data, available , _ = win32pipe.PeekNamedPipe(ls_socket, 1000)
             except pywintypes.error:
-                raise Exception("LiveSplit connection lost")
+                raise _lost()
             # If there is data available:
             if available > 0:
                 # Read the data from the pipe

@@ -73,6 +73,30 @@ class RunTest(unittest.TestCase):
         b.logger.error.assert_not_called()
         b.stop.assert_not_called()
 
+    def test_lost_livesplit_connection_is_reported_once(self):
+        b = make_base()
+        b._current_split.split_type = "NORMAL"
+        b._game_capture = mock.Mock()
+        b._in_game = True
+        b._make_predictions = False
+        b._count_xcams = False
+        b.analyze_fade_status = mock.Mock()
+        # The process would split, which fails too
+        b._processor_switch = mock.Mock(execute=mock.Mock(side_effect=ConnectionAbortedError))
+        b.logger = mock.Mock()
+        b.validity_check = mock.Mock(return_value=True)
+        b._start_listener = mock.Mock()
+        b._error_listener = mock.Mock()
+        b.stop = mock.Mock(side_effect=lambda: setattr(b, "_running", False))
+
+        with mock.patch.object(base, "as64", SimpleNamespace(fps=30), create=True), \
+             mock.patch.object(base.livesplit, "connect"), \
+             mock.patch.object(base.livesplit, "split_index", side_effect=ConnectionAbortedError("LiveSplit connection lost")):
+            b.run()
+
+        b._error_listener.assert_called_once_with("LiveSplit connection lost")
+        b.stop.assert_called()
+
 
 class FirstSplitsTest(unittest.TestCase):
     """ Lookups of earlier splits at the start of the route mustn't wrap around to its end """
