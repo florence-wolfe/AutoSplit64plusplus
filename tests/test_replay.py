@@ -47,15 +47,8 @@ class FullRunTest(_SplitsTest):
 
     def test_splits_when_the_runner_did(self):
         for index, (title, _, _) in enumerate(RECORDING.split_windows()):
-            if title == "Mips":
-                continue
             with self.subTest(title):
                 self.assert_split_in_window(self.result, index)
-
-    @unittest.expectedFailure
-    def test_mips_split(self):
-        # Splits 0.34 s early, while Mario runs to the painting: Mario's hat isn't found for one frame
-        self.assert_split_in_window(self.result, [title for title, _ in RECORDING.splits].index("Mips"))
 
     def test_only_splits_after_the_start(self):
         commands = [command for _, command, _ in self.result.commands[2:]]
