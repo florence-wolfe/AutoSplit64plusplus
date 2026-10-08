@@ -27,7 +27,7 @@ from autosplit64.processes.standard import (
     ProcessWait,
 )
 from autosplit64.processes.xcam import ProcessXCam, ProcessXCamStartUpSegment
-from autosplit64.processes.ddd import ProcessDDDEntry, ProcessDDDEntryX, ProcessFindDDDPortal
+from autosplit64.processes.ddd import ProcessDDDSplit, ProcessDDDSplitX, ProcessFindDDDPortal
 from autosplit64.processes.final import ProcessFinalStageEntry, ProcessFinalStarGrab, ProcessFinalStarSpawn
 
 def route_timing():
@@ -71,12 +71,12 @@ def register_processes():
     register_process("FILE_SELECT_SPLIT", ProcessFileSelectSplit())
 
     register_process("FIND_DDD_PORTAL", ProcessFindDDDPortal())
-    register_process("DDD_SPLIT", ProcessDDDEntry())  # TODO: RENAME ProcessDDDEntry to ProcessDDDSplit
-    register_process("DDD_SPLIT_X", ProcessDDDEntryX())  # TODO: RENAME ProcessDDDEntryX to ProcessDDDSplitX
+    register_process("DDD_SPLIT", ProcessDDDSplit())
+    register_process("DDD_SPLIT_X", ProcessDDDSplitX())
 
     register_process("FINAL_DETECT_ENTRY", ProcessFinalStageEntry())  # TODO: RENAME
     register_process("FINAL_DETECT_SPAWN", ProcessFinalStarSpawn())  # TODO: RENAME
-    register_process("FINAL_STAR_SPLIT", ProcessFinalStarGrab())  # TODO: RENAME to FINAL_STAR_SPLIT
+    register_process("FINAL_STAR_SPLIT", ProcessFinalStarGrab())
 
 
 class AutoSplit64(QtCore.QObject):

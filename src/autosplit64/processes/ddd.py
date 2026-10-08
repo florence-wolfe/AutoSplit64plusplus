@@ -39,7 +39,7 @@ class ProcessFindDDDPortal(Process):
         super().on_transition()
 
 
-class ProcessDDDEntry(Process):
+class ProcessDDDSplit(Process):
     def __init__(self,):
         super().__init__()
         self.register_signal("ENTERED")
@@ -64,7 +64,7 @@ class ProcessDDDEntry(Process):
         super().on_transition()
 
 
-class ProcessDDDEntryX(Process):
+class ProcessDDDSplitX(Process):
     def __init__(self,):
         super().__init__()
         self.register_signal("ENTERED")

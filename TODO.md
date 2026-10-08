@@ -22,7 +22,4 @@ Ranked by what matters most to a runner, then by what makes the rest safer to do
 
 10. **`test_split_list` in `tests/test_theme.py` is flaky.** It fails about one in three runs of the whole suite: the selected row is sometimes drawn in the inactive highlight colour (grey), probably because the window doesn't have focus. Releases run the tests first, so it can fail a release.
 
-11. **Cleanups.**
-    - The `# TODO: RENAME` processes in `main.py`.
-    - The fallback in `Base.__init__` that passes the route path as the game version when no route loads (`# TODO: What is this doing?`).
-    - `AutoSplit64++.spec` and `AutoSplit64plusplus.spec`: check which one `build.py` uses and remove the other.
+11. **Name the Final processes.** `main.py` marks the `FINAL_DETECT_ENTRY` and `FINAL_DETECT_SPAWN` processes `# TODO: RENAME`, without saying to what.

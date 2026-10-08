@@ -50,14 +50,11 @@ class Base(Thread):
         self._route = load_route(config.get("route", "path"))
 
         # Initialize Game Capture
-        if config.get("game", "override_version"):
+        # Without a route, starting fails on it, but the capture regions still need a version
+        if config.get("game", "override_version") or not self._route:
             version = config.get("game", "version")
         else:
-            try:
-                version = self._route.version
-            except AttributeError:
-                # TODO: What is this doing? Why are we ever passing the path into the version?
-                version = config.get("route", "path")
+            version = self._route.version
 
         # Initialize the Game Capture
         self._game_capture = GameCapture(config.get("game", "use_obs"), config.get("game", "vc_fix"), config.get("game", "process_name"), config.get("game", "game_region"), version, config.get("game", "capture_device") if config.get("game", "capture_source") == "device" else None)

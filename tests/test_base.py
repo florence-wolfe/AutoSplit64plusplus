@@ -98,6 +98,31 @@ class RunTest(unittest.TestCase):
         b.stop.assert_called()
 
 
+class GameVersionTest(unittest.TestCase):
+    """ The version the capture regions are laid out for """
+
+    def version_for(self, route, override=False):
+        real_get = base.config.get
+        settings = {("game", "override_version"): override, ("game", "version"): "US", ("route", "path"): "routes/missing.as64"}
+        with mock.patch.object(base.config, "load_config"), \
+             mock.patch.object(base.config, "get", side_effect=lambda section, key=None: settings.get((section, key), real_get(section, key))), \
+             mock.patch.object(base, "load_route", return_value=route), \
+             mock.patch.object(base, "Model"), \
+             mock.patch.object(base, "GameCapture") as game_capture:
+            game_capture.return_value.get_region_rect.return_value = [0, 0, 10, 10]
+            Base(SimpleNamespace(CONFIRMATION_MODE=0, prediction_info=None))
+        return game_capture.call_args.args[4]
+
+    def test_route_version(self):
+        self.assertEqual(self.version_for(SimpleNamespace(version="JP", splits=[SimpleNamespace(star_count=1)], initial_star=0)), "JP")
+
+    def test_overridden(self):
+        self.assertEqual(self.version_for(SimpleNamespace(version="JP", splits=[SimpleNamespace(star_count=1)], initial_star=0), override=True), "US")
+
+    def test_route_that_failed_to_load(self):
+        self.assertEqual(self.version_for(None), "US")
+
+
 class FirstSplitsTest(unittest.TestCase):
     """ Lookups of earlier splits at the start of the route mustn't wrap around to its end """
 
