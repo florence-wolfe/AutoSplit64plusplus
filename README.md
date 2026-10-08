@@ -259,4 +259,4 @@ Gerardo Cervantes - [Star Classifier](https://github.com/gerardocervantes8/Star-
 
 ## TODO
 
-- **Capture cards on Windows without the OBS Plugin.** Windows has no Video Device source yet, so capture card users who run OBS need the plugin: capturing the OBS window gets the scaled preview with overlays, and most capture cards can't be opened by a second program while OBS uses them. Add a Video Device source on Windows like the macOS one, so the OBS Virtual Camera (with its output set to the capture card source) and capture cards can be captured directly, e.g. with OpenCV, which is already a dependency. Then compare it with the plugin for latency and image quality (the virtual camera always uses OBS's output resolution, and can only output one thing at a time), and if it's good enough, retire the plugin, its build and `capture_shmem.py`.
+See [TODO.md](TODO.md).
