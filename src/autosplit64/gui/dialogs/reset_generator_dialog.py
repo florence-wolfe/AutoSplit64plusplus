@@ -46,6 +46,8 @@ class ResetGeneratorHelpDialog(QtWidgets.QDialog):
 
 
 class ResetGeneratorDialog(QtWidgets.QDialog):
+    applied = QtCore.pyqtSignal()
+
     TEMPLATE_DIR = "templates/"
     FRAME_WIDTH = 251
     FRAME_HEIGHT = 137
@@ -153,6 +155,7 @@ class ResetGeneratorDialog(QtWidgets.QDialog):
 
         self._reset_generator.stop()
         self.hide()
+        self.applied.emit()
 
     def cancel_clicked(self):
         self._remove_temp_files()

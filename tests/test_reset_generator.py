@@ -51,6 +51,16 @@ class ResetGeneratorDialogTest(unittest.TestCase):
         self.assertEqual(config.get("advanced", "reset_frame_two"), str(self.dir) + "/generated_reset_two.jpg")
         config.save_config.assert_called_once()
 
+    def test_apply_tells_split_detection_to_restart(self):
+        # Split detection reads the templates when it starts, so it must restart to use the new ones
+        applied = mock.Mock()
+        self.dialog.applied.connect(applied)
+        self.dialog.on_generate()
+        self.dialog.cancel_clicked()
+        applied.assert_not_called()
+        self.dialog.apply_clicked()
+        applied.assert_called_once()
+
     def test_opening_shows_the_templates_in_use(self):
         # Templates applied earlier, not the temporary frames of a generation
         for name, i in (("one", 1), ("two", 4)):

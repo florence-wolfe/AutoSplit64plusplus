@@ -186,6 +186,7 @@ class App(QtWidgets.QMainWindow):
         self.dialogs["route_editor"].route_updated.connect(self._on_route_update)
         self.dialogs["settings_dialog"].applied.connect(self.settings_updated)
         self.dialogs["capture_editor"].applied.connect(self._reset)
+        self.dialogs["reset_dialog"].applied.connect(self._reset)
         self.menu_button.clicked.connect(self._show_button_menu)
 
         # On macOS, the right-click menu is also in the menu bar
