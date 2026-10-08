@@ -310,11 +310,17 @@ class App(QtWidgets.QMainWindow):
         return True
 
     def open_route_browser(self):
-        """ Show native file dialog to select a .route file for use. """
+        """ Show native file dialog to select a route to use, or LiveSplit splits to convert to one. """
         file_path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Open Route", absolute_path("routes"),
-                                                             "AS64 Route Files (*.as64)")
+                                                             "Routes and LiveSplit Splits (*.as64 *.lss)")
 
-        if file_path:
+        if not file_path:
+            return
+        # Converted in the Route Editor, like its Open does, to check the guessed details before saving it
+        if file_path.lower().endswith(".lss"):
+            self.dialogs["route_editor"].show()
+            self.dialogs["route_editor"].convert_lss(file_path)
+        else:
             self._save_open_route(file_path)
 
     def contextMenuEvent(self, event):
@@ -349,7 +355,7 @@ class App(QtWidgets.QMainWindow):
 
         route_menu.addSeparator()
         from_file_action = route_menu.addAction("From File")
-        from_file_action.setToolTip("Open a route (.as64) from anywhere")
+        from_file_action.setToolTip("Open a route (.as64) from anywhere, or LiveSplit splits (.lss) to convert to a route")
         from_file_action.triggered.connect(self.open_route_browser)
 
         # (text, tooltip, slot) actions; None is a separator, and a (text, tooltip, setting) slot

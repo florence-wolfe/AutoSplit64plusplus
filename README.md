@@ -187,7 +187,7 @@ A regular split triggers when the specified number of stars has been collected, 
 
 **The easiest way to create a route is to import the splits you use in LiveSplit: press `Open` in the Route Editor and select your `.lss` file. AutoSplit64++ fills in as many details as it can, but check each split to make sure it's correct.**
 
-`Right-Click -> Open Route` switches between the routes in the `routes` folder, or opens one from a file.
+`Right-Click -> Open Route` switches between the routes in the `routes` folder, or opens one from a file. Choosing LiveSplit splits (`.lss`) there converts them in the Route Editor, like its `Open` does.
 
 ### Updates
 The installed version is shown at the bottom, next to the menu button. Click it to check for an update. With `Check for Updates` on (in `Settings -> General`), AutoSplit64++ also checks when it opens and offers a new version, and a green dot appears next to the version: click it to update.

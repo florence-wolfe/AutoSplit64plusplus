@@ -86,6 +86,32 @@ class MenuActionsTest(unittest.TestCase):
         self.assertEqual(routes[-1].text(), "From File")
         self.assertTrue(routes[-2].isSeparator())
 
+    def from_file(self, chosen):
+        """ Open Route -> From File, choosing `chosen` in the file dialog. Returns the dialog's file filter. """
+        with mock.patch.object(QtWidgets.QFileDialog, "getOpenFileName", return_value=(chosen, "")) as dialog:
+            self.app.open_route_browser()
+        return dialog.call_args.args[3]
+
+    def test_from_file_offers_routes_and_livesplit_splits(self):
+        file_filter = self.from_file("")
+        self.assertIn("*.as64", file_filter)
+        self.assertIn("*.lss", file_filter)
+
+    def test_from_file_switches_to_a_route(self):
+        with mock.patch.object(self.app, "_save_open_route") as switch:
+            self.from_file("/routes/16 star.as64")
+        switch.assert_called_once_with("/routes/16 star.as64")
+
+    def test_from_file_converts_livesplit_splits_in_the_route_editor(self):
+        editor = self.app.dialogs["route_editor"]
+        with mock.patch.object(self.app, "_save_open_route") as switch, mock.patch.object(editor, "show") as show, \
+             mock.patch.object(editor, "convert_lss") as convert:
+            self.from_file("/splits/16 star.LSS")
+        # Like the Route Editor's Open, to check the guessed details before saving the route
+        show.assert_called_once()
+        convert.assert_called_once_with("/splits/16 star.LSS")
+        switch.assert_not_called()
+
 
 class MainWindowTest(unittest.TestCase):
     def setUp(self):
