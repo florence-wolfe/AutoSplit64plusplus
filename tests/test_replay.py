@@ -2,11 +2,14 @@
 Split detection over recorded runs (see tests/replay.py), against the runner's own splits: each must happen
 within the tenth of a second that the runner's timer shows for it.
 """
+import json
 import shutil
 import tempfile
 import unittest
 
-from tests.replay import Recording, generate_reset_templates, replay
+from autosplit64.core import route_loader
+from autosplit64.core.constants import SPLIT_NORMAL
+from tests.replay import DEFAULTS, ROUNDING, Recording, first_black_centre, generate_reset_templates, replay
 
 NEEDS_VIDEO = "Needs the recording, from: uv run python -m tests.replay"
 
@@ -54,6 +57,21 @@ class _FullRunTest(_RecordingTest):
         for index, (title, _, _) in enumerate(self.RECORDING.split_windows()):
             with self.subTest(title):
                 self.assert_split_in_window(self.result, index)
+
+    def test_fadeout_splits_on_the_first_frame_the_centre_is_black(self):
+        # Frame-exact, unlike the runner's timer: at most one look of split detection after the frame
+        look = 1 / json.loads(DEFAULTS.read_text())["advanced"]["fadeout_process_frame_rate"]
+        times = self.result.split_times()
+        for index, split in enumerate(route_loader.load(self.RECORDING.route_path).splits):
+            if split.split_type != SPLIT_NORMAL:
+                continue
+            with self.subTest(split.title):
+                time = times[index]
+                # Looking a second back also finds a frame the split should have happened on before
+                black = first_black_centre(self.RECORDING, time - 1, time)
+                self.assertIsNotNone(black, f"The centre isn't black when {split.title} splits, at {time:.3f} s")
+                self.assertLessEqual(time - black, look + ROUNDING,
+                                     f"{split.title} split at {time:.3f} s, the centre is black from {black:.3f} s")
 
     def test_only_splits_after_the_start(self):
         commands = [command for _, command, _ in self.result.run_commands()[2:]]

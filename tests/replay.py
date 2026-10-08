@@ -17,6 +17,7 @@ import importlib
 import io
 import json
 import logging
+import math
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -26,7 +27,9 @@ import cv2
 
 from autosplit64 import core, main
 from autosplit64.core import base, config, route_loader
+from autosplit64.core.constants import RESET_REGION
 from autosplit64.core.game_capture import GameCapture
+from autosplit64.core.image_utils import is_black
 from autosplit64.gui.dialogs import reset_generator_dialog
 
 RECORDINGS = Path(__file__).parent / "recordings"
@@ -303,6 +306,29 @@ def generate_reset_templates(recording, directory):
     if errors or not all(frame.exists() for frame in frames):
         raise RuntimeError(f"No console reset between {at} and {at + length} s: {errors}")
     return frames
+
+
+def first_black_centre(recording, earliest, latest):
+    """
+    The time of the first frame from `earliest` to `latest` where the centre of the game is black, which a split
+    at a fadeout waits for, or None
+    """
+    black_threshold = json.loads(DEFAULTS.read_text())["thresholds"]["black_threshold"]
+    version = route_loader.load(recording.route_path).version
+    clock = Clock(earliest, latest)
+    capture = VideoCapture(recording.video, clock, recording.game_region, version)
+    try:
+        fps = recording.fps()
+        # Frame times times fps are whole numbers, give or take rounding
+        for frame in range(math.ceil(earliest * fps - ROUNDING), math.floor(latest * fps + ROUNDING) + 1):
+            # Within the frame, so it's the frame that's captured
+            clock.now = (frame + 0.5) / fps
+            capture.capture()
+            if is_black(capture.get_region(RESET_REGION), black_threshold):
+                return capture.frame_time
+        return None
+    finally:
+        capture.release()
 
 
 def replay(recording, start, end, templates, split_index=-1):
