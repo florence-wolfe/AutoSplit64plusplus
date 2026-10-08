@@ -1,7 +1,11 @@
 import subprocess
 import sys
+import threading
 import time
 import unittest
+from unittest import mock
+
+import numpy as np
 
 if sys.platform == "darwin":
     import Quartz
@@ -62,6 +66,64 @@ class CaptureWindowMacTest(unittest.TestCase):
         first = capture_window_mac.capture(self.window)
         second = capture_window_mac.capture(self.window)
         self.assertEqual(first.shape, second.shape)
+
+
+@unittest.skipUnless(sys.platform == "darwin", "needs macOS")
+class TitleBarTest(unittest.TestCase):
+    """ The title bar isn't part of the capture, like the client area on Windows """
+
+    def setUp(self):
+        self.addCleanup(setattr, capture_window_mac, "_active", None)
+
+    def window(self, width, height):
+        window = mock.Mock()
+        window.windowID.return_value = 7
+        window.frame.return_value = Quartz.CGRectMake(100, 50, width, height)
+        return window
+
+    def screen(self, *windows, display=(1512, 982)):
+        display_mock = mock.Mock()
+        display_mock.frame.return_value = Quartz.CGRectMake(0, 0, *display)
+        content = mock.Mock()
+        content.windows.return_value = list(windows)
+        content.displays.return_value = [display_mock]
+        return mock.patch.object(capture_window_mac, "_shareable_content", return_value=content)
+
+    def stream(self, window, frame):
+        """ Start a stream of window, which has received frame """
+        output = mock.Mock(frame=frame, error=None, frame_received=threading.Event())
+        output.frame_received.set()
+        with mock.patch.object(capture_window_mac.SCK, "SCStream"), \
+             mock.patch.object(capture_window_mac.SCK, "SCContentFilter"), \
+             mock.patch.object(capture_window_mac, "_StreamOutput") as stream_output, \
+             mock.patch.object(capture_window_mac, "_wait", return_value=[None]):
+            stream_output.alloc.return_value.init.return_value = output
+            capture_window_mac.SCK.SCStream.alloc.return_value.initWithFilter_configuration_delegate_.return_value.addStreamOutput_type_sampleHandlerQueue_error_.return_value = (True, None)
+            return capture_window_mac.capture(window)
+
+    def test_size_leaves_out_the_title_bar(self):
+        window = self.window(1290, 988)
+        with self.screen(window):
+            self.assertEqual(capture_window_mac.get_capture_size(window), [1290, 960])
+
+    def test_frame_leaves_out_the_title_bar(self):
+        window = self.window(400, 300)
+        # Each row's value is its number, so the first row left shows what was cut
+        frame = np.repeat(np.arange(300, dtype=np.uint16)[:, None, None], 400, axis=1).repeat(3, axis=2)
+        with self.screen(window):
+            captured = self.stream(window, frame)
+            self.assertEqual(captured.shape, (272, 400, 3))
+            self.assertEqual(captured[0, 0, 0], 28)
+            # Later frames of the running stream too
+            self.assertEqual(capture_window_mac.capture(window).shape, (272, 400, 3))
+
+    def test_fullscreen_window_has_no_title_bar(self):
+        window = self.window(1512, 982)
+        window.frame.return_value = Quartz.CGRectMake(0, 0, 1512, 982)
+        frame = np.zeros((982, 1512, 3), np.uint8)
+        with self.screen(window):
+            self.assertEqual(capture_window_mac.get_capture_size(window), [1512, 982])
+            self.assertEqual(self.stream(window, frame).shape, (982, 1512, 3))
 
 
 if __name__ == "__main__":

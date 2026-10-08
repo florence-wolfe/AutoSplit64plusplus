@@ -166,7 +166,7 @@ On macOS, the Capture Editor's `Source` chooses what to capture. Each source nee
 
 **Window** streams the emulator window directly with ScreenCaptureKit (the same API used by screen sharing apps), so neither OBS nor a virtual camera is needed. It needs the Screen Recording permission; restart AutoSplit64++ after allowing it if the editor doesn't pick it up.
 - The window can be behind other windows, but not minimized.
-- Select your emulator in the `Process` drop-down. The capture includes the window's title bar, so make sure the game region only covers the game.
+- Select your emulator in the `Process` drop-down. The capture leaves out the window's title bar, like on Windows. If you set up your game region with an earlier version, set it again and generate new reset templates; starting asks you to.
 - Don't resize the emulator window after setting the region. If you do, set the region again.
 
 The OBS Plugin is Windows-only.

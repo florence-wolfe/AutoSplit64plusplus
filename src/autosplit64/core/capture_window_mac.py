@@ -9,6 +9,7 @@ import subprocess
 import sys
 import threading
 
+import AppKit
 import numpy as np
 import objc
 import psutil
@@ -20,7 +21,7 @@ from Foundation import NSBundle, NSObject
 _TIMEOUT = 5
 _MINIMUM_WINDOW_SIZE = 100
 
-# The stream of the window currently being captured: (window id, stream, output)
+# The stream of the window currently being captured: (window id, stream, output, title bar height)
 _active = None
 
 
@@ -159,7 +160,9 @@ def _start_stream(window):
     global _active
     stop()
 
-    width, height = get_capture_size(window)
+    window, displays = _current(window)
+    size = window.frame().size
+    width, height = int(size.width), int(size.height)
     config = SCK.SCStreamConfiguration.alloc().init()
     config.setWidth_(width)
     config.setHeight_(height)
@@ -177,7 +180,7 @@ def _start_stream(window):
     if error is not None:
         raise Exception(f"Failed to capture \"{window.title()}\"\n\n{error.localizedDescription()}")
 
-    _active = (window.windowID(), stream, output)
+    _active = (window.windowID(), stream, output, _title_bar_height(window, displays))
     return output
 
 
@@ -198,14 +201,30 @@ def capture(window, client_area=True):
 
     if not output.frame_received.wait(1):
         raise Exception(f"Failed to capture \"{window.title()}\"\n\nMake sure the window is not minimized!")
-    return output.frame
+    return output.frame[_active[3]:]
+
+
+def _current(window):
+    """ The window as it is now, as SCWindows don't update, and the displays """
+    content = _shareable_content()
+    if content is None:
+        return window, []
+    for w in content.windows():
+        if w.windowID() == window.windowID():
+            return w, content.displays()
+    return window, content.displays()
+
+
+def _title_bar_height(window, displays):
+    """ The height of the window's title bar in points, which a fullscreen window doesn't show """
+    if any(Quartz.CGRectEqualToRect(window.frame(), display.frame()) for display in displays):
+        return 0
+    content = Quartz.CGRectMake(0, 0, 100, 100)
+    return int(AppKit.NSWindow.frameRectForContentRect_styleMask_(content, AppKit.NSWindowStyleMaskTitled).size.height - 100)
 
 
 def get_capture_size(window):
-    """ Returns the current window size in points """
-    for w in _windows():
-        if w.windowID() == window.windowID():
-            window = w
-            break
+    """ Returns the current size in points of the window without its title bar, like the client area on Windows """
+    window, displays = _current(window)
     size = window.frame().size
-    return [int(size.width), int(size.height)]
+    return [int(size.width), int(size.height) - _title_bar_height(window, displays)]
