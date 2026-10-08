@@ -46,9 +46,37 @@ def timing_setup(timing):
 
 
 def set_up_timing():
-    """ Set up the configured route's timing, and return its initial processor """
+    """ Set up the configured route's timing, and return its initial processor's file """
     path, core.start_on_reset = timing_setup(route_timing())
-    return ProcessorGenerator.generate(path)
+    return path
+
+
+def register_processes():
+    register_process("WAIT", ProcessWait())
+    register_process("RUN_START", ProcessRunStart())
+    register_process("RUN_START_UP_RTA", ProcessRunStartUpSegment())
+    register_process("STAR_COUNT", ProcessStarCount())
+    register_process("FADEIN", ProcessFadein())
+    register_process("FADEOUT", ProcessFadeout())
+    register_process("FADEOUT_NO_STAR", ProcessFadeoutNoStar())
+    register_process("FADEOUT_RESET_ONLY", ProcessFadeoutResetOnly())
+    register_process("POST_FADEOUT", ProcessPostFadeout())
+    register_process("FLASH_CHECK", ProcessFlashCheck())
+    register_process("RESET", ProcessReset())
+    register_process("DUMMY", ProcessDummy())
+
+    register_process("XCAM", ProcessXCam())
+    register_process("XCAM_UP_RTA", ProcessXCamStartUpSegment())
+
+    register_process("FILE_SELECT_SPLIT", ProcessFileSelectSplit())
+
+    register_process("FIND_DDD_PORTAL", ProcessFindDDDPortal())
+    register_process("DDD_SPLIT", ProcessDDDEntry())  # TODO: RENAME ProcessDDDEntry to ProcessDDDSplit
+    register_process("DDD_SPLIT_X", ProcessDDDEntryX())  # TODO: RENAME ProcessDDDEntryX to ProcessDDDSplitX
+
+    register_process("FINAL_DETECT_ENTRY", ProcessFinalStageEntry())  # TODO: RENAME
+    register_process("FINAL_DETECT_SPAWN", ProcessFinalStarSpawn())  # TODO: RENAME
+    register_process("FINAL_STAR_SPLIT", ProcessFinalStarGrab())  # TODO: RENAME to FINAL_STAR_SPLIT
 
 
 class AutoSplit64(QtCore.QObject):
@@ -84,48 +112,24 @@ class AutoSplit64(QtCore.QObject):
             self.on_error("Reset template files are missing!\n\nPlease generate reset templates first.")
             return
 
-        register_process("WAIT", ProcessWait())
-        register_process("RUN_START", ProcessRunStart())
-        register_process("RUN_START_UP_RTA", ProcessRunStartUpSegment())
-        register_process("STAR_COUNT", ProcessStarCount())
-        register_process("FADEIN", ProcessFadein())
-        register_process("FADEOUT", ProcessFadeout())
-        register_process("FADEOUT_NO_STAR", ProcessFadeoutNoStar())
-        register_process("FADEOUT_RESET_ONLY", ProcessFadeoutResetOnly())
-        register_process("POST_FADEOUT", ProcessPostFadeout())
-        register_process("FLASH_CHECK", ProcessFlashCheck())
-        register_process("RESET", ProcessReset())
-        register_process("DUMMY", ProcessDummy())
+        register_processes()
 
-        register_process("XCAM", ProcessXCam())
-        register_process("XCAM_UP_RTA", ProcessXCamStartUpSegment())
-
-        register_process("FILE_SELECT_SPLIT", ProcessFileSelectSplit())
-
-        register_process("FIND_DDD_PORTAL", ProcessFindDDDPortal())
-        register_process("DDD_SPLIT", ProcessDDDEntry())  # TODO: RENAME ProcessDDDEntry to ProcessDDDSplit
-        register_process("DDD_SPLIT_X", ProcessDDDEntryX())  # TODO: RENAME ProcessDDDEntryX to ProcessDDDSplitX
-
-        register_process("FINAL_DETECT_ENTRY", ProcessFinalStageEntry())  # TODO: RENAME
-        register_process("FINAL_DETECT_SPAWN", ProcessFinalStarSpawn())  # TODO: RENAME
-        register_process("FINAL_STAR_SPLIT", ProcessFinalStarGrab())  # TODO: RENAME to FINAL_STAR_SPLIT
-
-        initial_processor = set_up_timing()
-
-        standard_processor = ProcessorGenerator.generate("standard/star_fade.processor")
-        fade_only_processor = ProcessorGenerator.generate("standard/fade_only.processor")
-        xcam_processor = ProcessorGenerator.generate("standard/xcam_split.processor")
-        ddd_processor = ProcessorGenerator.generate("ddd/ddd.processor")
-        mips_x_processor = ProcessorGenerator.generate("ddd/mips_x.processor")
-        final_processor = ProcessorGenerator.generate("final/final.processor")
-
-        core.register_split_processor(core.SPLIT_INITIAL, initial_processor)
-        core.register_split_processor(core.SPLIT_NORMAL, standard_processor)
-        core.register_split_processor(core.SPLIT_FADE_ONLY, fade_only_processor)
-        core.register_split_processor(core.SPLIT_MIPS, ddd_processor)
-        core.register_split_processor(core.SPLIT_MIPS_X, mips_x_processor)
-        core.register_split_processor(core.SPLIT_FINAL, final_processor)
-        core.register_split_processor(core.SPLIT_XCAM, xcam_processor)
+        processor_paths = {
+            core.SPLIT_INITIAL: set_up_timing(),
+            core.SPLIT_NORMAL: "standard/star_fade.processor",
+            core.SPLIT_FADE_ONLY: "standard/fade_only.processor",
+            core.SPLIT_XCAM: "standard/xcam_split.processor",
+            core.SPLIT_MIPS: "ddd/ddd.processor",
+            core.SPLIT_MIPS_X: "ddd/mips_x.processor",
+            core.SPLIT_FINAL: "final/final.processor",
+        }
+        for split_type, path in processor_paths.items():
+            processor = ProcessorGenerator.generate(path)
+            # Without it, splits of this type would never happen
+            if processor is None:
+                self.on_error(f"Unable to load the split detection logic {path}.\n\nSee the log for details.")
+                return
+            core.register_split_processor(split_type, processor)
 
         core.set_update_listener(self.on_update)
         core.set_error_listener(self.on_error)

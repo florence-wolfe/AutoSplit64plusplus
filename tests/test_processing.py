@@ -50,6 +50,19 @@ class GenerateTest(unittest.TestCase):
                 self.assertIsNone(ProcessorGenerator.generate(self.write("p", "A", transitions)))
         self.assertIsNone(ProcessorGenerator.generate(self.write("p", "UNKNOWN", {})))
 
+    def test_failures_are_logged_with_their_reason(self):
+        for transitions, reason in [({"UNKNOWN": {"A.DONE": "B"}}, "UNKNOWN"), ({"A": {"A.UNKNOWN": "B"}}, "A.UNKNOWN"),
+                                    ({"A": {"A.DONE": "UNKNOWN"}}, "UNKNOWN")]:
+            with self.subTest(transitions), self.assertLogs(".log", "ERROR") as logs:
+                ProcessorGenerator.generate(self.write("p", "A", transitions))
+            self.assertIn("p.processor", logs.output[0])
+            self.assertIn(reason, logs.output[0])
+
+    def test_missing_file_is_logged(self):
+        with self.assertLogs(".log", "ERROR") as logs:
+            ProcessorGenerator.generate("missing.processor")
+        self.assertIn("missing.processor", logs.output[0])
+
 
 class ShippedProcessorsTest(unittest.TestCase):
     """ Every processor in logic/ generates, with stand-ins for the processes main.py registers """

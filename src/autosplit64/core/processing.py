@@ -7,6 +7,8 @@ from pathlib import Path
 # Processor files, which refer to each other relative to it
 LOGIC_DIR = Path(__file__).resolve().parent.parent / "logic"
 
+log = logging.getLogger(".log")
+
 processes = {}
 
 
@@ -26,7 +28,7 @@ class ProcessorGenerator(object):
         # Load processor file
         file = ProcessorGenerator._open_file(file_path)
         if not file:
-            print(file_path, "2: File Error")
+            log.error("Unable to read processor %s", file_path)
             return None
 
         transitions = {}
@@ -38,7 +40,7 @@ class ProcessorGenerator(object):
             sub_processor = ProcessorGenerator.generate(file[ProcessorGenerator.SUB_PROCESSORS][sub_processor_key])
 
             if not sub_processor:
-                print(file["name"], "1: Sub-Processor Generation Error")
+                log.error("Unable to generate sub-processor %s of %s", sub_processor_key, file_path)
                 return None
 
             sub_processors[sub_processor_key] = sub_processor
@@ -53,7 +55,7 @@ class ProcessorGenerator(object):
         # Set initial process
         initial_process = find(file[ProcessorGenerator.INITIAL_PROCESS])
         if not initial_process:
-            print(file["name"], "3: [KeyError] Unable to set initial process")
+            log.error("Unknown initial process %s in %s", file[ProcessorGenerator.INITIAL_PROCESS], file_path)
             return None
         processor.initial_process = initial_process
 
@@ -62,7 +64,7 @@ class ProcessorGenerator(object):
             inherit_file = ProcessorGenerator._open_file(file[ProcessorGenerator.INHERIT])
 
             if not inherit_file:
-                print(file["name"], "4")
+                log.error("Unable to read processor %s, which %s inherits", file[ProcessorGenerator.INHERIT], file_path)
                 return None
 
             transitions = inherit_file[ProcessorGenerator.TRANSITIONS]
@@ -80,18 +82,18 @@ class ProcessorGenerator(object):
                 # Define Transition
                 t_process = find(process_key)
                 if not t_process:
-                    print(file["name"], "5")
+                    log.error("Unknown process %s in %s", process_key, file_path)
                     return None
 
                 signal_process = find(signal_location)
                 t_signal = signal_process.signals.get(signal_value) if signal_process else None
                 if not t_signal:
-                    print(file["name"], "6")
+                    log.error("Unknown signal %s in %s", signal, file_path)
                     return None
 
                 t_next = find(transitions[process_key][signal])
                 if not t_next:
-                    print(file["name"], "7")
+                    log.error("Unknown process %s in %s", transitions[process_key][signal], file_path)
                     return None
 
                 t = Transition(t_process, t_signal, t_next)
