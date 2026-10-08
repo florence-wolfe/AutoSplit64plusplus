@@ -10,7 +10,7 @@ from autosplit64.core.image_utils import is_black
 from autosplit64.core.processing import Process, Signal
 
 
-class ProcessFinalStageEntry(Process):
+class ProcessFindFinalStage(Process):
     def __init__(self,):
         super().__init__()
         self.register_signal("ENTERED")
@@ -41,7 +41,7 @@ class ProcessFinalStageEntry(Process):
         super().on_transition()
 
 
-class ProcessFinalStarSpawn(Process):
+class ProcessFindFinalStar(Process):
     def __init__(self):
         super().__init__()
         self.register_signal("SPAWNED")
@@ -92,7 +92,7 @@ class ProcessFinalStarSpawn(Process):
         return not is_black(output, 0.1, threshold)
 
 
-class ProcessFinalStarGrab(Process):
+class ProcessFinalStarSplit(Process):
     def __init__(self):
         super().__init__()
         self.register_signal("COMPLETE")

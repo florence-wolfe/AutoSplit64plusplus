@@ -1,14 +1,14 @@
 {
   "name": "final_spawn",
-  "initial_process": "FINAL_DETECT_SPAWN",
+  "initial_process": "FIND_FINAL_STAR",
   "inherit": null,
   "sub_processors": {},
   "transitions": {
     "FADEOUT": {
       "FADEOUT.RESET": "RESET"
     },
-    "FINAL_DETECT_SPAWN": {
-      "FINAL_DETECT_SPAWN.FADEOUT": "FADEOUT"
+    "FIND_FINAL_STAR": {
+      "FIND_FINAL_STAR.FADEOUT": "FADEOUT"
     }
   }
 }

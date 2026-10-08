@@ -1,14 +1,14 @@
 {
   "name": "final_entry",
-  "initial_process": "FINAL_DETECT_ENTRY",
+  "initial_process": "FIND_FINAL_STAGE",
   "inherit": null,
   "sub_processors": {},
   "transitions": {
-    "FINAL_DETECT_ENTRY": {
-      "FINAL_DETECT_ENTRY.FADEOUT": "FADEOUT"
+    "FIND_FINAL_STAGE": {
+      "FIND_FINAL_STAGE.FADEOUT": "FADEOUT"
     },
     "FADEOUT": {
-      "FADEOUT.COMPLETE": "FINAL_DETECT_ENTRY",
+      "FADEOUT.COMPLETE": "FIND_FINAL_STAGE",
       "FADEOUT.RESET": "RESET"
     }
   }
