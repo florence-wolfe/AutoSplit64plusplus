@@ -1,0 +1,24 @@
+{
+    "title": "greensuigi's 16 Star No LBLJ in 15:28.99 (world record), from a console reset",
+    "url": "https://www.youtube.com/watch?v=yHgp1r4P1AQ",
+    "height": 720,
+    "game_region": [291, 0, 989, 720],
+    "route": "greensuigi_16_star.as64",
+    "labels": "The splits are the runner's, as their timer shows them at the end of the run. Their timer's tenths change exactly on the tenths of the video (frame 906, at 30.2 s, first shows 27.4; frame 27006 first shows 14:57.4), so the video is timer_offset seconds ahead of it, to within a frame. The timer starts at timer_start when the logo shows after the console reset.",
+    "timer_offset": 2.8,
+    "timer_start": 1.36,
+    "splits": [
+        ["BOB 1", "1:35.1"],
+        ["WF 6", "4:33.6"],
+        ["CCM 8", "5:52.0"],
+        ["BitDW 9", "7:41.1"],
+        ["SSL 11", "9:03.1"],
+        ["LLL 13", "10:02.2"],
+        ["HMC 15", "10:46.1"],
+        ["Mips", "11:22.0"],
+        ["DDD 16", "12:03.3"],
+        ["BitFS", "13:24.2"],
+        ["BLJ", "14:08.4"],
+        ["BitS", "15:29.0"]
+    ]
+}

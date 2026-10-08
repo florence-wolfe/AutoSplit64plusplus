@@ -79,6 +79,25 @@ def register_processes():
     register_process("FINAL_STAR_SPLIT", ProcessFinalStarSplit())
 
 
+def register_split_processors():
+    """ Register each split type's processor, returning the file of one that failed to generate, or None """
+    processor_paths = {
+        core.SPLIT_INITIAL: set_up_timing(),
+        core.SPLIT_NORMAL: "standard/star_fade.processor",
+        core.SPLIT_FADE_ONLY: "standard/fade_only.processor",
+        core.SPLIT_XCAM: "standard/xcam_split.processor",
+        core.SPLIT_MIPS: "ddd/ddd.processor",
+        core.SPLIT_MIPS_X: "ddd/mips_x.processor",
+        core.SPLIT_FINAL: "final/final.processor",
+    }
+    for split_type, path in processor_paths.items():
+        processor = ProcessorGenerator.generate(path)
+        if processor is None:
+            return path
+        core.register_split_processor(split_type, processor)
+    return None
+
+
 class AutoSplit64(QtCore.QObject):
     error = QtCore.pyqtSignal(str)
     update_found = QtCore.pyqtSignal(dict)
@@ -114,22 +133,11 @@ class AutoSplit64(QtCore.QObject):
 
         register_processes()
 
-        processor_paths = {
-            core.SPLIT_INITIAL: set_up_timing(),
-            core.SPLIT_NORMAL: "standard/star_fade.processor",
-            core.SPLIT_FADE_ONLY: "standard/fade_only.processor",
-            core.SPLIT_XCAM: "standard/xcam_split.processor",
-            core.SPLIT_MIPS: "ddd/ddd.processor",
-            core.SPLIT_MIPS_X: "ddd/mips_x.processor",
-            core.SPLIT_FINAL: "final/final.processor",
-        }
-        for split_type, path in processor_paths.items():
-            processor = ProcessorGenerator.generate(path)
-            # Without it, splits of this type would never happen
-            if processor is None:
-                self.on_error(f"Unable to load the split detection logic {path}.\n\nSee the log for details.")
-                return
-            core.register_split_processor(split_type, processor)
+        failed = register_split_processors()
+        # Without it, splits of this type would never happen
+        if failed:
+            self.on_error(f"Unable to load the split detection logic {failed}.\n\nSee the log for details.")
+            return
 
         core.set_update_listener(self.on_update)
         core.set_error_listener(self.on_error)

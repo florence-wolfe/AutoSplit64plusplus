@@ -5,6 +5,8 @@ obs-plugin/cmake/.CMakeBuildNumber
 obs-plugin/build_x64/
 obs-plugin/.deps/
 .vscode
+# Videos of recorded runs, downloaded by tests/replay.py
+tests/recordings/cache/
 
 ### Python template
 # Byte-compiled / optimized / DLL files

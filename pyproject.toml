@@ -24,7 +24,10 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["pyinstaller==6.11.1"]
+dev = [
+    "pyinstaller==6.11.1",
+    "yt-dlp==2026.8.19",
+]
 
 [build-system]
 requires = ["hatchling"]

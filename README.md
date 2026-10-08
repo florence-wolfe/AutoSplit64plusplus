@@ -216,6 +216,7 @@ AutoSplit64++ uses [uv](https://docs.astral.sh/uv/) to manage Python and its dep
 
 - Start AutoSplit64++: `uv run python -m autosplit64`
 - Run the tests: `uv run python -m unittest`
+- Replay recorded runs in the tests: `uv run python -m tests.replay` downloads the videos of the runs in `tests/recordings` into `tests/recordings/cache` with yt-dlp. The tests then replay them through split detection and check its splits against the runner's, which takes about a minute. Without the videos, these tests are skipped.
 - Add or update a dependency: `uv add <package>`, which updates `pyproject.toml` and `uv.lock`
 
 The code is in `src/autosplit64`: `core` (capture, LiveSplit connections, config, updates), `logic` (split detection), and `gui` (the windows and dialogs).
