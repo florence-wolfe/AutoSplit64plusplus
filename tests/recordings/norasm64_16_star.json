@@ -1,0 +1,65 @@
+{
+    "title": "NoraSM64's 16 Star No LBLJ in 17:33, from a console reset",
+    "url": "https://www.twitch.tv/videos/2596356339",
+    "height": 720,
+    "game_region": [
+        320,
+        0,
+        960,
+        720
+    ],
+    "route": "norasm64_16_star.as64",
+    "labels": "The splits are the runner's, as their timer shows them at the end of the run, where each course's subsplits are collapsed into the course's last split. Their timer's tenths change on a frame: frame 18002 (300.033 s) is the first to show 4:51.3, so the video is timer_offset seconds ahead of it, to within a frame.",
+    "timer_offset": 8.73,
+    "timer_start": 1.36,
+    "splits": [
+        [
+            "BOB 1",
+            "1:37.5"
+        ],
+        [
+            "WF 6",
+            "4:41.3"
+        ],
+        [
+            "CCM 8",
+            "6:04.6"
+        ],
+        [
+            "BitDW 9",
+            "8:09.2"
+        ],
+        [
+            "SSL 11",
+            "9:35.8"
+        ],
+        [
+            "LLL 12",
+            "10:09.0"
+        ],
+        [
+            "HMC 15",
+            "11:28.9"
+        ],
+        [
+            "Mips",
+            "12:15.0"
+        ],
+        [
+            "DDD 16",
+            "13:02.7"
+        ],
+        [
+            "BitFS",
+            "14:36.5"
+        ],
+        [
+            "BLJs",
+            "15:42.2"
+        ],
+        [
+            "BitS",
+            "17:33.8"
+        ]
+    ]
+}

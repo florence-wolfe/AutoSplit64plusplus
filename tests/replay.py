@@ -32,6 +32,11 @@ from autosplit64.gui.dialogs import reset_generator_dialog
 RECORDINGS = Path(__file__).parent / "recordings"
 CACHE = RECORDINGS / "cache"
 DEFAULTS = Path(__file__).parent.parent / "defaults.ini"
+# The runner's timer in a video shows a split a little after split detection sends it, once LiveSplit and the
+# recording show it: NoraSM64's LiveSplit shows AutoSplit64+'s splits 0.03 to 0.08 s after the replay sends them
+DISPLAY_DELAY = 0.1
+# Leeway for adding up floating point numbers
+ROUNDING = 1e-6
 
 
 @dataclass
@@ -66,25 +71,25 @@ class Recording:
     def available(self):
         return self.video.exists()
 
-    def _window(self, time):
+    def _window(self, time, shown_for):
         """
-        When something the runner's timer shows at `time` happened in the video: the timer shows tenths, cut off,
-        and the offset is exact to within a frame
+        When split detection did what the runner's timer shows at `time`, which it shows for `shown_for` seconds:
+        the offset is exact to within a frame, and detection is up to DISPLAY_DELAY ahead of the timer
         """
         start = time + self.timer_offset
-        return start - 1 / self.fps(), start + 0.1
+        return start - 1 / self.fps() - DISPLAY_DELAY - ROUNDING, start + shown_for + ROUNDING
 
     def start_window(self):
-        """ When the timer started in the video """
-        start = self.timer_start + self.timer_offset
-        return start - 1 / self.fps(), start
+        """ When split detection started the timer """
+        return self._window(self.timer_start, 0)
 
     def split_windows(self):
         """ (title, earliest, latest) in the video of each of the runner's splits """
         windows = []
         for title, shown in self.splits:
             minutes, _, seconds = shown.rpartition(":")
-            windows.append((title, *self._window(int(minutes or 0) * 60 + float(seconds))))
+            # The timer shows tenths, cut off
+            windows.append((title, *self._window(int(minutes or 0) * 60 + float(seconds), 0.1)))
         return windows
 
     def _video_property(self, *properties):
@@ -153,6 +158,8 @@ class VideoCapture(GameCapture):
                 break
             self._index += 1
             self._frame = frame
+        # The time of the frame in the video, which split detection decides on
+        self.frame_time = self._index / self._fps
         self._window_image = self._frame
         self._region_images = {}
 
@@ -169,8 +176,9 @@ class VideoCapture(GameCapture):
 class Timer:
     """ Stands in for the livesplit module: a timer with the route's splits, which records the commands it gets """
 
-    def __init__(self, clock, split_count, index=-1):
-        self._clock = clock
+    def __init__(self, now, split_count, index=-1):
+        # When a command happens, in the video
+        self._now = now
         self._split_count = split_count
         # -1 while the timer isn't running, like LiveSplit's getsplitindex, and the split count once it ended
         self.index = index
@@ -178,7 +186,7 @@ class Timer:
         self.commands = []
 
     def _record(self, command):
-        self.commands.append((self._clock.now, command, self.index))
+        self.commands.append((self._now(), command, self.index))
 
     def connect(self):
         return self
@@ -226,9 +234,14 @@ class Replay:
     # The warnings and errors it logged
     log: list
 
+    def run_commands(self):
+        """ The commands from the console reset the run starts with, if any. Videos can start in the attempt before. """
+        start = next((i for i, (_, command, _) in enumerate(self.commands) if command == "reset"), 0)
+        return self.commands[start:]
+
     def split_times(self):
-        """ When the timer moved on to each split, by the index of the split that ended """
-        return {index - 1: time for time, command, index in self.commands if command == "split" and index > 0}
+        """ When the timer moved on to each split in the run, by the index of the split that ended """
+        return {index - 1: time for time, command, index in self.run_commands() if command == "split" and index > 0}
 
 
 class _LogRecorder(logging.Handler):
@@ -267,11 +280,12 @@ def _replaying(recording, clock, settings):
         root.removeHandler(recorder)
 
 
-def generate_reset_templates(recording, directory, at=0.0, length=10.0):
+def generate_reset_templates(recording, directory):
     """
-    Reset templates from the console reset in the `length` seconds after `at`, like Generate Reset Templates
-    does with the default frames: two and three after the fadeout. Returns their paths.
+    Reset templates from the console reset the recording starts with, like Generate Reset Templates does with
+    the default frames: two and three after the fadeout. Returns their paths.
     """
+    at, length = 0, recording.start_window()[1] + 5
     clock = Clock(at, at + length)
     settings = _settings(recording, None)
     with _replaying(recording, clock, settings), \
@@ -297,7 +311,7 @@ def replay(recording, start, end, templates, split_index=-1):
     (-1: not running). Returns what it did.
     """
     clock = Clock(start, end)
-    timer = Timer(clock, len(route_loader.load(recording.route_path).splits), split_index)
+    timer = Timer(lambda: captures[-1].frame_time, len(route_loader.load(recording.route_path).splits), split_index)
     captures = []
 
     def video_capture(use_obs, vc_fix, process_name, game_region, version, device):
@@ -335,8 +349,9 @@ def download(recording):
     import yt_dlp
 
     CACHE.mkdir(exist_ok=True)
-    # Only the video, so no ffmpeg is needed to merge it with the audio
-    options = {"format": f"bestvideo[height={recording.height}][ext=mp4]", "outtmpl": str(recording.video)}
+    # Only the video, so no ffmpeg is needed to merge it with the audio, or else one file with both, like on Twitch
+    video = f"[height={recording.height}][ext=mp4]"
+    options = {"format": f"bestvideo{video}/bv*{video}", "outtmpl": str(recording.video)}
     with yt_dlp.YoutubeDL(options) as downloader:
         downloader.download([recording.url])
 

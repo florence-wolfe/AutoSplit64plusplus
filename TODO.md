@@ -2,7 +2,7 @@
 
 Ranked by what matters most to a runner, then by what makes the rest safer to do.
 
-1. **More recorded runs.** `tests/recordings` has one clean run, on the JP version, captured through one runner's setup. Add runs with deaths, resets during the run and star skips, other versions and captures (VC, emulators), and the other split types (X-Cam, fade-only, File Select and Up RTA timing). Recordings of your own could run in CI, without YouTube. The replay doesn't charge detection's processing time to the clock, so it can't show splits that a slow computer would be late for.
+1. **More recorded runs.** `tests/recordings` has two clean 16 Star No LBLJ runs on console with the JP version: greensuigi's and NoraSM64's. Add runs with deaths, resets during the run and star skips, the LBLJ route, other versions and captures (VC, emulators), and the other split types (X-Cam, fade-only, File Select and Up RTA timing). A run is only ground truth when the runner split with AutoSplit64: BigCheeseSR's and DharcLicht's splits differ from split detection by up to 0.2 s either way, so they split some other way. Recordings of your own could run in CI, without YouTube or Twitch. The replay doesn't charge detection's processing time to the clock, so it can't show splits that a slow computer would be late for.
 
 2. **Make the core stateful.** `core/__init__.py` is a module of stub functions and globals that `Base` overwrites with its own methods and values when split detection starts. Replace it with an object that holds the state and that the processes are given, so it can be created, tested and thrown away without patching a module.
 
