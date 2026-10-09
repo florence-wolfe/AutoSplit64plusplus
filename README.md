@@ -220,9 +220,9 @@ AutoSplit64++ uses [uv](https://docs.astral.sh/uv/) to manage Python and its dep
 
 - Start AutoSplit64++: `uv run python -m autosplit64`
 - Start it for development: `uv run dev.py`, which starts it again whenever its code changes. `--open debug` (or `route-editor`, `settings`, `capture`, `reset-templates`, `about`) also opens that window each time. It ends when you quit AutoSplit64++, and after a crash, it waits for your next change.
-- Run the tests: `uv run python -m unittest`
-- Replay recorded runs in the tests: `uv run python -m tests.replay` downloads the videos of the runs in `tests/recordings` into `tests/recordings/cache` with yt-dlp. The tests then replay them through split detection, also with other settings and routes, and check its splits against the runner's, which takes about 8 minutes. Without the videos, these tests are skipped.
-- What split detection does over each recording is kept in `tests/recordings/traces`: every split, star count and fade it counted, at its frame of the video. A change must leave them the same, since runners' split times depend on it. If a change means to change them, rerun the tests with `UPDATE_TRACES=1`, and check every change in the traces' diff.
+- Run the tests: `uv run pytest`. They run in a process for each CPU core, with their windows drawn in memory instead of on the screen. `-n 0` runs them in one process, and `QT_QPA_PLATFORM=cocoa` (or `windows`) shows their windows.
+- Replay recorded runs in the tests: `uv run python -m tests.replay` downloads the videos of the runs in `tests/recordings` into `tests/recordings/cache` with yt-dlp. The tests then replay them through split detection, also with other settings and routes, and check its splits against the runner's, which takes a couple of minutes. Without the videos, these tests are skipped.
+- What split detection does over each recording is kept in `tests/recordings/traces`: every split, star count and fade it counted, at its frame of the video. A change must leave them the same, since runners' split times depend on it. If a change means to change them, rerun the tests with `UPDATE_TRACES=1 uv run pytest tests/test_replay.py`, and check every change in the traces' diff.
 - Add or update a dependency: `uv add <package>`, which updates `pyproject.toml` and `uv.lock`
 
 The code is in `src/autosplit64`: `core` (capture, LiveSplit connections, config, updates), `logic` (split detection), and `gui` (the windows and dialogs).

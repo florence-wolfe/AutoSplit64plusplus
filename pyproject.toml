@@ -26,6 +26,8 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pyinstaller==6.11.1",
+    "pytest==9.1.1",
+    "pytest-xdist==3.8.0",
     "yt-dlp==2026.8.19",
 ]
 
@@ -39,3 +41,8 @@ packages = ["src/autosplit64"]
 [tool.uv]
 # AutoSplit64++ runs on Windows and macOS
 environments = ["sys_platform == 'win32'", "sys_platform == 'darwin'"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Each test class in one process, since the replay tests replay a recording once for all their tests
+addopts = "-n auto --dist loadscope"

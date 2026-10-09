@@ -1,4 +1,5 @@
 import json
+import socket
 import threading
 import time
 import unittest
@@ -8,7 +9,15 @@ from websockets.sync.client import connect
 from autosplit64.core import livesplit_one
 from autosplit64.core.livesplit_one import LiveSplitOneServer
 
-PORT = 16899
+
+def free_port():
+    with socket.socket() as probe:
+        probe.bind(("localhost", 0))
+        return probe.getsockname()[1]
+
+
+# One for each test process, since they run at the same time
+PORT = free_port()
 
 
 class FakeLiveSplitOne:

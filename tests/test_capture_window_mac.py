@@ -1,3 +1,4 @@
+import os
 import subprocess
 import sys
 import threading
@@ -8,12 +9,10 @@ from unittest import mock
 import numpy as np
 
 if sys.platform == "darwin":
+    import AppKit
     import Quartz
-    from PyQt6 import QtWidgets
     from autosplit64.core import capture_window_mac
 
-    # Capture streams need a window server connection, which the app gets from Qt
-    _app = QtWidgets.QApplication([])
 
 # A window whose left half is pure red and right half pure blue
 WINDOW_SCRIPT = """
@@ -35,8 +34,16 @@ app.exec()
 
 @unittest.skipUnless(sys.platform == "darwin" and Quartz.CGPreflightScreenCaptureAccess(), "needs macOS with Screen Recording permission")
 class CaptureWindowMacTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # Capture streams need a window server connection, which the app gets from Qt, and AppKit when the
+        # tests run offscreen. Only here, since it makes the test process an app, with a Dock icon on macOS.
+        AppKit.NSApplication.sharedApplication()
+
     def setUp(self):
-        self.proc = subprocess.Popen([sys.executable, "-c", WINDOW_SCRIPT])
+        # On the screen, also when the tests run offscreen
+        env = {key: value for key, value in os.environ.items() if key != "QT_QPA_PLATFORM"}
+        self.proc = subprocess.Popen([sys.executable, "-c", WINDOW_SCRIPT], env=env)
         self.addCleanup(self.proc.wait)
         self.addCleanup(self.proc.kill)
         self.addCleanup(capture_window_mac.stop)
