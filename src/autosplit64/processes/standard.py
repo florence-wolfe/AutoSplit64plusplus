@@ -159,8 +159,11 @@ class ProcessFadein(Process):
         if self.core.fade_status == FADEIN_PARTIAL:
             return self.signals["LOOP"]
         else:
-            # TODO: BUG: Fadein transition oscillation
-            # Returns complete signal, transitions to star_count, is still white, transitions back on loop
+            # Also while the screen is still white, so the star count process takes over and comes straight back,
+            # every other look until the fade-in ends. Left that way on purpose: runners can't see it, since the
+            # fade-in split happens before it starts. Returning LOOP until the fade-in ends was tried: the star counts,
+            # fades and splits stayed the same, but the looks after each fade-in fell at other times, which moved splits
+            # in the recordings' traces by a video frame or two, as many earlier as later.
             return self.signals["COMPLETE"]
 
     def on_transition(self):
