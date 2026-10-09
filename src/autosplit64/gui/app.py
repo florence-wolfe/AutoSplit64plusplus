@@ -2,7 +2,6 @@ import os
 import logging
 from functools import partial
 import re
-import time
 from datetime import datetime
 from pathlib import Path
 from PyQt6 import QtCore, QtGui, QtWidgets
@@ -10,7 +9,7 @@ from autosplit64.core import app_location, debug_info, route_loader, config, liv
 from autosplit64.core.resource_utils import base_path, absolute_path, rel_to_abs
 from . import constants
 from .widgets import PictureButton, StateButton, StarCountDisplay, SplitListWidget, ServerStatusIndicator, MenuButton, UpdateBadge
-from .dialogs import AboutDialog, CaptureEditor, SettingsDialog, RouteEditor, ResetGeneratorDialog, OutputDialog
+from .dialogs import AboutDialog, CaptureEditor, SettingsDialog, RouteEditor, ResetGeneratorDialog, DebugDialog
 from .updates import Updates
 
 
@@ -77,7 +76,7 @@ class App(QtWidgets.QMainWindow):
             "settings_dialog": SettingsDialog(self),
             "route_editor": RouteEditor(self),
             "reset_dialog": ResetGeneratorDialog(self),
-            "output_dialog": OutputDialog(self)
+            "debug_dialog": DebugDialog(self)
         }
 
         self._routes = {}
@@ -187,6 +186,7 @@ class App(QtWidgets.QMainWindow):
                                  "The timer itself isn't affected.")
         self.dialogs["route_editor"].route_updated.connect(self._on_route_update)
         self.dialogs["settings_dialog"].applied.connect(self.settings_updated)
+        self.dialogs["debug_dialog"].save_debug_info.connect(self.save_debug_info)
         self.dialogs["capture_editor"].applied.connect(self._reset)
         self.dialogs["reset_dialog"].applied.connect(self._reset)
         self.menu_button.clicked.connect(self._show_button_menu)
@@ -372,7 +372,7 @@ class App(QtWidgets.QMainWindow):
             None,
             ("Generate Reset Templates", "Record what a console reset looks like in your capture, so resets are detected", self.dialogs["reset_dialog"].show),
             None,
-            ("Show Output", "Show what split detection sees: fades, X-Cams and star predictions", self.dialogs["output_dialog"].show),
+            ("Debug", "Show what split detection sees and does, and its logs", self.dialogs["debug_dialog"].show),
             ("Save Debug Info", "Save the logs, settings, route and a captured frame in one file, for a bug report", self.save_debug_info),
             None,
             ("Autostart", "Start split detection when AutoSplit64++ opens, trying for up to 5 minutes", "auto_start"),
@@ -422,7 +422,7 @@ class App(QtWidgets.QMainWindow):
 
     def _edit_coordinates(self):
         self.dialogs["capture_editor"].show()
-        self.dialogs["output_dialog"].close()
+        self.dialogs["debug_dialog"].close()
 
     def mousePressEvent(self, event):
         if event.buttons() == QtCore.Qt.MouseButton.LeftButton:
@@ -500,13 +500,7 @@ class App(QtWidgets.QMainWindow):
         self.set_started(False)
 
     def closeEvent(self, event):
-        output_dialog = self.dialogs["output_dialog"]
-        reading_output = output_dialog.output_reader is not None
-        output_dialog.close()
-        if reading_output:
-            # Give the output reader a moment to stop
-            time.sleep(0.1)
-
+        self.dialogs["debug_dialog"].close()
         self.stop.emit()
         self.updates.on_quit()
         event.accept()

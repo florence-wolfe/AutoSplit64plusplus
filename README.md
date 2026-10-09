@@ -74,7 +74,7 @@ All windows and options are in the right-click menu, which the menu button (☰)
 - **Edit Coordinates**: choose what to capture and where the game is in it
 - **Settings**: connection to LiveSplit, detection thresholds, theme and other settings
 - **Generate Reset Templates**: record what a console reset looks like in your capture
-- **Show Output**: show what split detection sees: fades, X-Cams and star predictions
+- **Debug**: show what split detection sees and does, and open this session's or the previous session's log
 - **Save Debug Info**: save the logs, settings, route, reset templates and a captured frame with split detection's regions drawn on it in one file, to send with a bug report
 - **Autostart**: start split detection when AutoSplit64++ opens
 - **SRL Mode**: don't reset the timer when you reset the console, e.g. in races
@@ -210,7 +210,7 @@ If it splits at the wrong time, or not at all, also send a recording of the run 
 - Check the correct route is loaded, and that it's accurate (e.g. correct star counts, fadeout/fadein counts)
 - Make sure SRL Mode (`Right-Click -> SRL Mode`) is off if you want AutoSplit64++ to detect console resets
 - Generate reset templates (`Right-Click -> Generate Reset Templates`)
-- Use `Right-Click -> Show Output` to see what split detection sees
+- Use `Right-Click -> Debug` to see what split detection sees
 - Enlarge your game capture window if it is very small
 - Make sure your capture's colour settings (e.g. saturation) are default or close to default
 - If using an unpowered splitter, compare the whiteness of your star select screens to other players. If it is extremely dull you may need to increase your capture brightness

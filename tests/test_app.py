@@ -40,7 +40,7 @@ class MenuTest(unittest.TestCase):
         app._populate_menu(menu)
         items = [a.text() if not a.isSeparator() else "---" for a in menu.actions()]
         self.assertEqual(items, ["Edit Route", "Open Route", "---", "Edit Coordinates", "---", "Settings", "---",
-                                 "Generate Reset Templates", "---", "Show Output", "Save Debug Info", "---", "Autostart", "SRL Mode",
+                                 "Generate Reset Templates", "---", "Debug", "Save Debug Info", "---", "Autostart", "SRL Mode",
                                  "---", "About", "---", "Exit"])
 
 
@@ -64,7 +64,7 @@ class MenuActionsTest(unittest.TestCase):
             ("Edit Coordinates", "Choose what to capture and where the game is in it", False, no_role),
             ("Settings", "Connection to LiveSplit, detection thresholds and other settings", False, no_role),
             ("Generate Reset Templates", "Record what a console reset looks like in your capture, so resets are detected", False, no_role),
-            ("Show Output", "Show what split detection sees: fades, X-Cams and star predictions", False, no_role),
+            ("Debug", "Show what split detection sees and does, and its logs", False, no_role),
             ("Save Debug Info", "Save the logs, settings, route and a captured frame in one file, for a bug report", False, no_role),
             ("Autostart", "Start split detection when AutoSplit64++ opens, trying for up to 5 minutes", True, no_role),
             ("SRL Mode", "Don't reset the timer when you reset the console, e.g. in races", True, no_role),
@@ -74,7 +74,7 @@ class MenuActionsTest(unittest.TestCase):
     def test_actions_open_their_dialog(self):
         for text, dialog in [("Edit Route", "route_editor"), ("Edit Coordinates", "capture_editor"),
                              ("Settings", "settings_dialog"), ("Generate Reset Templates", "reset_dialog"),
-                             ("Show Output", "output_dialog"), ("About", "about_dialog")]:
+                             ("Debug", "debug_dialog"), ("About", "about_dialog")]:
             with self.subTest(text), mock.patch.object(self.app.dialogs[dialog], "show") as show:
                 # The menu connects to show when it's filled
                 self.menu = QtWidgets.QMenu(self.app)
@@ -188,7 +188,7 @@ class MainWindowTest(unittest.TestCase):
         stopped = mock.Mock()
         self.app.stop.connect(stopped)
         with mock.patch.object(self.app.updates, "on_quit") as on_quit, \
-                mock.patch.object(self.app.dialogs["output_dialog"], "close") as close_output:
+                mock.patch.object(self.app.dialogs["debug_dialog"], "close") as close_output:
             self.app.close()
         stopped.assert_called()
         on_quit.assert_called()

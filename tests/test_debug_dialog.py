@@ -1,11 +1,15 @@
+import contextlib
+import shutil
+import tempfile
 import unittest
+from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-from PyQt6 import QtGui, QtWidgets
+from PyQt6 import QtCore, QtGui, QtWidgets
 
-from autosplit64.core import config
-from autosplit64.gui.dialogs.output_dialog import OutputDialog
+from autosplit64.core import config, logs
+from autosplit64.gui.dialogs.debug_dialog import DebugDialog
 
 _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
@@ -13,13 +17,13 @@ OUTPUT = {"fade_status": "FADEOUT_PARTIAL", "fadeout_count": 2, "fadein_count": 
           "xcam_count": 3, "xcam_status": True, "prediction": 16, "probability": 0.987654321, "execution": 0.0123456}
 
 
-class OutputDialogTest(unittest.TestCase):
+class DebugDialogTest(unittest.TestCase):
     def setUp(self):
         for patcher in [mock.patch.object(config, "_config", {"general": {"output_update_rate": 10}}),
                         mock.patch.object(config, "save_config")]:
             patcher.start()
             self.addCleanup(patcher.stop)
-        self.dialog = OutputDialog()
+        self.dialog = DebugDialog()
         self.addCleanup(self.dialog.deleteLater)
 
     def fields(self):
@@ -54,11 +58,59 @@ class OutputDialogTest(unittest.TestCase):
         self.assertEqual(config.get("general", "output_update_rate"), 25)
         config.save_config.assert_called_once()
 
+    def test_title_and_resizable(self):
+        self.assertEqual(self.dialog.windowTitle(), "Debug")
+        self.assertLess(self.dialog.minimumSize().width(), self.dialog.maximumSize().width())
+        self.assertLess(self.dialog.minimumSize().height(), self.dialog.maximumSize().height())
+
+    def test_remembers_its_size(self):
+        self.dialog.show()
+        self.dialog.resize(420, 610)
+        self.dialog.close()
+        self.assertEqual(config.get("general", "debug_window_size"), [420, 610])
+        again = DebugDialog()
+        self.addCleanup(again.deleteLater)
+        self.assertEqual((again.width(), again.height()), (420, 610))
+
+    def test_opens_the_logs_in_the_text_editor(self):
+        with mock.patch.object(QtGui.QDesktopServices, "openUrl") as open_url:
+            self.dialog.open_log_btn.click()
+        self.assertEqual(open_url.call_args.args[0], QtCore.QUrl.fromLocalFile(str(Path(logs.LOG_FILE).absolute())))
+
+    def test_previous_log_only_when_there_is_one(self):
+        directory = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, directory)
+        with contextlib.chdir(directory):
+            self.dialog.update_log_buttons()
+            self.assertFalse(self.dialog.open_old_log_btn.isEnabled())
+            Path(logs.OLD_LOG_FILE).write_text("previous session")
+            self.dialog.update_log_buttons()
+            self.assertTrue(self.dialog.open_old_log_btn.isEnabled())
+            with mock.patch.object(QtGui.QDesktopServices, "openUrl") as open_url:
+                self.dialog.open_old_log_btn.click()
+            self.assertEqual(open_url.call_args.args[0], QtCore.QUrl.fromLocalFile(str(Path(logs.OLD_LOG_FILE).absolute())))
+
+    def test_save_debug_info(self):
+        saved = mock.Mock()
+        self.dialog.save_debug_info.connect(saved)
+        self.dialog.save_debug_info_btn.click()
+        saved.assert_called_once()
+
+    def test_closing_stops_the_output_reader(self):
+        # Deleting the window while its thread runs would abort AutoSplit64++
+        config.set_key("general", "output_update_rate", 1)
+        self.dialog.show()
+        reader = self.dialog.output_reader
+        self.dialog.close()
+        self.assertTrue(reader.isFinished())
+
     def test_closing_before_it_was_shown(self):
         # The main window closes it when quitting, also when it was never shown. An exception in
         # closeEvent would abort the app, so it's called directly here to fail the test instead.
         self.dialog.closeEvent(QtGui.QCloseEvent())
         self.dialog.hide()
+        # Which doesn't change the settings
+        config.save_config.assert_not_called()
 
 
 if __name__ == "__main__":

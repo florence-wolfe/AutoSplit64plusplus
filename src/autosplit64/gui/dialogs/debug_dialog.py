@@ -1,17 +1,24 @@
+import os
+import threading
+from pathlib import Path
+
 from PyQt6 import QtCore, QtGui, QtWidgets
-import time
 
 from ..constants import (
     ICON_PATH
 )
 
 from autosplit64 import core as as64
-from autosplit64.core import resource_utils, config
+from autosplit64.core import resource_utils, config, logs
 from autosplit64.gui.widgets import HLine
 
 
-class OutputDialog(QtWidgets.QDialog):
+class DebugDialog(QtWidgets.QDialog):
     open_capture = QtCore.pyqtSignal()
+    save_debug_info = QtCore.pyqtSignal()
+
+    # Before it's resized
+    DEFAULT_SIZE = (300, 400)
 
     # Rows of up to two (label, output key) fields, each label above its field, or one field
     # (label, output key, True) as wide as two. A number is a line between groups of rows, with
@@ -34,9 +41,10 @@ class OutputDialog(QtWidgets.QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent, QtCore.Qt.WindowType.WindowSystemMenuHint | QtCore.Qt.WindowType.WindowCloseButtonHint)
-        self.setWindowTitle("Output")
+        self.setWindowTitle("Debug")
         self.setWindowIcon(QtGui.QIcon(resource_utils.base_path(ICON_PATH)))
-        self.setFixedSize(250, 375)
+        self.setMinimumSize(*self.DEFAULT_SIZE)
+        self.resize(*(config.get("general", "debug_window_size") or self.DEFAULT_SIZE))
 
         # Output Reader
         self.output_reader = None
@@ -80,10 +88,32 @@ class OutputDialog(QtWidgets.QDialog):
         layout.addLayout(update_rate_layout, row, 1)
         layout.addItem(QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Expanding), row + 1, 0)
 
+        # The logs open in the text editor
+        self.open_log_btn = QtWidgets.QPushButton("Open Log")
+        self.open_log_btn.setToolTip("This session's log")
+        self.open_old_log_btn = QtWidgets.QPushButton("Open Previous Log")
+        self.open_old_log_btn.setToolTip("The previous session's log")
+        self.save_debug_info_btn = QtWidgets.QPushButton("Save Debug Info")
+        self.save_debug_info_btn.setToolTip("Save the logs, settings, route and a captured frame in one file, for a bug report")
+        layout.addWidget(self.open_log_btn, row + 2, 0)
+        layout.addWidget(self.open_old_log_btn, row + 2, 1)
+        layout.addWidget(self.save_debug_info_btn, row + 3, 0, 1, 2)
+
         # Connections
         self.update_le.editingFinished.connect(self._update_rate_changed)
+        self.open_log_btn.clicked.connect(lambda: self._open(logs.LOG_FILE))
+        self.open_old_log_btn.clicked.connect(lambda: self._open(logs.OLD_LOG_FILE))
+        self.save_debug_info_btn.clicked.connect(self.save_debug_info)
+
+    def update_log_buttons(self):
+        """ The previous session's log is there from the second session on """
+        self.open_old_log_btn.setEnabled(os.path.exists(logs.OLD_LOG_FILE))
+
+    def _open(self, log):
+        QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(Path(log).absolute())))
 
     def show(self):
+        self.update_log_buttons()
         self.output_reader = OutputReader(parent=self)
         self.update_le.setText(str(self._update_rate))
 
@@ -100,14 +130,19 @@ class OutputDialog(QtWidgets.QDialog):
     def _stop_reader(self):
         # Started when the dialog is shown
         if self.output_reader:
-            self.output_reader.running = False
-            self.output_reader.exit()
+            self.output_reader.stop()
+            # Deleting the window while the thread runs would abort AutoSplit64++
+            self.output_reader.wait()
 
     def hide(self):
         self._stop_reader()
         super().hide()
 
     def closeEvent(self, e):
+        # Closed when AutoSplit64++ quits too, also when it wasn't open
+        if self.isVisible():
+            config.set_key("general", "debug_window_size", [self.width(), self.height()])
+            config.save_config()
         self._stop_reader()
         super().closeEvent(e)
 
@@ -128,6 +163,11 @@ class OutputReader(QtCore.QThread):
 
         self.running = True
         self.update_rate = config.get("general", "output_update_rate")
+        self._stopped = threading.Event()
+
+    def stop(self):
+        self.running = False
+        self._stopped.set()
 
     def run(self):
         while self.running:
@@ -154,7 +194,5 @@ class OutputReader(QtCore.QThread):
 
             self.output.emit(output_data)
 
-            try:
-                time.sleep(1 / self.update_rate)
-            except ValueError:
-                pass
+            # Returns as soon as it's stopped
+            self._stopped.wait(1 / self.update_rate)
