@@ -79,8 +79,8 @@ def register_processes(detection):
     register_process("RESET", ProcessReset())
     register_process("DUMMY", ProcessDummy())
 
-    register_process("XCAM", ProcessXCam())
-    register_process("XCAM_UP_RTA", ProcessXCamStartUpSegment())
+    register_process("XCAM", ProcessXCam(detection))
+    register_process("XCAM_UP_RTA", ProcessXCamStartUpSegment(detection))
 
     register_process("FILE_SELECT_SPLIT", ProcessFileSelectSplit())
 
