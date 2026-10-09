@@ -341,9 +341,16 @@
 892.367 Running ProcessFindFinalStage
 893.767 Running Processor
 893.767 Running ProcessFindFinalStar
+915.933 Grand Star seen, iteration 0
+916.933 Grand Star seen, iteration 1
+924.233 Grand Star seen, iteration 0
+925.233 Grand Star seen, iteration 1
+929.233 Grand Star seen, iteration 2
+930.233 Grand Star spawned
 930.267 Running Processor
 930.267 Running ProcessFinalStarSplit
 931.767 Split: split 12 of 12, BitS (needs 16 stars, fadeout -1, fade-in -1), star count 16, fadeouts 1, fade-ins 0
+931.767 Grand Star grabbed
 931.800 Running Processor
 931.800 Running ProcessWait
 956.700 Fadeout 2: split 12 of 12, BitS (needs 16 stars, fadeout -1, fade-in -1), star count 16, fadeouts 2, fade-ins 0

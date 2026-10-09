@@ -1,3 +1,4 @@
+import logging
 import time
 
 import cv2
@@ -8,6 +9,9 @@ from autosplit64.core.constants import FADEOUT_COMPLETE, FADEOUT_PARTIAL, NO_HUD
 from autosplit64.core import config
 from autosplit64.core.image_utils import is_black
 from autosplit64.core.processing import Process, Signal
+
+# What split detection does and why, in the session log
+log = logging.getLogger("detection")
 
 
 class ProcessFindFinalStage(Process):
@@ -57,11 +61,11 @@ class ProcessFindFinalStar(Process):
             return self.signals["FADEOUT"]
         if self._star_visible() and self.loop_time() > 20:
             if self._looping_iteration == len(self._iteration_value):
-                print("Star Spawned")
+                log.info("Grand Star spawned")
                 return self.signals["SPAWNED"]
             else:
                 try:
-                    print("Found Iteration:", self._looping_iteration)
+                    log.info("Grand Star seen, iteration %d", self._looping_iteration)
                     time.sleep(self._iteration_value[self._looping_iteration])
                 except IndexError:
                     pass
@@ -106,7 +110,7 @@ class ProcessFinalStarSplit(Process):
 
         if not self._star_visible():
             self.core.split()
-            print("Grabbed!")
+            log.info("Grand Star grabbed")
             return self.signals["COMPLETE"]
 
         return self.signals["LOOP"]
