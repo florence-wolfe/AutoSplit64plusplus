@@ -6,7 +6,8 @@ import numpy as np
 
 from autosplit64 import core
 from autosplit64.core import config
-from autosplit64.processes.ddd import ProcessDDDSplit
+from autosplit64.processes.ddd import ProcessDDDSplit, ProcessDDDSplitX
+from tests.test_standard_processes import ProcessTestCase
 
 SETTINGS = {
     ("split_ddd_enter", "hat_lower_bound"): [0, 0, 80],
@@ -55,6 +56,40 @@ class DDDSplitTest(unittest.TestCase):
         core.fade_status = core.FADEOUT_PARTIAL
         self.assertEqual(self.frames(NO_HAT), ["FADEOUT"])
         self.split.assert_not_called()
+
+
+class DDDSplitXTest(ProcessTestCase):
+    """ ProcessDDDSplitX (Mips-X) splits on the first X-Cam """
+
+    def setUp(self):
+        super().setUp()
+        core.xcam_count = 3
+        self.process = ProcessDDDSplitX()
+        self.process.on_transition()
+
+    def test_on_transition_counts_xcams_from_zero(self):
+        self.assertEqual(core.xcam_count, 0)
+        self.assertEqual(self.calls, [("enable_xcam_count", True)])
+        self.assertEqual(core.fps, 29.97)
+
+    def test_splits_on_the_first_xcam(self):
+        results = []
+        for count in (0, 1):
+            core.xcam_count = count
+            results.append(self.process.execute())
+        self.assertEqual(results, [self.process.signals["LOOP"], self.process.signals["ENTERED"]])
+        self.assertEqual(self.names(), ["enable_xcam_count", "split"])
+
+    def test_no_split_past_the_first_xcam(self):
+        core.xcam_count = 2
+        self.assertIs(self.process.execute(), self.process.signals["LOOP"])
+        self.assertNotIn("split", self.names())
+
+    def test_fadeout(self):
+        core.fade_status = core.FADEOUT_PARTIAL
+        core.xcam_count = 1
+        self.assertIs(self.process.execute(), self.process.signals["FADEOUT"])
+        self.assertNotIn("split", self.names())
 
 
 if __name__ == "__main__":
