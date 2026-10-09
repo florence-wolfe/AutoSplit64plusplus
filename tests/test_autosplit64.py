@@ -59,5 +59,48 @@ class StartTest(unittest.TestCase):
         self.assertIn("ddd/ddd.processor", autosplit64.on_error.call_args.args[0])
 
 
+class ErrorMessageTest(unittest.TestCase):
+    """ The messages about errors nothing else handled, whose details are in the log """
+
+    def setUp(self):
+        from PyQt6 import QtWidgets
+        self.app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+        for patcher in [mock.patch.object(main, "_shown_error", False),
+                        mock.patch.object(main.QtWidgets.QMessageBox, "critical"),
+                        mock.patch.object(main.QtWidgets.QMessageBox, "warning")]:
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def test_first_error_tells_where_the_log_is(self):
+        main.show_error(ValueError("a bug"))
+        message = main.QtWidgets.QMessageBox.critical.call_args.args[2]
+        self.assertIn("a bug", message)
+        self.assertIn(str(Path(main.logs.LOG_FILE).absolute()), message)
+
+    def test_only_the_first_error_shows_a_message(self):
+        # e.g. an error in painting, which happens again on every repaint
+        main.show_error(ValueError("a bug"))
+        main.show_error(ValueError("a bug"))
+        main.QtWidgets.QMessageBox.critical.assert_called_once()
+
+    def test_errors_in_other_threads_are_only_logged(self):
+        import threading
+        thread = threading.Thread(target=main.show_error, args=(ValueError("in a thread"),))
+        thread.start()
+        thread.join()
+        main.QtWidgets.QMessageBox.critical.assert_not_called()
+
+    def test_previous_crash(self):
+        with mock.patch.object(main.logs, "previous_session_crashed", return_value=True):
+            main.tell_about_previous_crash()
+        message = main.QtWidgets.QMessageBox.warning.call_args.args[2]
+        self.assertIn(str(Path(main.logs.OLD_LOG_FILE).absolute()), message)
+
+    def test_no_previous_crash(self):
+        with mock.patch.object(main.logs, "previous_session_crashed", return_value=False):
+            main.tell_about_previous_crash()
+        main.QtWidgets.QMessageBox.warning.assert_not_called()
+
+
 if __name__ == "__main__":
     unittest.main()

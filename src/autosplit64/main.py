@@ -1,5 +1,8 @@
+import logging
 import sys
 import os
+import threading
+from pathlib import Path
 from threading import Thread
 from PyQt6 import QtCore, QtWidgets, QtGui
 from autosplit64.gui import theme
@@ -162,9 +165,39 @@ class AutoSplit64(QtCore.QObject):
         self.app.close()
 
 
+# Whether this session showed a message about an error already
+_shown_error = False
+
+
+def show_error(error):
+    """
+    Tell about the first error nothing else handled in this session, whose details are in the log. Only the GUI
+    thread may show windows, so errors in other threads are only logged.
+    """
+    global _shown_error
+    if _shown_error or threading.current_thread() is not threading.main_thread() or not QtWidgets.QApplication.instance():
+        return
+    _shown_error = True
+    QtWidgets.QMessageBox.critical(
+        None, "AutoSplit64++",
+        f"Something went wrong: {error}\n\nWhat happened is in the log, {Path(logs.LOG_FILE).absolute()}. "
+        "Please send it with a bug report. More errors in this session are only in the log.")
+
+
+def tell_about_previous_crash():
+    """ The log of a crash is the old log now, until AutoSplit64++ starts again """
+    if logs.previous_session_crashed():
+        logging.getLogger(".log").warning("The previous session crashed, see %s", logs.OLD_LOG_FILE)
+        QtWidgets.QMessageBox.warning(
+            None, "AutoSplit64++",
+            f"AutoSplit64++ quit unexpectedly last time. What happened is in {Path(logs.OLD_LOG_FILE).absolute()}. "
+            "Please send it with a bug report before starting AutoSplit64++ again, which replaces it.")
+
+
 def main():
     # First, so the log has everything that goes wrong
-    logs.start_session(VERSION)
+    handler = logs.start_session(VERSION)
+    logs.install_crash_handlers(handler, show_error)
 
     # Create QT Application
     qt_app = QtWidgets.QApplication(sys.argv)
@@ -177,6 +210,7 @@ def main():
 
     # Create main application
     autosplit64 = AutoSplit64(qt_app)
+    tell_about_previous_crash()
 
     # Exit
     sys.exit(qt_app.exec())
