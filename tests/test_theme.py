@@ -95,7 +95,9 @@ class ThemedWidgetsTest(unittest.TestCase):
 
     def test_split_list(self):
         rows = self.window.split_list
-        self.assertEqual(self.pixel(rows, 2, 2), self.color(Role.Highlight))
+        # The window may or may not have the focus, which has its own highlight
+        group = QtGui.QPalette.ColorGroup.Active if self.window.isActiveWindow() else QtGui.QPalette.ColorGroup.Inactive
+        self.assertEqual(self.pixel(rows, 2, 2), self.palette.color(group, Role.Highlight).getRgb()[:3])
         second, third = self.pixel(rows, 2, 37 + 2), self.pixel(rows, 2, 2 * 37 + 2)
         self.assertNotEqual(second, third)
         # Both rows are shades of the theme's background
