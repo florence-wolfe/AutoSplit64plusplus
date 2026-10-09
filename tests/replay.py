@@ -407,8 +407,7 @@ def _replay(recording, start, end, templates, split_index, variant, route_path):
         importlib.reload(core)
         try:
             core.init()
-            main.register_processes(core._base)
-            failed = main.register_split_processors()
+            failed = main.register_split_processors(main.make_processes(core._base))
             if failed:
                 raise RuntimeError(f"{failed} failed to generate")
             # Like main.AutoSplit64.start, which sets all three

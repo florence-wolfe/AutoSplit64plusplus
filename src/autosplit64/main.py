@@ -20,7 +20,7 @@ from autosplit64.core.constants import (
     TIMING_FILE_SELECT,
     TIMING_UP_RTA,
 )
-from autosplit64.core.processing import register_process, ProcessorGenerator
+from autosplit64.core.processing import ProcessorGenerator
 from autosplit64.core.route_loader import load_or_none
 from autosplit64.core import config, livesplit, logs
 from autosplit64.core.resource_utils import resource_path
@@ -64,37 +64,39 @@ def set_up_timing():
     return path
 
 
-def register_processes(detection):
-    """ Register the processes, which run in detection, the Base that started """
-    register_process("WAIT", ProcessWait(detection))
-    register_process("RUN_START", ProcessRunStart(detection))
-    register_process("RUN_START_UP_RTA", ProcessRunStartUpSegment(detection))
-    register_process("STAR_COUNT", ProcessStarCount(detection))
-    register_process("FADEIN", ProcessFadein(detection))
-    register_process("FADEOUT", ProcessFadeout(detection))
-    register_process("FADEOUT_NO_STAR", ProcessFadeoutNoStar(detection))
-    register_process("FADEOUT_RESET_ONLY", ProcessFadeoutResetOnly(detection))
-    register_process("POST_FADEOUT", ProcessPostFadeout(detection))
-    register_process("FLASH_CHECK", ProcessFlashCheck(detection))
-    register_process("RESET", ProcessReset(detection))
-    register_process("DUMMY", ProcessDummy(detection))
+def make_processes(detection):
+    """ The processes, which run in detection, the Base that started, by the names the processor files use """
+    return {
+        "WAIT": ProcessWait(detection),
+        "RUN_START": ProcessRunStart(detection),
+        "RUN_START_UP_RTA": ProcessRunStartUpSegment(detection),
+        "STAR_COUNT": ProcessStarCount(detection),
+        "FADEIN": ProcessFadein(detection),
+        "FADEOUT": ProcessFadeout(detection),
+        "FADEOUT_NO_STAR": ProcessFadeoutNoStar(detection),
+        "FADEOUT_RESET_ONLY": ProcessFadeoutResetOnly(detection),
+        "POST_FADEOUT": ProcessPostFadeout(detection),
+        "FLASH_CHECK": ProcessFlashCheck(detection),
+        "RESET": ProcessReset(detection),
+        "DUMMY": ProcessDummy(detection),
 
-    register_process("XCAM", ProcessXCam(detection))
-    register_process("XCAM_UP_RTA", ProcessXCamStartUpSegment(detection))
+        "XCAM": ProcessXCam(detection),
+        "XCAM_UP_RTA": ProcessXCamStartUpSegment(detection),
 
-    register_process("FILE_SELECT_SPLIT", ProcessFileSelectSplit(detection))
+        "FILE_SELECT_SPLIT": ProcessFileSelectSplit(detection),
 
-    register_process("FIND_DDD_PORTAL", ProcessFindDDDPortal(detection))
-    register_process("DDD_SPLIT", ProcessDDDSplit(detection))
-    register_process("DDD_SPLIT_X", ProcessDDDSplitX(detection))
+        "FIND_DDD_PORTAL": ProcessFindDDDPortal(detection),
+        "DDD_SPLIT": ProcessDDDSplit(detection),
+        "DDD_SPLIT_X": ProcessDDDSplitX(detection),
 
-    register_process("FIND_FINAL_STAGE", ProcessFindFinalStage(detection))
-    register_process("FIND_FINAL_STAR", ProcessFindFinalStar(detection))
-    register_process("FINAL_STAR_SPLIT", ProcessFinalStarSplit(detection))
+        "FIND_FINAL_STAGE": ProcessFindFinalStage(detection),
+        "FIND_FINAL_STAR": ProcessFindFinalStar(detection),
+        "FINAL_STAR_SPLIT": ProcessFinalStarSplit(detection),
+    }
 
 
-def register_split_processors():
-    """ Register each split type's processor, returning the file of one that failed to generate, or None """
+def register_split_processors(processes):
+    """ Register each split type's processor of processes, returning the file of one that failed to generate, or None """
     processor_paths = {
         SPLIT_INITIAL: set_up_timing(),
         SPLIT_NORMAL: "standard/star_fade.processor",
@@ -105,7 +107,7 @@ def register_split_processors():
         SPLIT_FINAL: "final/final.processor",
     }
     for split_type, path in processor_paths.items():
-        processor = ProcessorGenerator.generate(path)
+        processor = ProcessorGenerator.generate(path, processes)
         if processor is None:
             return path
         core.register_split_processor(split_type, processor)
@@ -146,9 +148,9 @@ class AutoSplit64(QtCore.QObject):
             self.on_error("Reset template files are missing!\n\nPlease generate reset templates first.")
             return
 
-        register_processes(core._base)
+        processes = make_processes(core._base)
 
-        failed = register_split_processors()
+        failed = register_split_processors(processes)
         # Without it, splits of this type would never happen
         if failed:
             self.on_error(f"Unable to load the split detection logic {failed}.\n\nSee the log for details.")

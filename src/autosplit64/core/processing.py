@@ -9,13 +9,6 @@ LOGIC_DIR = Path(__file__).resolve().parent.parent / "logic"
 
 log = logging.getLogger(".log")
 
-processes = {}
-
-
-def register_process(name, process):
-    processes[name] = process
-
-
 class ProcessorGenerator(object):
     INITIAL_PROCESS = "initial_process"
     INHERIT = "inherit"
@@ -24,7 +17,8 @@ class ProcessorGenerator(object):
     SUB_PROCESSORS = "sub_processors"
 
     @staticmethod
-    def generate(file_path):
+    def generate(file_path, processes):
+        """ The processor in file_path, of processes by the names the processor files use """
         # Load processor file
         file = ProcessorGenerator._open_file(file_path)
         if not file:
@@ -37,7 +31,7 @@ class ProcessorGenerator(object):
         sub_processors = {}
 
         for sub_processor_key in file[ProcessorGenerator.SUB_PROCESSORS]:
-            sub_processor = ProcessorGenerator.generate(file[ProcessorGenerator.SUB_PROCESSORS][sub_processor_key])
+            sub_processor = ProcessorGenerator.generate(file[ProcessorGenerator.SUB_PROCESSORS][sub_processor_key], processes)
 
             if not sub_processor:
                 log.error("Unable to generate sub-processor %s of %s", sub_processor_key, file_path)
@@ -46,7 +40,7 @@ class ProcessorGenerator(object):
             sub_processors[sub_processor_key] = sub_processor
 
         def find(name):
-            """ A registered process, or a sub-processor of this file """
+            """ A process, or a sub-processor of this file """
             return processes.get(name) or sub_processors.get(name)
 
         # Create blank processor instance

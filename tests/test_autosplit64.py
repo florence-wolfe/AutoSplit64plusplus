@@ -50,9 +50,9 @@ class StartTest(unittest.TestCase):
         autosplit64 = main.AutoSplit64.__new__(main.AutoSplit64)
         autosplit64.on_error = mock.Mock()
         autosplit64.app = SimpleNamespace(detection=None)
-        generate = lambda path: None if path == "ddd/ddd.processor" else mock.Mock()
+        generate = lambda path, processes: None if path == "ddd/ddd.processor" else mock.Mock()
         with mock.patch.object(main.core, "init"), mock.patch.object(main.core, "start") as start, \
-             mock.patch.object(main, "register_processes"), \
+             mock.patch.object(main, "make_processes"), \
              mock.patch.object(main.os.path, "exists", return_value=True), \
              mock.patch.object(main.ProcessorGenerator, "generate", side_effect=generate):
             autosplit64.start()
