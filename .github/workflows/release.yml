@@ -33,12 +33,13 @@ jobs:
         with:
           enable-cache: true
 
-      # build.py puts the plugin in the Windows app; configuring downloads the OBS sources it builds against
+      # build.py puts the plugin in the Windows app; configuring downloads the OBS sources it builds against.
+      # The runner has Visual Studio 2026 instead of the preset's 2022.
       - name: Build the OBS plugin
         if: runner.os == 'Windows'
         working-directory: obs-plugin
         run: |
-          cmake --preset windows-x64
+          cmake --preset windows-x64 -G "Visual Studio 18 2026"
           cmake --build --preset windows-x64
 
       - name: Build
