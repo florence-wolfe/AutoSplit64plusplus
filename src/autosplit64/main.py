@@ -9,6 +9,17 @@ from autosplit64.gui import theme
 from autosplit64.gui.app import App
 from autosplit64.gui.constants import FONT_PATH, VERSION
 from autosplit64 import core
+from autosplit64.core.constants import (
+    SPLIT_FADE_ONLY,
+    SPLIT_FINAL,
+    SPLIT_INITIAL,
+    SPLIT_MIPS,
+    SPLIT_MIPS_X,
+    SPLIT_NORMAL,
+    SPLIT_XCAM,
+    TIMING_FILE_SELECT,
+    TIMING_UP_RTA,
+)
 from autosplit64.core.processing import register_process, ProcessorGenerator
 from autosplit64.core.route_loader import load_or_none
 from autosplit64.core import config, livesplit, logs
@@ -40,9 +51,9 @@ def route_timing():
 
 def timing_setup(timing):
     """ The initial processor for a route's timing, and whether a console reset restarts the timer """
-    if timing == core.TIMING_UP_RTA:
+    if timing == TIMING_UP_RTA:
         return "up_rta/initial_up_rta.processor", False
-    if timing == core.TIMING_FILE_SELECT:
+    if timing == TIMING_FILE_SELECT:
         return "file_select/initial_file_select_start.processor", False
     return "standard/initial.processor", True
 
@@ -84,13 +95,13 @@ def register_processes():
 def register_split_processors():
     """ Register each split type's processor, returning the file of one that failed to generate, or None """
     processor_paths = {
-        core.SPLIT_INITIAL: set_up_timing(),
-        core.SPLIT_NORMAL: "standard/star_fade.processor",
-        core.SPLIT_FADE_ONLY: "standard/fade_only.processor",
-        core.SPLIT_XCAM: "standard/xcam_split.processor",
-        core.SPLIT_MIPS: "ddd/ddd.processor",
-        core.SPLIT_MIPS_X: "ddd/mips_x.processor",
-        core.SPLIT_FINAL: "final/final.processor",
+        SPLIT_INITIAL: set_up_timing(),
+        SPLIT_NORMAL: "standard/star_fade.processor",
+        SPLIT_FADE_ONLY: "standard/fade_only.processor",
+        SPLIT_XCAM: "standard/xcam_split.processor",
+        SPLIT_MIPS: "ddd/ddd.processor",
+        SPLIT_MIPS_X: "ddd/mips_x.processor",
+        SPLIT_FINAL: "final/final.processor",
     }
     for split_type, path in processor_paths.items():
         processor = ProcessorGenerator.generate(path)

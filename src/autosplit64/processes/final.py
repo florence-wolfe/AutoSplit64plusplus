@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 
 from autosplit64 import core
+from autosplit64.core.constants import FADEOUT_COMPLETE, FADEOUT_PARTIAL, NO_HUD_REGION
 
 from autosplit64.core import config
 from autosplit64.core.image_utils import is_black
@@ -19,9 +20,9 @@ class ProcessFindFinalStage(Process):
         self.bowser_upper_bound = config.get("split_final_star", "stage_upper_bound")
 
     def execute(self):
-        no_hud = core.get_region(core.NO_HUD_REGION)
+        no_hud = core.get_region(NO_HUD_REGION)
 
-        if core.fade_status in (core.FADEOUT_PARTIAL, core.FADEOUT_COMPLETE):
+        if core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
 
         lower = np.array(self.bowser_lower_bound, dtype="uint8")
@@ -53,7 +54,7 @@ class ProcessFindFinalStar(Process):
         self.star_upper_bound = config.get("split_final_star", "star_upper_bound")
 
     def execute(self):
-        if core.fade_status in (core.FADEOUT_PARTIAL, core.FADEOUT_COMPLETE):
+        if core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
         if self._star_visible() and self.loop_time() > 20:
             if self._looping_iteration == len(self._iteration_value):
@@ -81,7 +82,7 @@ class ProcessFindFinalStar(Process):
         super().on_transition()
 
     def _star_visible(self, threshold=0.999):
-        no_hud = core.get_region(core.NO_HUD_REGION)
+        no_hud = core.get_region(NO_HUD_REGION)
 
         lower = np.array(self.star_lower_bound, dtype="uint8")
         upper = np.array(self.star_upper_bound, dtype="uint8")
@@ -101,7 +102,7 @@ class ProcessFinalStarSplit(Process):
         self.star_upper_bound = config.get("split_final_star", "star_upper_bound")
 
     def execute(self):
-        if core.fade_status in (core.FADEOUT_PARTIAL, core.FADEOUT_COMPLETE):
+        if core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
 
         if not self._star_visible():
@@ -117,7 +118,7 @@ class ProcessFinalStarSplit(Process):
         super().on_transition()
 
     def _star_visible(self, threshold=0.999):
-        no_hud = core.get_region(core.NO_HUD_REGION)
+        no_hud = core.get_region(NO_HUD_REGION)
 
         lower = np.array(self.star_lower_bound, dtype="uint8")
         upper = np.array(self.star_upper_bound, dtype="uint8")

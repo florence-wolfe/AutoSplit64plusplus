@@ -28,7 +28,8 @@ from .constants import (
     MODEL_PATH,
     MODEL_PATH_LEGACY,
     MODEL_WIDTH,
-    MODEL_HEIGHT
+    MODEL_HEIGHT,
+    CONFIRMATION_MODE
 )
 
 
@@ -76,7 +77,7 @@ class Base(Thread):
         self._running = False
 
         # Operation Mode
-        self._operation_mode = as64.CONFIRMATION_MODE
+        self._operation_mode = CONFIRMATION_MODE
 
         # Splitter Functionality Flags
         self._count_fades = False
@@ -137,7 +138,7 @@ class Base(Thread):
         self._detailed_output = config.get("advanced", "detailed_console_output")
 
         # Star Analysis Function
-        if config.get("general", "operation_mode") == as64.CONFIRMATION_MODE:
+        if config.get("general", "operation_mode") == CONFIRMATION_MODE:
             self.analyze_star_count = self._analyze_star_count_confirmation_mode
         else:
             self.analyze_star_count = self._analyze_star_count_probability_mode

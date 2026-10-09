@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 
 from autosplit64 import core
+from autosplit64.core.constants import FADEOUT_COMPLETE, FADEOUT_PARTIAL, GAME_REGION, NO_HUD_REGION
 
 from autosplit64.core import config
 from autosplit64.core.image_utils import is_black
@@ -17,9 +18,9 @@ class ProcessFindDDDPortal(Process):
         self.portal_upper_bound = config.get("split_ddd_enter", "portal_upper_bound")
 
     def execute(self):
-        no_hud = core.get_region(core.GAME_REGION)
+        no_hud = core.get_region(GAME_REGION)
 
-        if core.fade_status in (core.FADEOUT_PARTIAL, core.FADEOUT_COMPLETE):
+        if core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
 
         lower = np.array(self.portal_lower_bound, dtype="uint8")
@@ -48,9 +49,9 @@ class ProcessDDDSplit(Process):
         self.upper_bound = np.array(config.get("split_ddd_enter", "hat_upper_bound"), dtype="uint8")
 
     def execute(self):
-        no_hud = core.get_region(core.NO_HUD_REGION)
+        no_hud = core.get_region(NO_HUD_REGION)
 
-        if core.fade_status in (core.FADEOUT_PARTIAL, core.FADEOUT_COMPLETE):
+        if core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
 
         # Split on the first frame without the hat, like AutoSplit64. Waiting for a second frame delays every Mips
@@ -73,7 +74,7 @@ class ProcessDDDSplitX(Process):
         self.register_signal("FADEOUT")
 
     def execute(self):
-        if core.fade_status in (core.FADEOUT_PARTIAL, core.FADEOUT_COMPLETE):
+        if core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
 
         if core.xcam_count == 1:

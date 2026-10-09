@@ -5,6 +5,17 @@ import cv2
 import numpy as np
 
 from autosplit64 import core
+from autosplit64.core.constants import (
+    FADEIN_COMPLETE,
+    FADEIN_PARTIAL,
+    FADEOUT_COMPLETE,
+    FADEOUT_PARTIAL,
+    FADEOUT_REGION,
+    POWER_REGION,
+    RESET_REGION,
+    SPLIT_FADE_ONLY,
+    SPLIT_NORMAL,
+)
 
 from autosplit64.core.resource_utils import resource_path
 
@@ -23,7 +34,7 @@ class ProcessWait(Process):
         self.register_signal("FADEOUT")
 
     def execute(self):
-        if core.fade_status in (core.FADEOUT_PARTIAL, core.FADEOUT_COMPLETE):
+        if core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
 
         return self.signals["LOOP"]
@@ -81,7 +92,7 @@ class ProcessRunStart(_RunStartProcess):
         self.register_signal("START")
 
     def execute(self):
-        if core.fade_status in (core.FADEOUT_COMPLETE, core.FADEOUT_PARTIAL):
+        if core.fade_status in (FADEOUT_COMPLETE, FADEOUT_PARTIAL):
             return self.signals["FADEOUT"]
         if self._in_game_detected():
             core.set_in_game(True)
@@ -102,7 +113,7 @@ class ProcessRunStartUpSegment(_RunStartProcess):
         self.register_signal("START")
 
     def execute(self):
-        if core.fade_status in (core.FADEOUT_COMPLETE, core.FADEOUT_PARTIAL):
+        if core.fade_status in (FADEOUT_COMPLETE, FADEOUT_PARTIAL):
             return self.signals["FADEOUT"]
         if self._in_game_detected():
             return self.signals["START"]
@@ -122,10 +133,10 @@ class ProcessStarCount(Process):
         self.register_signal("FADEIN")
 
     def execute(self):
-        if core.fade_status in (core.FADEOUT_PARTIAL, core.FADEOUT_COMPLETE):
+        if core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
 
-        if core.fade_status in (core.FADEIN_PARTIAL, core.FADEIN_COMPLETE):
+        if core.fade_status in (FADEIN_PARTIAL, FADEIN_COMPLETE):
             return self.signals["FADEIN"]
 
         return self.signals["LOOP"]
@@ -143,10 +154,10 @@ class ProcessFadein(Process):
         self.register_signal("COMPLETE")
 
     def execute(self):
-        if core.incoming_split() and core.fade_status == core.FADEIN_COMPLETE:
+        if core.incoming_split() and core.fade_status == FADEIN_COMPLETE:
             core.split()
 
-        if core.fade_status == core.FADEIN_PARTIAL:
+        if core.fade_status == FADEIN_PARTIAL:
             return self.signals["LOOP"]
         else:
             # TODO: BUG: Fadein transition oscillation
@@ -172,7 +183,7 @@ class _FadeoutProcess(Process):
         self._black_threshold = config.get("thresholds", "black_threshold")
         self._undo_threshold = config.get("thresholds", "undo_threshold")
 
-        _, _, reset_width, reset_height = core.get_region_rect(core.RESET_REGION)
+        _, _, reset_width, reset_height = core.get_region_rect(RESET_REGION)
         self._reset_template = cv2.resize(cv2.imread(resource_path(config.get("advanced", "reset_frame_one"))), (reset_width, reset_height), interpolation=cv2.INTER_AREA)
         self._reset_template_2 = cv2.resize(cv2.imread(resource_path(config.get("advanced", "reset_frame_two"))), (reset_width, reset_height), interpolation=cv2.INTER_AREA)
 
@@ -180,7 +191,7 @@ class _FadeoutProcess(Process):
         """ Split during the fadeout if the current split ends with one """
 
     def execute(self):
-        reset_region = core.get_region(core.RESET_REGION)
+        reset_region = core.get_region(RESET_REGION)
         self._split(reset_region)
 
         # Check for a match against the reset templates (SM64 logo)
@@ -190,7 +201,7 @@ class _FadeoutProcess(Process):
             return self.signals["RESET"]
 
         # If both star count, and life count are still black, reprocess fadeout, otherwise fadeout completed
-        if core.fade_status in (core.FADEOUT_COMPLETE, core.FADEOUT_PARTIAL):
+        if core.fade_status in (FADEOUT_COMPLETE, FADEOUT_PARTIAL):
             return self.signals["LOOP"]
         else:
             core.enable_predictions(True)
@@ -227,7 +238,7 @@ class ProcessFadeout(_FadeoutProcess):
     def _split(self, reset_region):
         # TODO: SWITCH TO USING FADE_STATUS
         # If centre of screen is black, and the current split conditions are met, trigger split
-        if is_black(reset_region, self._black_threshold) and core.incoming_split() and core.current_split().split_type == core.SPLIT_NORMAL:
+        if is_black(reset_region, self._black_threshold) and core.incoming_split() and core.current_split().split_type == SPLIT_NORMAL:
             core.split()
 
 
@@ -235,7 +246,7 @@ class ProcessFadeoutNoStar(_FadeoutProcess):
     def _split(self, reset_region):
         # TODO: SWITCH TO USING FADE_STATUS
         # If centre of screen is black, and the current split conditions are met, trigger split
-        if is_black(reset_region, self._black_threshold) and core.incoming_split(star_count=False) and core.current_split().split_type == core.SPLIT_FADE_ONLY:
+        if is_black(reset_region, self._black_threshold) and core.incoming_split(star_count=False) and core.current_split().split_type == SPLIT_FADE_ONLY:
             core.split()
 
 
@@ -256,10 +267,10 @@ class ProcessPostFadeout(Process):
         self._power_found = False
 
     def execute(self):
-        if core.fade_status in (core.FADEOUT_PARTIAL, core.FADEOUT_COMPLETE):
+        if core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
 
-        if core.fade_status in (core.FADEIN_PARTIAL, core.FADEIN_COMPLETE):
+        if core.fade_status in (FADEIN_PARTIAL, FADEIN_COMPLETE):
             return self.signals["FADEIN"]
 
         if core.prediction_info.prediction in (121, 122) and self.loop_time() > 1:
@@ -289,7 +300,7 @@ class ProcessPostFadeout(Process):
                 core.fadeout_count = max(core.fadeout_count - 2, 0)
 
     def _power_check(self):
-        power_region = core.get_region(core.POWER_REGION)
+        power_region = core.get_region(POWER_REGION)
 
         lower = np.array(self.power_lower_bound, dtype="uint8")
         upper = np.array(self.power_upper_bound, dtype="uint8")
@@ -320,10 +331,10 @@ class ProcessFlashCheck(Process):
         self._flash_count = 0
 
     def execute(self):
-        if core.fade_status in (core.FADEOUT_PARTIAL, core.FADEOUT_COMPLETE):
+        if core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
 
-        if core.fade_status in (core.FADEIN_PARTIAL, core.FADEIN_COMPLETE):
+        if core.fade_status in (FADEIN_PARTIAL, FADEIN_COMPLETE):
             return self.signals["FADEIN"]
 
         if core.prediction_info.prediction in (121, 122):
@@ -393,9 +404,9 @@ class ProcessFileSelectSplit(_RunStartProcess):
         self._restart_split_delay = 1.2012 + (config.get("advanced", "file_select_frame_offset") / 29.97)
 
     def execute(self):
-        region = core.get_region(core.FADEOUT_REGION)
+        region = core.get_region(FADEOUT_REGION)
 
-        if core.fade_status in (core.FADEOUT_COMPLETE, core.FADEOUT_PARTIAL):
+        if core.fade_status in (FADEOUT_COMPLETE, FADEOUT_PARTIAL):
             return self.signals["FADEOUT"]
         if self._in_game_detected():
             core.set_in_game(True)

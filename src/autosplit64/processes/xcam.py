@@ -3,6 +3,7 @@ import numpy as np
 import time
 
 from autosplit64 import core
+from autosplit64.core.constants import FADEIN_COMPLETE, FADEIN_PARTIAL, FADEOUT_COMPLETE, FADEOUT_PARTIAL, XCAM_REGION
 
 from autosplit64.core.image_utils import is_black
 from autosplit64.core.processing import Process
@@ -15,10 +16,10 @@ class ProcessXCam(Process):
         self.register_signal("FADEIN")
 
     def execute(self):
-        if core.fade_status in (core.FADEOUT_PARTIAL, core.FADEOUT_COMPLETE):
+        if core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
 
-        #if core.fade_status in (core.FADEIN_PARTIAL, core.FADEIN_COMPLETE):
+        #if core.fade_status in (FADEIN_PARTIAL, FADEIN_COMPLETE):
             #return self.signals["FADEIN"]
 
         if core.incoming_split():
@@ -49,13 +50,13 @@ class ProcessXCamStartUpSegment(Process):
         self._predictions = True
 
     def execute(self):
-        if core.fade_status in (core.FADEOUT_PARTIAL, core.FADEOUT_COMPLETE):
+        if core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
 
         if core.fadeout_count == 1:
             core.fps = 29.97
             core.enable_predictions(not self._predictions)
-            xcam = core.get_region(core.XCAM_REGION)
+            xcam = core.get_region(XCAM_REGION)
             lower = np.array(self.lower_bound, dtype="uint8")
             upper = np.array(self.upper_bound, dtype="uint8")
 
