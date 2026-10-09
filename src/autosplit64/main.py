@@ -88,9 +88,9 @@ def register_processes(detection):
     register_process("DDD_SPLIT", ProcessDDDSplit(detection))
     register_process("DDD_SPLIT_X", ProcessDDDSplitX(detection))
 
-    register_process("FIND_FINAL_STAGE", ProcessFindFinalStage())
-    register_process("FIND_FINAL_STAR", ProcessFindFinalStar())
-    register_process("FINAL_STAR_SPLIT", ProcessFinalStarSplit())
+    register_process("FIND_FINAL_STAGE", ProcessFindFinalStage(detection))
+    register_process("FIND_FINAL_STAR", ProcessFindFinalStar(detection))
+    register_process("FINAL_STAR_SPLIT", ProcessFinalStarSplit(detection))
 
 
 def register_split_processors():
