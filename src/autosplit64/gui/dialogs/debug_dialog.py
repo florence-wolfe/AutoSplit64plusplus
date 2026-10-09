@@ -13,6 +13,11 @@ from autosplit64.core import resource_utils, config, logs
 from autosplit64.gui.widgets import HLine
 
 
+def update_rate():
+    """ How many times a second the window shows the latest values. 0 was allowed before, which is 1 now. """
+    return max(1, config.get("general", "output_update_rate"))
+
+
 class DebugDialog(QtWidgets.QDialog):
     open_capture = QtCore.pyqtSignal()
     save_debug_info = QtCore.pyqtSignal()
@@ -48,7 +53,6 @@ class DebugDialog(QtWidgets.QDialog):
 
         # Output Reader
         self.output_reader = None
-        self._update_rate = config.get("general", "output_update_rate")
 
         layout = QtWidgets.QGridLayout()
         self.setLayout(layout)
@@ -78,12 +82,15 @@ class DebugDialog(QtWidgets.QDialog):
                 layout.addWidget(label, row, column)
             row += 2
 
-        update_lb = QtWidgets.QLabel("Update Rate:")
-        update_lb.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        self.update_lb = QtWidgets.QLabel("Update Rate:")
+        self.update_lb.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.update_le = QtWidgets.QLineEdit()
-        self.update_le.setValidator(QtGui.QIntValidator(0, 30, self))
+        self.update_le.setValidator(QtGui.QIntValidator(1, 30, self))
+        for widget in (self.update_lb, self.update_le):
+            widget.setToolTip("How many times a second this window shows split detection's latest values, from 1 to 30. "
+                              "Split detection itself isn't affected.")
         update_rate_layout = QtWidgets.QHBoxLayout()
-        update_rate_layout.addWidget(update_lb)
+        update_rate_layout.addWidget(self.update_lb)
         update_rate_layout.addWidget(self.update_le)
         layout.addLayout(update_rate_layout, row, 1)
         layout.addItem(QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Expanding), row + 1, 0)
@@ -115,7 +122,7 @@ class DebugDialog(QtWidgets.QDialog):
     def show(self):
         self.update_log_buttons()
         self.output_reader = OutputReader(parent=self)
-        self.update_le.setText(str(self._update_rate))
+        self.update_le.setText(str(update_rate()))
 
         self.output_reader.start()
         self.output_reader.output.connect(self.display_output)
@@ -162,7 +169,7 @@ class OutputReader(QtCore.QThread):
         super().__init__(parent)
 
         self.running = True
-        self.update_rate = config.get("general", "output_update_rate")
+        self.update_rate = update_rate()
         self._stopped = threading.Event()
 
     def stop(self):

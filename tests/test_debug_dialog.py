@@ -96,6 +96,34 @@ class DebugDialogTest(unittest.TestCase):
         self.dialog.save_debug_info_btn.click()
         saved.assert_called_once()
 
+    def test_update_rate_is_explained(self):
+        for widget in (self.dialog.update_lb, self.dialog.update_le):
+            self.assertIn("times a second", widget.toolTip())
+            self.assertIn("Split detection itself isn't affected", widget.toolTip())
+
+    def test_update_rate_is_1_to_30(self):
+        validator = self.dialog.update_le.validator()
+        self.assertNotEqual(validator.validate("0", 0)[0], QtGui.QValidator.State.Acceptable)
+        self.assertEqual(validator.validate("1", 0)[0], QtGui.QValidator.State.Acceptable)
+        self.assertEqual(validator.validate("30", 0)[0], QtGui.QValidator.State.Acceptable)
+
+    def test_saved_update_rate_of_0_is_1(self):
+        # Allowed before, which divided by zero in the thread
+        config.set_key("general", "output_update_rate", 0)
+        self.dialog.show()
+        self.addCleanup(self.dialog.close)
+        self.assertEqual(self.dialog.output_reader.update_rate, 1)
+        self.assertEqual(self.dialog.update_le.text(), "1")
+
+    def test_reopening_shows_the_changed_update_rate(self):
+        self.dialog.show()
+        self.dialog.update_le.setText("25")
+        self.dialog.update_le.editingFinished.emit()
+        self.dialog.close()
+        self.dialog.show()
+        self.addCleanup(self.dialog.close)
+        self.assertEqual(self.dialog.update_le.text(), "25")
+
     def test_closing_stops_the_output_reader(self):
         # Deleting the window while its thread runs would abort AutoSplit64++
         config.set_key("general", "output_update_rate", 1)
