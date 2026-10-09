@@ -373,7 +373,6 @@ class App(QtWidgets.QMainWindow):
             ("Generate Reset Templates", "Record what a console reset looks like in your capture, so resets are detected", self.dialogs["reset_dialog"].show),
             None,
             ("Debug", "Show what split detection sees and does, and its logs", self.dialogs["debug_dialog"].show),
-            ("Save Debug Info", "Save the logs, settings, route and a captured frame in one file, for a bug report", self.save_debug_info),
             None,
             ("Autostart", "Start split detection when AutoSplit64++ opens, trying for up to 5 minutes", "auto_start"),
             ("SRL Mode", "Don't reset the timer when you reset the console, e.g. in races", "srl_mode"),

@@ -40,7 +40,7 @@ class MenuTest(unittest.TestCase):
         app._populate_menu(menu)
         items = [a.text() if not a.isSeparator() else "---" for a in menu.actions()]
         self.assertEqual(items, ["Edit Route", "Open Route", "---", "Edit Coordinates", "---", "Settings", "---",
-                                 "Generate Reset Templates", "---", "Debug", "Save Debug Info", "---", "Autostart", "SRL Mode",
+                                 "Generate Reset Templates", "---", "Debug", "---", "Autostart", "SRL Mode",
                                  "---", "About", "---", "Exit"])
 
 
@@ -65,7 +65,6 @@ class MenuActionsTest(unittest.TestCase):
             ("Settings", "Connection to LiveSplit, detection thresholds and other settings", False, no_role),
             ("Generate Reset Templates", "Record what a console reset looks like in your capture, so resets are detected", False, no_role),
             ("Debug", "Show what split detection sees and does, and its logs", False, no_role),
-            ("Save Debug Info", "Save the logs, settings, route and a captured frame in one file, for a bug report", False, no_role),
             ("Autostart", "Start split detection when AutoSplit64++ opens, trying for up to 5 minutes", True, no_role),
             ("SRL Mode", "Don't reset the timer when you reset the console, e.g. in races", True, no_role),
             ("About", "Version and credits", False, no_role),
@@ -88,13 +87,13 @@ class MenuActionsTest(unittest.TestCase):
         self.assertTrue(routes[-2].isSeparator())
 
     def save_debug_info(self, chosen, error=None):
-        """ Save Debug Info, choosing `chosen` to save to """
+        """ Save Debug Info in the Debug window, choosing `chosen` to save to """
         with mock.patch.object(QtWidgets.QFileDialog, "getSaveFileName", return_value=(chosen, "")) as dialog, \
              mock.patch("autosplit64.gui.app.debug_info.capture_frame", return_value=(None, "No capture")), \
              mock.patch("autosplit64.gui.app.debug_info.save", side_effect=error) as save, \
              mock.patch.object(QtWidgets.QMessageBox, "information") as information, \
              mock.patch.object(QtWidgets.QMessageBox, "warning") as warning:
-            self.action("Save Debug Info").trigger()
+            self.app.dialogs["debug_dialog"].save_debug_info_btn.click()
         return dialog, save, information, warning
 
     def test_save_debug_info(self):
