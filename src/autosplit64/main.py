@@ -64,7 +64,8 @@ def set_up_timing():
     return path
 
 
-def register_processes():
+def register_processes(detection):
+    """ Register the processes, which run in detection, the Base that started """
     register_process("WAIT", ProcessWait())
     register_process("RUN_START", ProcessRunStart())
     register_process("RUN_START_UP_RTA", ProcessRunStartUpSegment())
@@ -83,9 +84,9 @@ def register_processes():
 
     register_process("FILE_SELECT_SPLIT", ProcessFileSelectSplit())
 
-    register_process("FIND_DDD_PORTAL", ProcessFindDDDPortal())
-    register_process("DDD_SPLIT", ProcessDDDSplit())
-    register_process("DDD_SPLIT_X", ProcessDDDSplitX())
+    register_process("FIND_DDD_PORTAL", ProcessFindDDDPortal(detection))
+    register_process("DDD_SPLIT", ProcessDDDSplit(detection))
+    register_process("DDD_SPLIT_X", ProcessDDDSplitX(detection))
 
     register_process("FIND_FINAL_STAGE", ProcessFindFinalStage())
     register_process("FIND_FINAL_STAR", ProcessFindFinalStar())
@@ -144,7 +145,7 @@ class AutoSplit64(QtCore.QObject):
             self.on_error("Reset template files are missing!\n\nPlease generate reset templates first.")
             return
 
-        register_processes()
+        register_processes(core._base)
 
         failed = register_split_processors()
         # Without it, splits of this type would never happen

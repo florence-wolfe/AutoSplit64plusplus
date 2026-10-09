@@ -26,20 +26,20 @@ SETTINGS = {
 
 def patch_detection(test, **state):
     """ Split detection's state for the test, on a stand-in for the Base that started last, where core keeps it """
-    patcher = mock.patch.object(core, "_base", SimpleNamespace(**state))
+    detection = SimpleNamespace(**state)
+    patcher = mock.patch.object(core, "_base", detection)
     patcher.start()
     test.addCleanup(patcher.stop)
+    return detection
 
 
 class ProcessTestCase(unittest.TestCase):
+    """ A stand-in for split detection, self.detection, which processes are given and core reads and writes """
+
     def setUp(self):
         self.calls = []
         record = lambda name: mock.Mock(side_effect=lambda *args, **kwargs: self.calls.append((name, *args)))
         splits = [SimpleNamespace(star_count=s, split_type=core.SPLIT_NORMAL, on_fadeout=1, on_fadein=0, on_xcam=-1) for s in (5, 10, 16)]
-        patch_detection(self, fade_status=core.NO_FADE, star_count=5, prediction_info=PredictionInfo(5, 0.9),
-                        route=SimpleNamespace(splits=splits, initial_star=0), fadein_count=0, fadeout_count=0,
-                        current_time=100.0, last_split=0.0, start_on_reset=True, fps=0.0,
-                        xcam_count=0, in_xcam=False, collection_time=0.0)
         functions = {
             "split_index": lambda: 1, "current_split": lambda: splits[1], "incoming_split": mock.Mock(return_value=True),
             "get_region_rect": lambda region: [0, 0, 251, 137],
@@ -48,6 +48,11 @@ class ProcessTestCase(unittest.TestCase):
         for name in ("enable_fade_count", "enable_xcam_count", "enable_predictions", "set_in_game", "set_star_count",
                      "split", "reset", "undo", "skip"):
             functions[name] = record(name)
+        self.detection = patch_detection(
+            self, fade_status=core.NO_FADE, star_count=5, prediction_info=PredictionInfo(5, 0.9),
+            route=SimpleNamespace(splits=splits, initial_star=0), fadein_count=0, fadeout_count=0,
+            current_time=100.0, last_split=0.0, start_on_reset=True, fps=0.0,
+            xcam_count=0, in_xcam=False, collection_time=0.0, **functions)
         for name, value in functions.items():
             patcher = mock.patch.object(core, name, value, create=True)
             patcher.start()
