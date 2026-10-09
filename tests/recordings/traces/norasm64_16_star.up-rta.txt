@@ -1,0 +1,15 @@
+0.000 Started: route NoraSM64 16 Star No LBLJ (JP, Up RTA, 12 splits), capturing the window of AmaRecTV.exe, game region [320, 0, 960, 720] of [1280, 720], VC fix False, connection mode Named Pipe, operation mode Probability, SRL mode False
+0.167 Star count 0 -> 1, prediction 1 at 0.99
+8.033 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+10.033 Reset the timer: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+10.033 Star count 1 -> 0, prediction 122 at 0.94
+72.067 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 0
+79.100 Split: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 0
+79.100 In game
+84.867 Fade-in 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 0, fade-ins 1
+87.267 Fade-in 2: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 0, fade-ins 2
+102.633 Star count 0 -> 1, prediction 1 at 0.99
+105.800 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+106.233 Split: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+106.267 Timer on split 2: WF 6
+135.383 Fade-in 1: split 2 of 12, WF 6 (needs 6 stars, fadeout 1, fade-in 0), star count 1, fadeouts 0, fade-ins 1

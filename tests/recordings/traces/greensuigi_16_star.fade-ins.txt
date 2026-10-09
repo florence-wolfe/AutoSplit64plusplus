@@ -1,0 +1,95 @@
+0.000 Started: route greensuigi 16 Star No LBLJ, fade-ins (JP, RTA, 14 splits), capturing the window of AmaRecTV.exe, game region [291, 0, 989, 720] of [1280, 720], VC fix False, connection mode Named Pipe, operation mode Probability, SRL mode False
+4.133 Reset the timer: split 1 of 14, 0 stars, fade-in (needs 0 stars, fadeout 1, fade-in 1), star count 0, fadeouts 0, fade-ins 0
+4.133 Split: split 1 of 14, 0 stars, fade-in (needs 0 stars, fadeout 1, fade-in 1), star count 0, fadeouts 0, fade-ins 0
+49.367 In game
+65.700 Fadeout 1: split 1 of 14, 0 stars, fade-in (needs 0 stars, fadeout 1, fade-in 1), star count 0, fadeouts 1, fade-ins 0
+78.067 Fade-in 1: split 1 of 14, 0 stars, fade-in (needs 0 stars, fadeout 1, fade-in 1), star count 0, fadeouts 1, fade-ins 1
+79.133 Split: split 1 of 14, 0 stars, fade-in (needs 0 stars, fadeout 1, fade-in 1), star count 0, fadeouts 1, fade-ins 1
+79.167 Timer on split 2: 1 stars, fade-in
+94.267 Star count 0 -> 1, prediction 1 at 0.99
+97.433 Fadeout 1: split 2 of 14, 1 stars, fade-in (needs 1 stars, fadeout 1, fade-in 1), star count 1, fadeouts 1, fade-ins 0
+126.833 Fade-in 1: split 2 of 14, 1 stars, fade-in (needs 1 stars, fadeout 1, fade-in 1), star count 1, fadeouts 1, fade-ins 1
+127.967 Split: split 2 of 14, 1 stars, fade-in (needs 1 stars, fadeout 1, fade-in 1), star count 1, fadeouts 1, fade-ins 1
+128.000 Timer on split 3: 2 stars, fade-in
+139.867 Star count 1 -> 2, prediction 2 at 0.98
+142.867 Fadeout 1: split 3 of 14, 2 stars, fade-in (needs 2 stars, fadeout 1, fade-in 1), star count 2, fadeouts 1, fade-ins 0
+152.033 Fade-in 1: split 3 of 14, 2 stars, fade-in (needs 2 stars, fadeout 1, fade-in 1), star count 2, fadeouts 1, fade-ins 1
+153.167 Split: split 3 of 14, 2 stars, fade-in (needs 2 stars, fadeout 1, fade-in 1), star count 2, fadeouts 1, fade-ins 1
+153.200 Timer on split 4: 3 stars, fade-in
+166.233 Star count 2 -> 3, prediction 3 at 0.99
+169.233 Fadeout 1: split 4 of 14, 3 stars, fade-in (needs 3 stars, fadeout 1, fade-in 1), star count 3, fadeouts 1, fade-ins 0
+180.267 Fade-in 1: split 4 of 14, 3 stars, fade-in (needs 3 stars, fadeout 1, fade-in 1), star count 3, fadeouts 1, fade-ins 1
+181.333 Split: split 4 of 14, 3 stars, fade-in (needs 3 stars, fadeout 1, fade-in 1), star count 3, fadeouts 1, fade-ins 1
+181.367 Timer on split 5: 4 stars, fade-in
+192.767 Star count 3 -> 4, prediction 4 at 0.97
+195.767 Fadeout 1: split 5 of 14, 4 stars, fade-in (needs 4 stars, fadeout 1, fade-in 1), star count 4, fadeouts 1, fade-ins 0
+204.900 Fade-in 1: split 5 of 14, 4 stars, fade-in (needs 4 stars, fadeout 1, fade-in 1), star count 4, fadeouts 1, fade-ins 1
+206.033 Split: split 5 of 14, 4 stars, fade-in (needs 4 stars, fadeout 1, fade-in 1), star count 4, fadeouts 1, fade-ins 1
+206.067 Timer on split 6: 5 stars, fade-in
+243.600 Star count 4 -> 5, prediction 5 at 0.99
+246.600 Fadeout 1: split 6 of 14, 5 stars, fade-in (needs 5 stars, fadeout 1, fade-in 1), star count 5, fadeouts 1, fade-ins 0
+255.900 Fade-in 1: split 6 of 14, 5 stars, fade-in (needs 5 stars, fadeout 1, fade-in 1), star count 5, fadeouts 1, fade-ins 1
+257.000 Split: split 6 of 14, 5 stars, fade-in (needs 5 stars, fadeout 1, fade-in 1), star count 5, fadeouts 1, fade-ins 1
+257.033 Timer on split 7: 6 stars, fade-in
+272.733 Star count 5 -> 6, prediction 6 at 1.00
+275.900 Fadeout 1: split 7 of 14, 6 stars, fade-in (needs 6 stars, fadeout 1, fade-in 1), star count 6, fadeouts 1, fade-ins 0
+303.700 Fade-in 1: split 7 of 14, 6 stars, fade-in (needs 6 stars, fadeout 1, fade-in 1), star count 6, fadeouts 1, fade-ins 1
+304.700 Split: split 7 of 14, 6 stars, fade-in (needs 6 stars, fadeout 1, fade-in 1), star count 6, fadeouts 1, fade-ins 1
+304.733 Timer on split 8: 7 stars, fade-in
+316.800 Star count 6 -> 7, prediction 7 at 0.99
+320.133 Fadeout 1: split 8 of 14, 7 stars, fade-in (needs 7 stars, fadeout 1, fade-in 1), star count 7, fadeouts 1, fade-ins 0
+329.467 Fade-in 1: split 8 of 14, 7 stars, fade-in (needs 7 stars, fadeout 1, fade-in 1), star count 7, fadeouts 1, fade-ins 1
+330.467 Split: split 8 of 14, 7 stars, fade-in (needs 7 stars, fadeout 1, fade-in 1), star count 7, fadeouts 1, fade-ins 1
+330.500 Timer on split 9: 9 stars, fade-in
+350.567 Star count 7 -> 8, prediction 8 at 0.97
+354.400 Fadeout 1: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 8, fadeouts 1, fade-ins 0
+380.633 Fadeout 2: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 8, fadeouts 2, fade-ins 0
+427.533 Star count 8 -> 9, prediction 9 at 0.99
+432.867 Fadeout 1: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 9, fadeouts 1, fade-ins 0
+463.433 Fadeout 2: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 9, fadeouts 2, fade-ins 0
+472.533 Fadeout 3: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 9, fadeouts 3, fade-ins 0
+475.333 Fadeout 4: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 9, fadeouts 4, fade-ins 0
+488.067 Fadeout 5: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 9, fadeouts 5, fade-ins 0
+504.200 Fade-in 1: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 9, fadeouts 5, fade-ins 1
+505.300 Split: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 9, fadeouts 5, fade-ins 1
+505.333 Timer on split 10: 10 stars, fade-in
+517.367 Fadeout 1: split 10 of 14, 10 stars, fade-in (needs 10 stars, fadeout 1, fade-in 1), star count 9, fadeouts 1, fade-ins 0
+520.533 Star count 9 -> 10, prediction 10 at 0.98
+523.667 Fadeout 1: split 10 of 14, 10 stars, fade-in (needs 10 stars, fadeout 1, fade-in 1), star count 10, fadeouts 1, fade-ins 0
+532.967 Fade-in 1: split 10 of 14, 10 stars, fade-in (needs 10 stars, fadeout 1, fade-in 1), star count 10, fadeouts 1, fade-ins 1
+533.967 Split: split 10 of 14, 10 stars, fade-in (needs 10 stars, fadeout 1, fade-in 1), star count 10, fadeouts 1, fade-ins 1
+534.000 Timer on split 11: 11 stars, fade-in
+542.533 Star count 10 -> 11, prediction 11 at 0.98
+545.533 Fadeout 1: split 11 of 14, 11 stars, fade-in (needs 11 stars, fadeout 1, fade-in 1), star count 11, fadeouts 1, fade-ins 0
+557.067 Fade-in 1: split 11 of 14, 11 stars, fade-in (needs 11 stars, fadeout 1, fade-in 1), star count 11, fadeouts 1, fade-ins 1
+558.067 Split: split 11 of 14, 11 stars, fade-in (needs 11 stars, fadeout 1, fade-in 1), star count 11, fadeouts 1, fade-ins 1
+558.100 Timer on split 12: 12 stars, fade-in
+575.067 Star count 11 -> 12, prediction 12 at 0.79
+577.233 Fadeout 1: split 12 of 14, 12 stars, fade-in (needs 12 stars, fadeout 1, fade-in 1), star count 12, fadeouts 1, fade-ins 0
+586.333 Fade-in 1: split 12 of 14, 12 stars, fade-in (needs 12 stars, fadeout 1, fade-in 1), star count 12, fadeouts 1, fade-ins 1
+587.300 Split: split 12 of 14, 12 stars, fade-in (needs 12 stars, fadeout 1, fade-in 1), star count 12, fadeouts 1, fade-ins 1
+587.333 Timer on split 13: 14 stars, fade-in
+601.533 Star count 12 -> 13, prediction 13 at 0.72
+604.533 Fadeout 1: split 13 of 14, 14 stars, fade-in (needs 14 stars, fadeout 0, fade-in 1), star count 13, fadeouts 1, fade-ins 0
+624.133 Star count 13 -> 14, prediction 14 at 0.98
+631.467 Fade-in 1: split 13 of 14, 14 stars, fade-in (needs 14 stars, fadeout 0, fade-in 1), star count 14, fadeouts 0, fade-ins 1
+632.433 Split: split 13 of 14, 14 stars, fade-in (needs 14 stars, fadeout 0, fade-in 1), star count 14, fadeouts 0, fade-ins 1
+632.467 Timer on split 14: 15 stars, fade-in
+645.333 Star count 14 -> 15, prediction 15 at 0.98
+648.500 Fadeout 1: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 15, fadeouts 1, fade-ins 0
+687.000 Fade-in 1: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 15, fadeouts 1, fade-ins 1
+688.100 Split: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 15, fadeouts 1, fade-ins 1
+688.300 Split not sent, within the split cooldown: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 15, fadeouts 1, fade-ins 1
+688.500 Split not sent, within the split cooldown: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 15, fadeouts 1, fade-ins 1
+688.700 Split: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 15, fadeouts 1, fade-ins 1
+722.167 Star count 15 -> 16, prediction 16 at 0.99
+725.667 Fadeout 1: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 1, fade-ins 0
+733.533 Fadeout 2: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 2, fade-ins 0
+768.967 Fadeout 3: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 3, fade-ins 0
+806.600 Fadeout 4: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 4, fade-ins 0
+815.967 Fadeout 5: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 5, fade-ins 0
+818.933 Fadeout 6: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 6, fade-ins 0
+827.933 Fadeout 7: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 7, fade-ins 0
+850.700 Fadeout 8: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 8, fade-ins 0
+890.900 Fadeout 9: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 9, fade-ins 0
+956.767 Fadeout 10: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 10, fade-ins 0

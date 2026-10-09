@@ -19,6 +19,7 @@ import json
 import logging
 import math
 import os
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from unittest import mock
@@ -113,6 +114,34 @@ class Recording:
 
     def capture_size(self):
         return [int(size) for size in self._video_property(cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT)]
+
+
+@dataclass
+class Variant:
+    """ Other settings or another route to replay a recording with """
+    name: str
+    # Settings to change, by (section, key)
+    settings: dict = field(default_factory=dict)
+    # Route file keys to change, e.g. {"timing": "File Select"}
+    route: dict = field(default_factory=dict)
+    # Another route in tests/recordings, instead of the recording's
+    route_file: str = None
+    # How much of the video to replay, from its start, or all of it
+    length: float = None
+
+    def route_path(self, recording, directory):
+        """ The route to replay with, written to directory if it's changed """
+        path = RECORDINGS / self.route_file if self.route_file else recording.route_path
+        if not self.route:
+            return path
+        data = json.loads(path.read_text(encoding="utf-8-sig"))
+        data.update(self.route)
+        changed = Path(directory) / path.name
+        changed.write_text(json.dumps(data))
+        return changed
+
+
+DEFAULT = Variant("default")
 
 
 class Clock:
@@ -238,6 +267,8 @@ class Replay:
     errors: list
     # The warnings and errors it logged
     log: list
+    # What split detection logged it did, each with the time of its frame in the video
+    trace: list
 
     def run_commands(self):
         """ The commands from the console reset the run starts with, if any. Videos can start in the attempt before. """
@@ -249,6 +280,16 @@ class Replay:
         return {index - 1: time for time, command, index in self.run_commands() if command == "split" and index > 0}
 
 
+class _TraceRecorder(logging.Handler):
+    def __init__(self, now):
+        super().__init__(logging.INFO)
+        self._now = now
+        self.lines = []
+
+    def emit(self, record):
+        self.lines.append(f"{self._now():.3f} {record.getMessage()}")
+
+
 class _LogRecorder(logging.Handler):
     def __init__(self):
         super().__init__(logging.WARNING)
@@ -258,15 +299,17 @@ class _LogRecorder(logging.Handler):
         self.records.append(self.format(record))
 
 
-def _settings(recording, templates):
-    """ The default settings, set up for the recording """
+def _settings(recording, templates, variant=DEFAULT, route_path=None):
+    """ The default settings, set up for the recording, with the variant's """
     settings = copy.deepcopy(json.loads(DEFAULTS.read_text()))
-    settings["route"]["path"] = str(recording.route_path)
+    settings["route"]["path"] = str(route_path or recording.route_path)
     settings["game"].update(use_obs=False, vc_fix=False, capture_source="window", override_version=False,
                             game_region=recording.game_region, capture_size=recording.capture_size())
     if templates:
         settings["advanced"].update(reset_frame_one=str(templates[0]), reset_frame_two=str(templates[1]))
     settings["general"]["srl_mode"] = False
+    for (section, key), value in variant.settings.items():
+        settings[section][key] = value
     return settings
 
 
@@ -333,21 +376,32 @@ def first_black_centre(recording, earliest, latest):
         capture.release()
 
 
-def replay(recording, start, end, templates, split_index=-1):
+def replay(recording, start, end, templates, split_index=-1, variant=DEFAULT):
     """
     Split detection over the video from `start` to `end` seconds, with the timer at `split_index`
-    (-1: not running). Returns what it did.
+    (-1: not running), with the variant's settings and route. Returns what it did.
     """
+    with tempfile.TemporaryDirectory() as directory:
+        return _replay(recording, start, end, templates, split_index, variant, variant.route_path(recording, directory))
+
+
+def _replay(recording, start, end, templates, split_index, variant, route_path):
     clock = Clock(start, end)
-    timer = Timer(lambda: captures[-1].frame_time, len(route_loader.load(recording.route_path).splits), split_index)
     captures = []
+    now = lambda: captures[-1].frame_time if captures else clock.now
+    timer = Timer(now, len(route_loader.load(route_path).splits), split_index)
+    tracer = _TraceRecorder(now)
+    detection_log = logging.getLogger("detection")
+    level = detection_log.level
 
     def video_capture(use_obs, vc_fix, process_name, game_region, version, device):
         captures.append(VideoCapture(recording.video, clock, game_region, version))
         return captures[-1]
 
     errors = []
-    with _replaying(recording, clock, _settings(recording, templates)) as log, \
+    detection_log.setLevel(logging.INFO)
+    detection_log.addHandler(tracer)
+    with _replaying(recording, clock, _settings(recording, templates, variant, route_path)) as log, \
          mock.patch.object(base, "livesplit", timer), mock.patch.object(base, "GameCapture", video_capture):
         # Split detection keeps its state in the core module, which starts afresh like when the app opens
         importlib.reload(core)
@@ -369,8 +423,10 @@ def replay(recording, start, end, templates, split_index=-1):
             for capture in captures:
                 capture.release()
             importlib.reload(core)
+            detection_log.removeHandler(tracer)
+            detection_log.setLevel(level)
 
-    return Replay(timer.commands, errors, log)
+    return Replay(timer.commands, errors, log, tracer.lines)
 
 
 def download(recording):

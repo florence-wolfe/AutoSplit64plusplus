@@ -1,0 +1,149 @@
+0.000 Started: route NoraSM64 16 Star No LBLJ (JP, RTA, 12 splits), capturing the window of AmaRecTV.exe, game region [320, 0, 960, 720] of [1280, 720], VC fix False, connection mode Named Pipe, operation mode Probability, SRL mode False
+0.167 Star count 0 -> 1, prediction 1 at 0.99
+0.167 In game
+8.000 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.167 Split: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.200 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.233 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.267 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.300 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.333 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.367 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.400 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.433 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.467 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.500 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.533 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.567 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.600 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.633 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.667 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.700 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.733 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.767 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.800 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.833 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.867 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.900 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.933 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+8.967 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.000 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.033 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.067 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.100 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.133 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.167 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.200 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.233 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.267 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.300 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.333 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.367 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.400 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.433 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.467 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.500 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.533 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.567 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.600 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.633 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.667 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.700 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.733 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.767 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.800 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.833 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.867 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.900 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.933 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+9.967 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+10.000 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+10.033 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+10.033 Undid the split: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+10.033 Reset the timer: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+10.033 Star count 1 -> 0, prediction 122 at 0.94
+10.033 Split: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 0, fade-ins 0
+55.100 In game
+72.100 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 0
+84.867 Fade-in 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 1
+87.267 Fade-in 2: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 2
+102.633 Star count 0 -> 1, prediction 1 at 0.99
+105.800 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+106.233 Split: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+106.267 Timer on split 2: WF 6
+135.400 Fade-in 1: split 2 of 12, WF 6 (needs 6 stars, fadeout 1, fade-in 0), star count 1, fadeouts 0, fade-ins 1
+152.333 Star count 1 -> 2, prediction 2 at 0.98
+155.333 Fadeout 1: split 2 of 12, WF 6 (needs 6 stars, fadeout 1, fade-in 0), star count 2, fadeouts 1, fade-ins 0
+164.867 Fade-in 1: split 2 of 12, WF 6 (needs 6 stars, fadeout 1, fade-in 0), star count 2, fadeouts 1, fade-ins 1
+180.700 Star count 2 -> 3, prediction 3 at 0.99
+183.867 Fadeout 1: split 2 of 12, WF 6 (needs 6 stars, fadeout 1, fade-in 0), star count 3, fadeouts 1, fade-ins 0
+195.183 Fade-in 1: split 2 of 12, WF 6 (needs 6 stars, fadeout 1, fade-in 0), star count 3, fadeouts 1, fade-ins 1
+208.750 Star count 3 -> 4, prediction 4 at 0.98
+211.750 Fadeout 1: split 2 of 12, WF 6 (needs 6 stars, fadeout 1, fade-in 0), star count 4, fadeouts 1, fade-ins 0
+221.383 Fade-in 1: split 2 of 12, WF 6 (needs 6 stars, fadeout 1, fade-in 0), star count 4, fadeouts 1, fade-ins 1
+255.650 Star count 4 -> 5, prediction 5 at 0.98
+258.650 Fadeout 1: split 2 of 12, WF 6 (needs 6 stars, fadeout 1, fade-in 0), star count 5, fadeouts 1, fade-ins 0
+268.450 Fade-in 1: split 2 of 12, WF 6 (needs 6 stars, fadeout 1, fade-in 0), star count 5, fadeouts 1, fade-ins 1
+286.516 Star count 5 -> 6, prediction 6 at 1.00
+289.683 Fadeout 1: split 2 of 12, WF 6 (needs 6 stars, fadeout 1, fade-in 0), star count 6, fadeouts 1, fade-ins 0
+290.050 Split: split 2 of 12, WF 6 (needs 6 stars, fadeout 1, fade-in 0), star count 6, fadeouts 1, fade-ins 0
+290.083 Timer on split 3: CCM 8
+318.016 Fade-in 1: split 3 of 12, CCM 8 (needs 8 stars, fadeout 1, fade-in 0), star count 6, fadeouts 0, fade-ins 1
+334.250 Star count 6 -> 7, prediction 7 at 0.98
+337.416 Fadeout 1: split 3 of 12, CCM 8 (needs 8 stars, fadeout 1, fade-in 0), star count 7, fadeouts 1, fade-ins 0
+346.883 Fade-in 1: split 3 of 12, CCM 8 (needs 8 stars, fadeout 1, fade-in 0), star count 7, fadeouts 1, fade-ins 1
+369.283 Star count 7 -> 8, prediction 8 at 0.96
+372.950 Fadeout 1: split 3 of 12, CCM 8 (needs 8 stars, fadeout 1, fade-in 0), star count 8, fadeouts 1, fade-ins 0
+373.416 Split: split 3 of 12, CCM 8 (needs 8 stars, fadeout 1, fade-in 0), star count 8, fadeouts 1, fade-ins 0
+373.450 Timer on split 4: BitDW 9
+400.383 Fadeout 1: split 4 of 12, BitDW 9 (needs 9 stars, fadeout 2, fade-in 0), star count 8, fadeouts 1, fade-ins 0
+456.483 Star count 8 -> 9, prediction 9 at 0.98
+461.816 Fadeout 1: split 4 of 12, BitDW 9 (needs 9 stars, fadeout 2, fade-in 0), star count 9, fadeouts 1, fade-ins 0
+497.433 Fadeout 2: split 4 of 12, BitDW 9 (needs 9 stars, fadeout 2, fade-in 0), star count 9, fadeouts 2, fade-ins 0
+497.933 Split: split 4 of 12, BitDW 9 (needs 9 stars, fadeout 2, fade-in 0), star count 9, fadeouts 2, fade-ins 0
+497.966 Timer on split 5: SSL 11
+522.400 Fadeout 1: split 5 of 12, SSL 11 (needs 11 stars, fadeout 1, fade-in 0), star count 9, fadeouts 1, fade-ins 0
+538.100 Fade-in 1: split 5 of 12, SSL 11 (needs 11 stars, fadeout 1, fade-in 0), star count 9, fadeouts 1, fade-ins 1
+558.633 Star count 9 -> 10, prediction 10 at 0.93
+561.966 Fadeout 1: split 5 of 12, SSL 11 (needs 11 stars, fadeout 1, fade-in 0), star count 10, fadeouts 1, fade-ins 0
+571.500 Fade-in 1: split 5 of 12, SSL 11 (needs 11 stars, fadeout 1, fade-in 0), star count 10, fadeouts 1, fade-ins 1
+581.200 Star count 10 -> 11, prediction 11 at 0.99
+584.200 Fadeout 1: split 5 of 12, SSL 11 (needs 11 stars, fadeout 1, fade-in 0), star count 11, fadeouts 1, fade-ins 0
+584.566 Split: split 5 of 12, SSL 11 (needs 11 stars, fadeout 1, fade-in 0), star count 11, fadeouts 1, fade-ins 0
+584.600 Timer on split 6: LLL 12
+595.833 Fade-in 1: split 6 of 12, LLL 12 (needs 12 stars, fadeout 1, fade-in 0), star count 11, fadeouts 0, fade-ins 1
+614.466 Star count 11 -> 12, prediction 12 at 0.97
+617.300 Fadeout 1: split 6 of 12, LLL 12 (needs 12 stars, fadeout 1, fade-in 0), star count 12, fadeouts 1, fade-ins 0
+617.766 Split: split 6 of 12, LLL 12 (needs 12 stars, fadeout 1, fade-in 0), star count 12, fadeouts 1, fade-ins 0
+617.800 Timer on split 7: HMC 15
+637.833 Star count 12 -> 13, prediction 13 at 0.99
+645.833 Fade-in 1: split 7 of 12, HMC 15 (needs 15 stars, fadeout 1, fade-in 0), star count 13, fadeouts 0, fade-ins 1
+661.816 Star count 13 -> 14, prediction 14 at 0.92
+664.816 Fadeout 1: split 7 of 12, HMC 15 (needs 15 stars, fadeout 1, fade-in 0), star count 14, fadeouts 1, fade-ins 0
+674.950 Fade-in 1: split 7 of 12, HMC 15 (needs 15 stars, fadeout 1, fade-in 0), star count 14, fadeouts 1, fade-ins 1
+694.183 Star count 14 -> 15, prediction 15 at 0.93
+697.183 Fadeout 1: split 7 of 12, HMC 15 (needs 15 stars, fadeout 1, fade-in 0), star count 15, fadeouts 1, fade-ins 0
+697.616 Split: split 7 of 12, HMC 15 (needs 15 stars, fadeout 1, fade-in 0), star count 15, fadeouts 1, fade-ins 0
+697.650 Timer on split 8: Mips
+743.749 Split: split 8 of 12, Mips (needs 15 stars, fadeout -1, fade-in -1), star count 15, fadeouts 0, fade-ins 0
+743.783 Timer on split 9: DDD 16
+746.283 Fade-in 1: split 9 of 12, DDD 16 (needs 16 stars, fadeout 1, fade-in 0), star count 15, fadeouts 0, fade-ins 1
+786.783 Star count 15 -> 16, prediction 16 at 0.97
+790.949 Fadeout 1: split 9 of 12, DDD 16 (needs 16 stars, fadeout 1, fade-in 0), star count 16, fadeouts 1, fade-ins 0
+791.449 Split: split 9 of 12, DDD 16 (needs 16 stars, fadeout 1, fade-in 0), star count 16, fadeouts 1, fade-ins 0
+791.483 Timer on split 10: BitFS
+799.949 Fadeout 1: split 10 of 12, BitFS (needs 16 stars, fadeout 3, fade-in 0), star count 16, fadeouts 1, fade-ins 0
+847.116 Fadeout 2: split 10 of 12, BitFS (needs 16 stars, fadeout 3, fade-in 0), star count 16, fadeouts 2, fade-ins 0
+884.849 Fadeout 3: split 10 of 12, BitFS (needs 16 stars, fadeout 3, fade-in 0), star count 16, fadeouts 3, fade-ins 0
+885.283 Split: split 10 of 12, BitFS (needs 16 stars, fadeout 3, fade-in 0), star count 16, fadeouts 3, fade-ins 0
+885.316 Timer on split 11: BLJs
+894.433 Fadeout 1: split 11 of 12, BLJs (needs 16 stars, fadeout 4, fade-in 0), star count 16, fadeouts 1, fade-ins 0
+897.999 Fadeout 2: split 11 of 12, BLJs (needs 16 stars, fadeout 4, fade-in 0), star count 16, fadeouts 2, fade-ins 0
+907.966 Fadeout 3: split 11 of 12, BLJs (needs 16 stars, fadeout 4, fade-in 0), star count 16, fadeouts 3, fade-ins 0
+950.433 Fadeout 4: split 11 of 12, BLJs (needs 16 stars, fadeout 4, fade-in 0), star count 16, fadeouts 4, fade-ins 0
+950.966 Split: split 11 of 12, BLJs (needs 16 stars, fadeout 4, fade-in 0), star count 16, fadeouts 4, fade-ins 0
+950.999 Timer on split 12: BitS
+1002.766 Fadeout 1: split 12 of 12, BitS (needs 16 stars, fadeout -1, fade-in -1), star count 16, fadeouts 1, fade-ins 0
+1062.449 Split: split 12 of 12, BitS (needs 16 stars, fadeout -1, fade-in -1), star count 16, fadeouts 1, fade-ins 0
+1087.983 Fadeout 2: split 12 of 12, BitS (needs 16 stars, fadeout -1, fade-in -1), star count 16, fadeouts 2, fade-ins 0
+1092.083 Fadeout 3: split 12 of 12, BitS (needs 16 stars, fadeout -1, fade-in -1), star count 16, fadeouts 3, fade-ins 0
