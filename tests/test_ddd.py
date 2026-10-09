@@ -46,19 +46,10 @@ class DDDSplitTest(unittest.TestCase):
         self.assertEqual(self.frames(HAT, HAT), ["LOOP", "LOOP"])
         self.split.assert_not_called()
 
-    def test_hat_missing_for_a_frame_while_running_to_the_painting(self):
-        self.assertEqual(self.frames(HAT, NO_HAT, HAT, NO_HAT, HAT), ["LOOP"] * 5)
-        self.split.assert_not_called()
-
-    def test_entering_the_painting(self):
-        self.assertEqual(self.frames(HAT, NO_HAT, NO_HAT), ["LOOP", "LOOP", "ENTERED"])
+    def test_splits_on_the_first_frame_without_the_hat(self):
+        # Like AutoSplit64 always has, which runners' Mips and DDD times were made with: see ProcessDDDSplit
+        self.assertEqual(self.frames(HAT, NO_HAT), ["LOOP", "ENTERED"])
         self.split.assert_called_once()
-
-    def test_each_attempt_starts_over(self):
-        self.frames(HAT, NO_HAT)
-        self.process.on_transition()
-        self.assertEqual(self.frames(NO_HAT), ["LOOP"])
-        self.split.assert_not_called()
 
     def test_fadeout(self):
         core.fade_status = core.FADEOUT_PARTIAL

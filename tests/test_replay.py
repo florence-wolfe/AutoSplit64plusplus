@@ -55,8 +55,19 @@ class _FullRunTest(_RecordingTest):
 
     def test_splits_when_the_runner_did(self):
         for index, (title, _, _) in enumerate(self.RECORDING.split_windows()):
+            if title in self.RECORDING.artifacts:
+                continue
             with self.subTest(title):
                 self.assert_split_in_window(self.result, index)
+
+    def test_recording_artifacts(self):
+        # The video isn't the capture split detection had live, so it's no reason to change split detection
+        for index, (title, earliest, latest) in enumerate(self.RECORDING.split_windows()):
+            if title in self.RECORDING.artifacts:
+                with self.subTest(title):
+                    time = self.result.split_times().get(index)
+                    self.assertFalse(time is not None and earliest <= time <= latest,
+                                     f"{title} splits when the runner did now, though: {self.RECORDING.artifacts[title]}")
 
     def test_fadeout_splits_on_the_first_frame_the_centre_is_black(self):
         # Frame-exact, unlike the runner's timer: at most one look of split detection after the frame

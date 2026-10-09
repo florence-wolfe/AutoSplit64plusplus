@@ -19,7 +19,7 @@ import json
 import logging
 import math
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from unittest import mock
 
@@ -56,6 +56,8 @@ class Recording:
     timer_start: float
     # (title, the runner's split time as their timer shows it, e.g. "1:35.1")
     splits: list
+    # Splits the video can't be trusted for, by title, and why
+    artifacts: dict = field(default_factory=dict)
 
     @classmethod
     def load(cls, name):

@@ -40,17 +40,12 @@ class ProcessFindDDDPortal(Process):
 
 
 class ProcessDDDSplit(Process):
-    # Mario entered the painting once his hat is gone for this many frames in a row. While he runs to the
-    # painting, small against it, his hat can go unfound for a frame.
-    FRAMES_WITHOUT_HAT = 2
-
     def __init__(self,):
         super().__init__()
         self.register_signal("ENTERED")
         self.register_signal("FADEOUT")
         self.lower_bound = np.array(config.get("split_ddd_enter", "hat_lower_bound"), dtype="uint8")
         self.upper_bound = np.array(config.get("split_ddd_enter", "hat_upper_bound"), dtype="uint8")
-        self._frames_without_hat = 0
 
     def execute(self):
         no_hud = core.get_region(core.NO_HUD_REGION)
@@ -58,19 +53,16 @@ class ProcessDDDSplit(Process):
         if core.fade_status in (core.FADEOUT_PARTIAL, core.FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
 
-        if cv2.inRange(no_hud, self.lower_bound, self.upper_bound).any():
-            self._frames_without_hat = 0
+        # Split on the first frame without the hat, like AutoSplit64. Waiting for a second frame delays every Mips
+        # split by 33 ms, which runners' golds can't be compared to.
+        if not cv2.inRange(no_hud, self.lower_bound, self.upper_bound).any():
+            core.split()
+            return self.signals["ENTERED"]
+        else:
             return self.signals["LOOP"]
-
-        self._frames_without_hat += 1
-        if self._frames_without_hat < self.FRAMES_WITHOUT_HAT:
-            return self.signals["LOOP"]
-        core.split()
-        return self.signals["ENTERED"]
 
     def on_transition(self):
         core.fps = 29.97
-        self._frames_without_hat = 0
         super().on_transition()
 
 
