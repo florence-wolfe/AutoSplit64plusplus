@@ -2,6 +2,8 @@ import unittest
 from types import SimpleNamespace
 from unittest import mock
 
+import numpy as np
+
 from autosplit64.core import split_detection
 from autosplit64.core.split_detection import SplitDetection
 from autosplit64.core.constants import INITIAL_STATE
@@ -310,6 +312,42 @@ class FirstSplitsTest(unittest.TestCase):
         self.base._reset_fade_count = mock.Mock()
         self.base.set_split_index(1)
         self.assertEqual(self.base.previous_split_initial_star, 0)
+
+
+class ProbabilityModeTest(unittest.TestCase):
+    """ The star count in Probability mode, from two predictions of the next star """
+
+    def setUp(self):
+        b = self.base = make_base(star_counts=(5, 10), current=1)
+        b._game_capture = mock.Mock(get_region=mock.Mock(return_value=np.zeros((47, 89, 3), np.uint8)))
+        b._model = mock.Mock(width=67, height=40)
+        b._prediction_processing_length = 20
+        b._predictions = [PredictionInfo(0, 0)] * 20
+        b._probability_threshold, b._confirmation_threshold = 0.6, 0.4
+        b._star_error_check = mock.Mock()
+        b._update_occurred = mock.Mock()
+        vars(b).update(star_count=5, in_xcam=False, xcam_count=0, fadeout_count=0, fadein_count=0, prediction_info=None)
+
+    def star_counts(self, *predictions):
+        """ The star count after each frame's prediction """
+        counts = []
+        for prediction in predictions:
+            self.base._model.predict.return_value = prediction
+            self.base._analyze_star_count_probability_mode()
+            counts.append(self.base.star_count)
+        return counts
+
+    def test_the_second_prediction_of_the_next_star_counts_it(self):
+        # On the frame of the second prediction, not one frame later
+        self.assertEqual(self.star_counts(*[PredictionInfo(6, 0.9)] * 3), [5, 6, 6])
+
+    def test_again_after_counting_a_star(self):
+        self.assertEqual(self.star_counts(*[PredictionInfo(6, 0.9)] * 2, *[PredictionInfo(7, 0.9)] * 3), [5, 6, 6, 7, 7])
+
+    def test_the_second_prediction_must_follow_the_first(self):
+        # One prediction of the current star count between them
+        self.assertEqual(self.star_counts(PredictionInfo(6, 0.9), PredictionInfo(5, 0.9), PredictionInfo(6, 0.9),
+                                          PredictionInfo(6, 0.9)), [5, 5, 5, 6])
 
 
 class StarSkipTest(unittest.TestCase):
