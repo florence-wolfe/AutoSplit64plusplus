@@ -292,6 +292,7 @@
 687.000 Fade-in 1: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 15, fadeouts 1, fade-ins 1
 687.167 Running ProcessFadein
 688.100 Split: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 15, fadeouts 1, fade-ins 1
+688.133 Timer ended the run
 688.133 Running ProcessStarCount
 688.300 Running ProcessFadein
 688.300 Split not sent, within the split cooldown: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 15, fadeouts 1, fade-ins 1
@@ -300,7 +301,7 @@
 688.500 Split not sent, within the split cooldown: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 15, fadeouts 1, fade-ins 1
 688.533 Running ProcessStarCount
 688.700 Running ProcessFadein
-688.700 Split: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 15, fadeouts 1, fade-ins 1
+688.700 Split not sent, past the last split: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 15, fadeouts 1, fade-ins 1
 688.733 Running ProcessStarCount
 688.900 Running ProcessFadein
 689.667 Running ProcessStarCount

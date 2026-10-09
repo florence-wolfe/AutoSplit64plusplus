@@ -421,6 +421,7 @@
 1060.916 Running ProcessFinalStarSplit
 1062.449 Split: split 12 of 12, BitS (needs 16 stars, fadeout -1, fade-in -1), star count 16, fadeouts 1, fade-ins 0
 1062.449 Grand Star grabbed
+1062.483 Timer ended the run
 1062.483 Running Processor
 1062.483 Running ProcessWait
 1087.983 Fadeout 2: split 12 of 12, BitS (needs 16 stars, fadeout -1, fade-in -1), star count 16, fadeouts 2, fade-ins 0

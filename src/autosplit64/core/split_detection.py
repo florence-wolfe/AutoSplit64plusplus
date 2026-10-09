@@ -109,6 +109,8 @@ class SplitDetection(Thread):
 
         #
         self._in_game = False
+        # Whether the timer ended the run, which leaves it past the last split
+        self._run_ended = False
 
         try:
             self._route_length = len(self._route.splits)
@@ -257,6 +259,10 @@ class SplitDetection(Thread):
         if ls_index is False:
             return
         ls_index = max(ls_index, 0)
+        run_ended = ls_index >= len(self._route.splits)
+        if run_ended and not self._run_ended:
+            log.info("Timer ended the run")
+        self._run_ended = run_ended
         if ls_index != self.split_index():
             self.set_split_index(ls_index)
 
@@ -445,7 +451,7 @@ class SplitDetection(Thread):
             return
 
         # Prevent splitting past the final split
-        if self.split_index() == len(self._route.splits):
+        if self._run_ended:
             log.info("Split not sent, past the last split: %s", self._state())
             return
 

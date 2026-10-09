@@ -175,6 +175,7 @@ class DetectionLogTest(unittest.TestCase):
         b._split_cooldown = 0.5
         b._split_on_current_xcam = False
         b._in_game = True
+        b._run_ended = False
         b._prediction_processing_length = 3
         b._update_occurred = mock.Mock()
         vars(b).update(star_count=7, fadeout_count=1, fadein_count=0, xcam_count=0, last_split=0.0,
@@ -196,6 +197,19 @@ class DetectionLogTest(unittest.TestCase):
         log = self.logged(self.base.split)
         self.livesplit.split.assert_not_called()
         self.assertIn("cooldown", log)
+
+    def test_no_split_once_the_timer_ended_the_run(self):
+        # The timer is past the last split, which split detection stays on
+        self.assertIn("Timer ended the run", self.logged(lambda: self.base._sync_split_index(3)))
+        log = self.logged(self.base.split)
+        self.livesplit.split.assert_not_called()
+        self.assertIn("past the last split", log)
+
+    def test_splits_again_once_the_timer_is_back_in_a_run(self):
+        for index in (3, -1):
+            self.base._sync_split_index(index)
+        self.logged(self.base.split)
+        self.livesplit.split.assert_called_once()
 
     def test_timer_commands(self):
         for command, words in (("undo", "Undid"), ("skip", "Skipped"), ("reset", "Reset"), ("restart", "Restarted")):
