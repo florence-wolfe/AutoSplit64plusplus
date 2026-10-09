@@ -4,7 +4,6 @@ import time
 import cv2
 import numpy as np
 
-from autosplit64 import core
 from autosplit64.core.constants import (
     FADEIN_COMPLETE,
     FADEIN_PARTIAL,
@@ -28,136 +27,136 @@ log = logging.getLogger("detection")
 
 
 class ProcessWait(Process):
-    def __init__(self,):
-        super().__init__()
+    def __init__(self, core):
+        super().__init__(core)
 
         self.register_signal("FADEOUT")
 
     def execute(self):
-        if core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
+        if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
 
         return self.signals["LOOP"]
 
     def on_transition(self):
-        core.enable_predictions(False)
-        core.fps = 10
+        self.core.enable_predictions(False)
+        self.core.fps = 10
         super().on_transition()
 
 
 class _RunStartProcess(Process):
     """ Detects being in game from the star count, also mid-run when that's enabled """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, core):
+        super().__init__(core)
         self._star_skip_enabled = config.get("general", "mid_run_start_enabled")
         self._prev_prediction = -1
         self._jump_predictions = 0
 
     def _in_game_detected(self):
-        if core.split_index() > 0:
-            prev_split_star = core.route.splits[core.split_index()-1].star_count
+        if self.core.split_index() > 0:
+            prev_split_star = self.core.route.splits[self.core.split_index()-1].star_count
         else:
-            prev_split_star = core.route.initial_star
+            prev_split_star = self.core.route.initial_star
 
         probability_threshold = config.get("thresholds", "probability_threshold")
 
-        if core.prediction_info.prediction == core.star_count and core.prediction_info.probability > probability_threshold:
-            core.enable_fade_count(True)
-            core.enable_xcam_count(True)
+        if self.core.prediction_info.prediction == self.core.star_count and self.core.prediction_info.probability > probability_threshold:
+            self.core.enable_fade_count(True)
+            self.core.enable_xcam_count(True)
             return True
-        elif self._star_skip_enabled and prev_split_star <= core.prediction_info.prediction <= core.current_split().star_count and core.prediction_info.probability > probability_threshold:
-            if core.prediction_info.prediction == self._prev_prediction:
+        elif self._star_skip_enabled and prev_split_star <= self.core.prediction_info.prediction <= self.core.current_split().star_count and self.core.prediction_info.probability > probability_threshold:
+            if self.core.prediction_info.prediction == self._prev_prediction:
                 self._jump_predictions += 1
             else:
                 self._jump_predictions = 0
 
             if self._jump_predictions >= 4:
-                core.enable_fade_count(True)
-                core.enable_xcam_count(True)
-                core.set_star_count(core.prediction_info.prediction)
+                self.core.enable_fade_count(True)
+                self.core.enable_xcam_count(True)
+                self.core.set_star_count(self.core.prediction_info.prediction)
                 self._jump_predictions = 0
                 self._prev_prediction = -1
                 return True
 
-            self._prev_prediction = core.prediction_info.prediction
+            self._prev_prediction = self.core.prediction_info.prediction
 
         return False
 
 
 class ProcessRunStart(_RunStartProcess):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, core):
+        super().__init__(core)
         self.register_signal("FADEOUT")
         self.register_signal("START")
 
     def execute(self):
-        if core.fade_status in (FADEOUT_COMPLETE, FADEOUT_PARTIAL):
+        if self.core.fade_status in (FADEOUT_COMPLETE, FADEOUT_PARTIAL):
             return self.signals["FADEOUT"]
         if self._in_game_detected():
-            core.set_in_game(True)
+            self.core.set_in_game(True)
             return self.signals["START"]
         return self.signals["LOOP"]
 
     def on_transition(self):
-        core.enable_fade_count(False)
-        core.fps = 6
+        self.core.enable_fade_count(False)
+        self.core.fps = 6
 
         super().on_transition()
 
 
 class ProcessRunStartUpSegment(_RunStartProcess):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, core):
+        super().__init__(core)
         self.register_signal("FADEOUT")
         self.register_signal("START")
 
     def execute(self):
-        if core.fade_status in (FADEOUT_COMPLETE, FADEOUT_PARTIAL):
+        if self.core.fade_status in (FADEOUT_COMPLETE, FADEOUT_PARTIAL):
             return self.signals["FADEOUT"]
         if self._in_game_detected():
             return self.signals["START"]
         return self.signals["LOOP"]
 
     def on_transition(self):
-        core.enable_fade_count(False)
-        core.fps = 6
+        self.core.enable_fade_count(False)
+        self.core.fps = 6
 
         super().on_transition()
 
 
 class ProcessStarCount(Process):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, core):
+        super().__init__(core)
         self.register_signal("FADEOUT")
         self.register_signal("FADEIN")
 
     def execute(self):
-        if core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
+        if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
 
-        if core.fade_status in (FADEIN_PARTIAL, FADEIN_COMPLETE):
+        if self.core.fade_status in (FADEIN_PARTIAL, FADEIN_COMPLETE):
             return self.signals["FADEIN"]
 
         return self.signals["LOOP"]
 
     def on_transition(self):
-        core.fps = config.get("advanced", "star_process_frame_rate")
-        core.enable_predictions(True)
-        core.enable_xcam_count(True)
+        self.core.fps = config.get("advanced", "star_process_frame_rate")
+        self.core.enable_predictions(True)
+        self.core.enable_xcam_count(True)
         super().on_transition()
 
 
 class ProcessFadein(Process):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, core):
+        super().__init__(core)
         self.register_signal("COMPLETE")
 
     def execute(self):
-        if core.incoming_split() and core.fade_status == FADEIN_COMPLETE:
-            core.split()
+        if self.core.incoming_split() and self.core.fade_status == FADEIN_COMPLETE:
+            self.core.split()
 
-        if core.fade_status == FADEIN_PARTIAL:
+        if self.core.fade_status == FADEIN_PARTIAL:
             return self.signals["LOOP"]
         else:
             # TODO: BUG: Fadein transition oscillation
@@ -165,8 +164,8 @@ class ProcessFadein(Process):
             return self.signals["COMPLETE"]
 
     def on_transition(self):
-        core.fps = 29.97
-        core.enable_predictions(False)
+        self.core.fps = 29.97
+        self.core.enable_predictions(False)
 
         super().on_transition()
 
@@ -174,8 +173,8 @@ class ProcessFadein(Process):
 class _FadeoutProcess(Process):
     """ A fadeout, which is a console reset when the SM64 logo shows """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, core):
+        super().__init__(core)
         self.register_signal("RESET")
         self.register_signal("COMPLETE")
 
@@ -183,7 +182,7 @@ class _FadeoutProcess(Process):
         self._black_threshold = config.get("thresholds", "black_threshold")
         self._undo_threshold = config.get("thresholds", "undo_threshold")
 
-        _, _, reset_width, reset_height = core.get_region_rect(RESET_REGION)
+        _, _, reset_width, reset_height = self.core.get_region_rect(RESET_REGION)
         self._reset_template = cv2.resize(cv2.imread(resource_path(config.get("advanced", "reset_frame_one"))), (reset_width, reset_height), interpolation=cv2.INTER_AREA)
         self._reset_template_2 = cv2.resize(cv2.imread(resource_path(config.get("advanced", "reset_frame_two"))), (reset_width, reset_height), interpolation=cv2.INTER_AREA)
 
@@ -191,35 +190,35 @@ class _FadeoutProcess(Process):
         """ Split during the fadeout if the current split ends with one """
 
     def execute(self):
-        reset_region = core.get_region(RESET_REGION)
+        reset_region = self.core.get_region(RESET_REGION)
         self._split(reset_region)
 
         # Check for a match against the reset templates (SM64 logo)
         if self._is_reset(reset_region, self._reset_template) or self._is_reset(reset_region, self._reset_template_2):
-            core.enable_predictions(True)
+            self.core.enable_predictions(True)
             self._reset()
             return self.signals["RESET"]
 
         # If both star count, and life count are still black, reprocess fadeout, otherwise fadeout completed
-        if core.fade_status in (FADEOUT_COMPLETE, FADEOUT_PARTIAL):
+        if self.core.fade_status in (FADEOUT_COMPLETE, FADEOUT_PARTIAL):
             return self.signals["LOOP"]
         else:
-            core.enable_predictions(True)
+            self.core.enable_predictions(True)
             return self.signals["COMPLETE"]
 
     def _reset(self):
         if not config.get("general", "srl_mode"):
-            if core.current_time - core.last_split < self._undo_threshold:
-                core.undo()
+            if self.core.current_time - self.core.last_split < self._undo_threshold:
+                self.core.undo()
 
-            core.reset()
-            if core.start_on_reset:
-                core.split()
+            self.core.reset()
+            if self.core.start_on_reset:
+                self.core.split()
 
-        core.enable_fade_count(False)
-        core.enable_xcam_count(False)
-        core.set_in_game(False)
-        core.star_count = core.route.initial_star
+        self.core.enable_fade_count(False)
+        self.core.enable_xcam_count(False)
+        self.core.set_in_game(False)
+        self.core.star_count = self.core.route.initial_star
 
     def _is_reset(self, region, template):
         match = cv2.minMaxLoc(cv2.matchTemplate(region,
@@ -228,9 +227,9 @@ class _FadeoutProcess(Process):
         return match < config.get("thresholds", "reset_threshold")
 
     def on_transition(self):
-        core.fps = self._fps
-        core.enable_predictions(False)
-        core.enable_xcam_count(False)
+        self.core.fps = self._fps
+        self.core.enable_predictions(False)
+        self.core.enable_xcam_count(False)
         super().on_transition()
 
 
@@ -238,16 +237,16 @@ class ProcessFadeout(_FadeoutProcess):
     def _split(self, reset_region):
         # TODO: SWITCH TO USING FADE_STATUS
         # If centre of screen is black, and the current split conditions are met, trigger split
-        if is_black(reset_region, self._black_threshold) and core.incoming_split() and core.current_split().split_type == SPLIT_NORMAL:
-            core.split()
+        if is_black(reset_region, self._black_threshold) and self.core.incoming_split() and self.core.current_split().split_type == SPLIT_NORMAL:
+            self.core.split()
 
 
 class ProcessFadeoutNoStar(_FadeoutProcess):
     def _split(self, reset_region):
         # TODO: SWITCH TO USING FADE_STATUS
         # If centre of screen is black, and the current split conditions are met, trigger split
-        if is_black(reset_region, self._black_threshold) and core.incoming_split(star_count=False) and core.current_split().split_type == SPLIT_FADE_ONLY:
-            core.split()
+        if is_black(reset_region, self._black_threshold) and self.core.incoming_split(star_count=False) and self.core.current_split().split_type == SPLIT_FADE_ONLY:
+            self.core.split()
 
 
 class ProcessFadeoutResetOnly(_FadeoutProcess):
@@ -255,8 +254,8 @@ class ProcessFadeoutResetOnly(_FadeoutProcess):
 
 
 class ProcessPostFadeout(Process):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, core):
+        super().__init__(core)
         self.register_signal("FADEOUT")
         self.register_signal("FADEIN")
         self.register_signal("FLASH")
@@ -267,24 +266,24 @@ class ProcessPostFadeout(Process):
         self._power_found = False
 
     def execute(self):
-        if core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
+        if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
 
-        if core.fade_status in (FADEIN_PARTIAL, FADEIN_COMPLETE):
+        if self.core.fade_status in (FADEIN_PARTIAL, FADEIN_COMPLETE):
             return self.signals["FADEIN"]
 
-        if core.prediction_info.prediction in (121, 122) and self.loop_time() > 1:
+        if self.core.prediction_info.prediction in (121, 122) and self.loop_time() > 1:
             return self.signals["FLASH"]
 
-        if time.time() - core.collection_time > 11:
+        if time.time() - self.core.collection_time > 11:
             self._death_check()
 
-        if core.incoming_split():
-            if core.xcam_count == 0 and core.in_xcam:
-                core.split()
-            elif core.xcam_count == core.current_split().on_xcam:
-                core.xcam_count = 0
-                core.split()
+        if self.core.incoming_split():
+            if self.core.xcam_count == 0 and self.core.in_xcam:
+                self.core.split()
+            elif self.core.xcam_count == self.core.current_split().on_xcam:
+                self.core.xcam_count = 0
+                self.core.split()
 
         if self.loop_time() < 6:
             return self.signals["LOOP"]
@@ -297,10 +296,10 @@ class ProcessPostFadeout(Process):
         elif self.loop_time() >= 3 and self._power_found:
             self._power_found = self._power_check()
             if not self._power_found:
-                core.fadeout_count = max(core.fadeout_count - 2, 0)
+                self.core.fadeout_count = max(self.core.fadeout_count - 2, 0)
 
     def _power_check(self):
-        power_region = core.get_region(POWER_REGION)
+        power_region = self.core.get_region(POWER_REGION)
 
         lower = np.array(self.power_lower_bound, dtype="uint8")
         upper = np.array(self.power_upper_bound, dtype="uint8")
@@ -312,16 +311,16 @@ class ProcessPostFadeout(Process):
 
     def on_transition(self):
         self._power_found = False
-        core.enable_predictions(True)
-        core.enable_xcam_count(True)
-        core.fps = 15
+        self.core.enable_predictions(True)
+        self.core.enable_xcam_count(True)
+        self.core.fps = 15
 
         super().on_transition()
 
 
 class ProcessFlashCheck(Process):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, core):
+        super().__init__(core)
         self.register_signal("FADEOUT")
         self.register_signal("FADEIN")
         self.register_signal("COMPLETE")
@@ -331,13 +330,13 @@ class ProcessFlashCheck(Process):
         self._flash_count = 0
 
     def execute(self):
-        if core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
+        if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
 
-        if core.fade_status in (FADEIN_PARTIAL, FADEIN_COMPLETE):
+        if self.core.fade_status in (FADEIN_PARTIAL, FADEIN_COMPLETE):
             return self.signals["FADEIN"]
 
-        if core.prediction_info.prediction in (121, 122):
+        if self.core.prediction_info.prediction in (121, 122):
             normalized_prediction = 1
         else:
             normalized_prediction = -1
@@ -350,15 +349,15 @@ class ProcessFlashCheck(Process):
 
         if -10 < self._running_total < 10 and self._flash_count >= 4:
             log.info("Star count flashed %d times, running total %d", self._flash_count, self._running_total)
-            if time.time() - core.collection_time > 15:
-                core.set_star_count(core.star_count + 1)
+            if time.time() - self.core.collection_time > 15:
+                self.core.set_star_count(self.core.star_count + 1)
 
-                if core.current_split().star_count == core.star_count:
+                if self.core.current_split().star_count == self.core.star_count:
 
-                    if core.current_split().on_fadeout == 1:
-                        core.skip()
+                    if self.core.current_split().on_fadeout == 1:
+                        self.core.skip()
                     else:
-                        core.fadeout_count += 1
+                        self.core.fadeout_count += 1
 
             return self.signals["COMPLETE"]
 
@@ -368,8 +367,8 @@ class ProcessFlashCheck(Process):
             return self.signals["COMPLETE"]
 
     def on_transition(self):
-        core.fps = 29.97
-        core.enable_predictions(True)
+        self.core.fps = 29.97
+        self.core.enable_predictions(True)
         self._running_total = 0
         self._flash_count = 0
         self._prev_prediction = 0
@@ -378,8 +377,8 @@ class ProcessFlashCheck(Process):
 
 
 class ProcessReset(Process):
-    def __init__(self,):
-        super().__init__()
+    def __init__(self, core):
+        super().__init__(core)
         self.register_signal("RESET")
 
     def execute(self):
@@ -387,8 +386,8 @@ class ProcessReset(Process):
 
 
 class ProcessDummy(Process):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, core):
+        super().__init__(core)
         self.register_signal("COMPLETE")
 
     def execute(self):
@@ -396,23 +395,23 @@ class ProcessDummy(Process):
 
 
 class ProcessFileSelectSplit(_RunStartProcess):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, core):
+        super().__init__(core)
         self.register_signal("FADEOUT")
         self.register_signal("COMPLETE")
 
         self._restart_split_delay = 1.2012 + (config.get("advanced", "file_select_frame_offset") / 29.97)
 
     def execute(self):
-        region = core.get_region(FADEOUT_REGION)
+        region = self.core.get_region(FADEOUT_REGION)
 
-        if core.fade_status in (FADEOUT_COMPLETE, FADEOUT_PARTIAL):
+        if self.core.fade_status in (FADEOUT_COMPLETE, FADEOUT_PARTIAL):
             return self.signals["FADEOUT"]
         if self._in_game_detected():
-            core.set_in_game(True)
+            self.core.set_in_game(True)
             return self.signals["COMPLETE"]
 
-        if core.fadein_count == 2:
+        if self.core.fadein_count == 2:
             region_int = region.astype(int)
             region_int_b, region_int_g, region_int_r = region_int.transpose(2, 0, 1)
             mask = (np.abs(region_int_r - region_int_g) > 25)
@@ -424,15 +423,15 @@ class ProcessFileSelectSplit(_RunStartProcess):
                     time.sleep(self._restart_split_delay)
                 except ValueError:
                     pass
-                core.fadein_count = 0
-                core.fadeout_count = 0
-                core.split()
-                core.set_in_game(True)
+                self.core.fadein_count = 0
+                self.core.fadeout_count = 0
+                self.core.split()
+                self.core.set_in_game(True)
                 return self.signals["COMPLETE"]
 
         return self.signals["LOOP"]
 
     def on_transition(self):
         super().on_transition()
-        core.fps = 29.97
-        core.enable_fade_count(True)
+        self.core.fps = 29.97
+        self.core.enable_fade_count(True)

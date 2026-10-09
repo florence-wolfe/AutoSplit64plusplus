@@ -14,7 +14,7 @@ class GenerateTest(unittest.TestCase):
     def setUp(self):
         self.dir = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.dir)
-        self.a, self.b = Process(), Process()
+        self.a, self.b = Process(None), Process(None)
         self.a.register_signal("DONE")
         self.b.register_signal("NEXT")
         patcher = mock.patch.dict(processing.processes, {"A": self.a, "B": self.b}, clear=True)
@@ -84,7 +84,7 @@ class ShippedProcessorsTest(unittest.TestCase):
         for name, signals in names.items():
             if name in sub_processor_names:
                 continue
-            stand_ins[name] = Process()
+            stand_ins[name] = Process(None)
             for signal in signals:
                 stand_ins[name].register_signal(signal)
 

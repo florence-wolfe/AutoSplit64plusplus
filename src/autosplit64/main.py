@@ -66,23 +66,23 @@ def set_up_timing():
 
 def register_processes(detection):
     """ Register the processes, which run in detection, the Base that started """
-    register_process("WAIT", ProcessWait())
-    register_process("RUN_START", ProcessRunStart())
-    register_process("RUN_START_UP_RTA", ProcessRunStartUpSegment())
-    register_process("STAR_COUNT", ProcessStarCount())
-    register_process("FADEIN", ProcessFadein())
-    register_process("FADEOUT", ProcessFadeout())
-    register_process("FADEOUT_NO_STAR", ProcessFadeoutNoStar())
-    register_process("FADEOUT_RESET_ONLY", ProcessFadeoutResetOnly())
-    register_process("POST_FADEOUT", ProcessPostFadeout())
-    register_process("FLASH_CHECK", ProcessFlashCheck())
-    register_process("RESET", ProcessReset())
-    register_process("DUMMY", ProcessDummy())
+    register_process("WAIT", ProcessWait(detection))
+    register_process("RUN_START", ProcessRunStart(detection))
+    register_process("RUN_START_UP_RTA", ProcessRunStartUpSegment(detection))
+    register_process("STAR_COUNT", ProcessStarCount(detection))
+    register_process("FADEIN", ProcessFadein(detection))
+    register_process("FADEOUT", ProcessFadeout(detection))
+    register_process("FADEOUT_NO_STAR", ProcessFadeoutNoStar(detection))
+    register_process("FADEOUT_RESET_ONLY", ProcessFadeoutResetOnly(detection))
+    register_process("POST_FADEOUT", ProcessPostFadeout(detection))
+    register_process("FLASH_CHECK", ProcessFlashCheck(detection))
+    register_process("RESET", ProcessReset(detection))
+    register_process("DUMMY", ProcessDummy(detection))
 
     register_process("XCAM", ProcessXCam(detection))
     register_process("XCAM_UP_RTA", ProcessXCamStartUpSegment(detection))
 
-    register_process("FILE_SELECT_SPLIT", ProcessFileSelectSplit())
+    register_process("FILE_SELECT_SPLIT", ProcessFileSelectSplit(detection))
 
     register_process("FIND_DDD_PORTAL", ProcessFindDDDPortal(detection))
     register_process("DDD_SPLIT", ProcessDDDSplit(detection))

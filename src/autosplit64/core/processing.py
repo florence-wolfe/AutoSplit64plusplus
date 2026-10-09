@@ -141,7 +141,7 @@ class Transition(object):
 
 
 class Process(object):
-    def __init__(self, core=None):
+    def __init__(self, core):
         # The split detection the process runs in, the Base
         self.core = core
         self.signals = {"LOOP": Signal()}
@@ -165,7 +165,8 @@ class Process(object):
 
 class Processor(Process):
     def __init__(self):
-        super().__init__()
+        # It runs processes, which run in split detection, but needs none itself
+        super().__init__(None)
 
         # Processor
         self._initial_process = None
