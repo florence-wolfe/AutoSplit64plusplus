@@ -1,5 +1,7 @@
+import logging
 import os
 import threading
+from collections import deque
 from pathlib import Path
 
 from PyQt6 import QtCore, QtGui, QtWidgets
@@ -21,6 +23,46 @@ LIVESPLIT_STATES = {"connected": "LiveSplit connected", "waiting": "waiting for 
 def update_rate():
     """ How many times a second the window shows the latest values. 0 was allowed before, which is 1 now. """
     return max(1, config.get("general", "output_update_rate"))
+
+
+class _EventSignal(QtCore.QObject):
+    line = QtCore.pyqtSignal(str)
+
+
+class DetectionEvents(logging.Handler):
+    """ This session's last detection log lines, with their time, and a signal of each new one, from any thread """
+
+    MAX = 200
+
+    def __init__(self):
+        super().__init__(logging.INFO)
+        self.setFormatter(logging.Formatter("%(asctime)s %(message)s", "%H:%M:%S"))
+        self._lines = deque(maxlen=self.MAX)
+        self.signal = _EventSignal()
+
+    def emit(self, record):
+        line = self.format(record)
+        self._lines.append(line)
+        self.signal.line.emit(line)
+
+    def lines(self):
+        # Logging calls emit with the lock held
+        with self.lock:
+            return list(self._lines)
+
+
+_events = None
+
+
+def detection_events():
+    """ The one DetectionEvents, on the detection log from the first time it's needed, when the main window is made """
+    global _events
+    if _events is None:
+        _events = DetectionEvents()
+        detection = logging.getLogger("detection")
+        detection.setLevel(logging.INFO)
+        detection.addHandler(_events)
+    return _events
 
 
 def livesplit_state():
@@ -110,6 +152,17 @@ class DebugDialog(QtWidgets.QDialog):
         basics.addRow("Counted:", self.counted_lb)
         layout.addLayout(basics)
 
+        # What split detection did in this session, the latest at the bottom
+        self.events = QtWidgets.QPlainTextEdit()
+        self.events.setReadOnly(True)
+        self.events.setMaximumBlockCount(DetectionEvents.MAX)
+        self.events.setToolTip("What split detection did in this session, like in the log")
+        events = detection_events()
+        self.events.setPlainText("\n".join(events.lines()))
+        events.signal.line.connect(self._add_event)
+        layout.addWidget(QtWidgets.QLabel("Recent events:"))
+        layout.addWidget(self.events, 1)
+
         # Everything else split detection sees, collapsed at first
         self.advanced_btn = QtWidgets.QToolButton()
         self.advanced_btn.setText("Advanced")
@@ -159,7 +212,6 @@ class DebugDialog(QtWidgets.QDialog):
         update_rate_layout.addWidget(self.update_lb)
         update_rate_layout.addWidget(self.update_le)
         grid.addLayout(update_rate_layout, row, 1)
-        layout.addStretch()
 
         # The logs open in the text editor
         self.open_log_btn = QtWidgets.QPushButton("Open Log")
@@ -193,6 +245,14 @@ class DebugDialog(QtWidgets.QDialog):
         if save:
             config.set_key("general", "debug_advanced", shown)
             config.save_config()
+
+    def _add_event(self, line):
+        # Following the latest, unless reading further up
+        bar = self.events.verticalScrollBar()
+        following = bar.value() == bar.maximum()
+        self.events.appendPlainText(line)
+        if following:
+            bar.setValue(bar.maximum())
 
     def update_log_buttons(self):
         """ The previous session's log is there from the second session on """

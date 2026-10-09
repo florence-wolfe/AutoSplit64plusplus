@@ -1,4 +1,7 @@
 import contextlib
+import logging
+import threading
+import uuid
 import shutil
 import tempfile
 import unittest
@@ -9,6 +12,7 @@ from unittest import mock
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 from autosplit64.core import config, logs
+from autosplit64.gui.dialogs import debug_dialog
 from autosplit64.gui.dialogs.debug_dialog import DebugDialog, describe
 
 _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
@@ -204,6 +208,72 @@ class DebugDialogTest(unittest.TestCase):
         self.dialog.hide()
         # Which doesn't change the settings
         config.save_config.assert_not_called()
+
+
+class RecentEventsTest(unittest.TestCase):
+    """ This session's last detection log lines, in the Debug window """
+
+    def setUp(self):
+        for patcher in [mock.patch.object(config, "_config", {"general": {"output_update_rate": 10}}),
+                        mock.patch.object(config, "save_config")]:
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        self.dialog = DebugDialog()
+        self.addCleanup(self.dialog.deleteLater)
+
+    def log(self, text=None):
+        """ Log a detection line, which is unique, and return it """
+        text = text or f"Split: {uuid.uuid4()}"
+        logging.getLogger("detection").info(text)
+        return text
+
+    def lines(self, dialog=None):
+        return (dialog or self.dialog).events.toPlainText().splitlines()
+
+    def test_new_lines_with_their_time(self):
+        text = self.log()
+        last = self.lines()[-1]
+        self.assertTrue(last.endswith(" " + text))
+        self.assertRegex(last, r"^\d\d:\d\d:\d\d ")
+
+    def test_lines_from_split_detection_thread(self):
+        text = f"Fadeout 1: {uuid.uuid4()}"
+        thread = threading.Thread(target=self.log, args=(text,))
+        thread.start()
+        thread.join()
+        # They arrive through the GUI thread
+        QtWidgets.QApplication.processEvents()
+        self.assertTrue(self.lines()[-1].endswith(text))
+
+    def test_lines_from_before_the_window_was_made(self):
+        text = self.log()
+        again = DebugDialog()
+        self.addCleanup(again.deleteLater)
+        self.assertTrue(self.lines(again)[-1].endswith(text))
+
+    def test_the_last_lines_only(self):
+        texts = [self.log() for _ in range(debug_dialog.DetectionEvents.MAX + 10)]
+        again = DebugDialog()
+        self.addCleanup(again.deleteLater)
+        for dialog in (self.dialog, again):
+            lines = self.lines(dialog)
+            self.assertEqual(len(lines), debug_dialog.DetectionEvents.MAX)
+            self.assertTrue(lines[-1].endswith(texts[-1]))
+            self.assertTrue(lines[0].endswith(texts[10]))
+
+    def test_reading_further_up_stays_there(self):
+        for _ in range(50):
+            self.log()
+        bar = self.dialog.events.verticalScrollBar()
+        self.dialog.show()
+        self.addCleanup(self.dialog.close)
+        QtWidgets.QApplication.processEvents()
+        bar.setValue(0)
+        self.log()
+        self.assertEqual(bar.value(), 0)
+        bar.setValue(bar.maximum())
+        self.log()
+        self.assertEqual(bar.value(), bar.maximum())
 
 
 if __name__ == "__main__":

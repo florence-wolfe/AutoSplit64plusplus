@@ -74,7 +74,7 @@ All windows and options are in the right-click menu, which the menu button (☰)
 - **Edit Coordinates**: choose what to capture and where the game is in it
 - **Settings**: connection to LiveSplit, detection thresholds, theme and other settings
 - **Generate Reset Templates**: record what a console reset looks like in your capture
-- **Debug**: show what split detection is doing: the split it's on, what that split needs and what it counted so far, with fades, X-Cams and star predictions under `Advanced`. It also opens this session's or the previous session's log
+- **Debug**: show what split detection is doing: the split it's on, what that split needs and what it counted so far, and what it did recently, like the splits it sent and the stars and fades it counted. Fades, X-Cams and star predictions are under `Advanced`. It also opens this session's or the previous session's log
 - **Save Debug Info**: save the logs, settings, route, reset templates and a captured frame with split detection's regions drawn on it in one file, to send with a bug report
 - **Autostart**: start split detection when AutoSplit64++ opens
 - **SRL Mode**: don't reset the timer when you reset the console, e.g. in races
