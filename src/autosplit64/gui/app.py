@@ -3,8 +3,10 @@ import logging
 from functools import partial
 import re
 import time
+from datetime import datetime
+from pathlib import Path
 from PyQt6 import QtCore, QtGui, QtWidgets
-from autosplit64.core import app_location, route_loader, config, livesplit, livesplit_one
+from autosplit64.core import app_location, debug_info, route_loader, config, livesplit, livesplit_one
 from autosplit64.core.resource_utils import base_path, absolute_path, rel_to_abs
 from . import constants
 from .widgets import PictureButton, StateButton, StarCountDisplay, SplitListWidget, ServerStatusIndicator, MenuButton, UpdateBadge
@@ -371,6 +373,7 @@ class App(QtWidgets.QMainWindow):
             ("Generate Reset Templates", "Record what a console reset looks like in your capture, so resets are detected", self.dialogs["reset_dialog"].show),
             None,
             ("Show Output", "Show what split detection sees: fades, X-Cams and star predictions", self.dialogs["output_dialog"].show),
+            ("Save Debug Info", "Save the logs, settings, route and a captured frame in one file, for a bug report", self.save_debug_info),
             None,
             ("Autostart", "Start split detection when AutoSplit64++ opens, trying for up to 5 minutes", "auto_start"),
             ("SRL Mode", "Don't reset the timer when you reset the console, e.g. in races", "srl_mode"),
@@ -398,6 +401,18 @@ class App(QtWidgets.QMainWindow):
         # Keep About, Settings and Exit in this menu instead of macOS moving them to the application menu
         for action in menu.actions() + route_menu.actions():
             action.setMenuRole(QtGui.QAction.MenuRole.NoRole)
+
+    def save_debug_info(self):
+        default = Path.home() / f"AutoSplit64++ debug info {datetime.now():%Y-%m-%d %H-%M}.zip"
+        path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save Debug Info", str(default), "Zip Files (*.zip)")
+        if not path:
+            return
+        try:
+            debug_info.save(path, *debug_info.capture_frame())
+        except OSError as e:
+            QtWidgets.QMessageBox.warning(self, "Save Debug Info", f"Couldn't save the debug info:\n\n{e}")
+            return
+        QtWidgets.QMessageBox.information(self, "Save Debug Info", f"Saved to {path}. Please send it with your bug report.")
 
     def _set_general(self, key, checked):
         config.set_key("general", key, checked)

@@ -75,6 +75,7 @@ All windows and options are in the right-click menu, which the menu button (☰)
 - **Settings**: connection to LiveSplit, detection thresholds, theme and other settings
 - **Generate Reset Templates**: record what a console reset looks like in your capture
 - **Show Output**: show what split detection sees: fades, X-Cams and star predictions
+- **Save Debug Info**: save the logs, settings, route, reset templates and a captured frame with split detection's regions drawn on it in one file, to send with a bug report
 - **Autostart**: start split detection when AutoSplit64++ opens
 - **SRL Mode**: don't reset the timer when you reset the console, e.g. in races
 
@@ -200,7 +201,7 @@ On macOS, each new version needs the Screen Recording and Camera permissions aga
 
 If you encounter any issues, please run through all steps below.
 
-When reporting a problem, include the log of the session it happened in: `AutoSplit64++.log`, and the session before it, `AutoSplit64++.old.log`. Each start of AutoSplit64++ begins a new log and keeps only the previous one, so a session's log is gone after two more starts. If AutoSplit64++ crashed, it says so the next time it starts, and the crash is in `AutoSplit64++.old.log`. They are next to `AutoSplit64++.exe` on Windows, and in `~/Library/Application Support/AutoSplit64++/` on macOS.
+When reporting a problem, `Right-Click -> Save Debug Info` saves everything that helps in one file. It includes the log of the session it happened in: `AutoSplit64++.log`, and the session before it, `AutoSplit64++.old.log`. Each start of AutoSplit64++ begins a new log and keeps only the previous one, so a session's log is gone after two more starts. If AutoSplit64++ crashed, it says so the next time it starts, and the crash is in `AutoSplit64++.old.log`. They are next to `AutoSplit64++.exe` on Windows, and in `~/Library/Application Support/AutoSplit64++/` on macOS.
 
 If it splits at the wrong time, or not at all, also send a recording of the run from a little before to a little after, e.g. your OBS recording or VOD, with the game uncovered by overlays, and your route (`.as64`). The run can then be replayed through split detection to see exactly what went wrong.
 

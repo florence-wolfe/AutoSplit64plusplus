@@ -40,7 +40,7 @@ class MenuTest(unittest.TestCase):
         app._populate_menu(menu)
         items = [a.text() if not a.isSeparator() else "---" for a in menu.actions()]
         self.assertEqual(items, ["Edit Route", "Open Route", "---", "Edit Coordinates", "---", "Settings", "---",
-                                 "Generate Reset Templates", "---", "Show Output", "---", "Autostart", "SRL Mode",
+                                 "Generate Reset Templates", "---", "Show Output", "Save Debug Info", "---", "Autostart", "SRL Mode",
                                  "---", "About", "---", "Exit"])
 
 
@@ -65,6 +65,7 @@ class MenuActionsTest(unittest.TestCase):
             ("Settings", "Connection to LiveSplit, detection thresholds and other settings", False, no_role),
             ("Generate Reset Templates", "Record what a console reset looks like in your capture, so resets are detected", False, no_role),
             ("Show Output", "Show what split detection sees: fades, X-Cams and star predictions", False, no_role),
+            ("Save Debug Info", "Save the logs, settings, route and a captured frame in one file, for a bug report", False, no_role),
             ("Autostart", "Start split detection when AutoSplit64++ opens, trying for up to 5 minutes", True, no_role),
             ("SRL Mode", "Don't reset the timer when you reset the console, e.g. in races", True, no_role),
             ("About", "Version and credits", False, no_role),
@@ -85,6 +86,33 @@ class MenuActionsTest(unittest.TestCase):
         routes = self.action("Open Route").menu().actions()
         self.assertEqual(routes[-1].text(), "From File")
         self.assertTrue(routes[-2].isSeparator())
+
+    def save_debug_info(self, chosen, error=None):
+        """ Save Debug Info, choosing `chosen` to save to """
+        with mock.patch.object(QtWidgets.QFileDialog, "getSaveFileName", return_value=(chosen, "")) as dialog, \
+             mock.patch("autosplit64.gui.app.debug_info.capture_frame", return_value=(None, "No capture")), \
+             mock.patch("autosplit64.gui.app.debug_info.save", side_effect=error) as save, \
+             mock.patch.object(QtWidgets.QMessageBox, "information") as information, \
+             mock.patch.object(QtWidgets.QMessageBox, "warning") as warning:
+            self.action("Save Debug Info").trigger()
+        return dialog, save, information, warning
+
+    def test_save_debug_info(self):
+        dialog, save, information, warning = self.save_debug_info("/somewhere/debug.zip")
+        self.assertTrue(dialog.call_args.args[2].endswith(".zip"))
+        save.assert_called_once_with("/somewhere/debug.zip", None, "No capture")
+        self.assertIn("/somewhere/debug.zip", information.call_args.args[2])
+        warning.assert_not_called()
+
+    def test_save_debug_info_cancelled(self):
+        dialog, save, information, warning = self.save_debug_info("")
+        save.assert_not_called()
+        information.assert_not_called()
+
+    def test_save_debug_info_failing(self):
+        dialog, save, information, warning = self.save_debug_info("/read-only/debug.zip", PermissionError("Permission denied"))
+        information.assert_not_called()
+        self.assertIn("Permission denied", warning.call_args.args[2])
 
     def from_file(self, chosen):
         """ Open Route -> From File, choosing `chosen` in the file dialog. Returns the dialog's file filter. """
