@@ -5,7 +5,7 @@ from unittest import mock
 
 import numpy as np
 
-from autosplit64 import core
+from autosplit64.core.constants import FADEOUT_COMPLETE, FADEOUT_PARTIAL, NO_FADE, SPLIT_FADE_ONLY, SPLIT_NORMAL
 from autosplit64.core import config
 from autosplit64.core.model import PredictionInfo
 from autosplit64.processes import standard
@@ -30,7 +30,7 @@ class ProcessTestCase(unittest.TestCase):
     def setUp(self):
         self.calls = []
         record = lambda name: mock.Mock(side_effect=lambda *args, **kwargs: self.calls.append((name, *args)))
-        splits = [SimpleNamespace(star_count=s, split_type=core.SPLIT_NORMAL, on_fadeout=1, on_fadein=0, on_xcam=-1) for s in (5, 10, 16)]
+        splits = [SimpleNamespace(star_count=s, split_type=SPLIT_NORMAL, on_fadeout=1, on_fadein=0, on_xcam=-1) for s in (5, 10, 16)]
         functions = {
             "split_index": lambda: 1, "current_split": lambda: splits[1], "incoming_split": mock.Mock(return_value=True),
             "get_region_rect": lambda region: [0, 0, 251, 137],
@@ -40,7 +40,7 @@ class ProcessTestCase(unittest.TestCase):
                      "split", "reset", "undo", "skip"):
             functions[name] = record(name)
         self.detection = SimpleNamespace(
-            fade_status=core.NO_FADE, star_count=5, prediction_info=PredictionInfo(5, 0.9),
+            fade_status=NO_FADE, star_count=5, prediction_info=PredictionInfo(5, 0.9),
             route=SimpleNamespace(splits=splits, initial_star=0), fadein_count=0, fadeout_count=0,
             current_time=100.0, last_split=0.0, start_on_reset=True, fps=0.0,
             xcam_count=0, in_xcam=False, collection_time=0.0, **functions)
@@ -62,7 +62,7 @@ class RunStartTest(ProcessTestCase):
     def test_fadeout(self):
         for cls, _, _ in self.CASES:
             with self.subTest(cls.__name__):
-                self.detection.fade_status = core.FADEOUT_PARTIAL
+                self.detection.fade_status = FADEOUT_PARTIAL
                 process = cls(self.detection)
                 self.assertIs(process.execute(), process.signals["FADEOUT"])
 
@@ -102,17 +102,17 @@ class FadeoutTest(ProcessTestCase):
 
     def setUp(self):
         super().setUp()
-        self.detection.fade_status = core.FADEOUT_COMPLETE
+        self.detection.fade_status = FADEOUT_COMPLETE
 
-    def run_process(self, cls, reset_template=None, split_type=core.SPLIT_NORMAL):
+    def run_process(self, cls, reset_template=None, split_type=SPLIT_NORMAL):
         self.detection.current_split().split_type = split_type
         process = cls(self.detection)
         process._is_reset = lambda region, template: reset_template is not None and template is getattr(process, reset_template)
         return process, process.execute()
 
     def test_split_on_matching_split_type(self):
-        for cls, split_type, incoming_split_args in [(standard.ProcessFadeout, core.SPLIT_NORMAL, ()),
-                                                     (standard.ProcessFadeoutNoStar, core.SPLIT_FADE_ONLY, ({"star_count": False},))]:
+        for cls, split_type, incoming_split_args in [(standard.ProcessFadeout, SPLIT_NORMAL, ()),
+                                                     (standard.ProcessFadeoutNoStar, SPLIT_FADE_ONLY, ({"star_count": False},))]:
             with self.subTest(cls.__name__):
                 self.calls.clear()
                 self.detection.incoming_split.reset_mock()
@@ -122,9 +122,9 @@ class FadeoutTest(ProcessTestCase):
                 self.assertEqual(self.detection.incoming_split.call_args.kwargs, incoming_split_args[0] if incoming_split_args else {})
 
     def test_no_split_on_other_split_types(self):
-        for cls, split_type in [(standard.ProcessFadeout, core.SPLIT_FADE_ONLY),
-                                (standard.ProcessFadeoutNoStar, core.SPLIT_NORMAL),
-                                (standard.ProcessFadeoutResetOnly, core.SPLIT_NORMAL)]:
+        for cls, split_type in [(standard.ProcessFadeout, SPLIT_FADE_ONLY),
+                                (standard.ProcessFadeoutNoStar, SPLIT_NORMAL),
+                                (standard.ProcessFadeoutResetOnly, SPLIT_NORMAL)]:
             with self.subTest(cls.__name__):
                 self.calls.clear()
                 self.run_process(cls, split_type=split_type)
@@ -146,8 +146,8 @@ class FadeoutTest(ProcessTestCase):
 
     def test_no_split_while_the_centre_is_not_black(self):
         self.detection.get_region.return_value = np.full((137, 251, 3), 255, np.uint8)
-        for cls, split_type in [(standard.ProcessFadeout, core.SPLIT_NORMAL),
-                                (standard.ProcessFadeoutNoStar, core.SPLIT_FADE_ONLY)]:
+        for cls, split_type in [(standard.ProcessFadeout, SPLIT_NORMAL),
+                                (standard.ProcessFadeoutNoStar, SPLIT_FADE_ONLY)]:
             with self.subTest(cls.__name__):
                 self.calls.clear()
                 process, result = self.run_process(cls, split_type=split_type)
@@ -182,7 +182,7 @@ class FadeoutTest(ProcessTestCase):
     def test_fadeout_completes(self):
         for cls in (standard.ProcessFadeout, standard.ProcessFadeoutNoStar, standard.ProcessFadeoutResetOnly):
             with self.subTest(cls.__name__):
-                self.detection.fade_status = core.NO_FADE
+                self.detection.fade_status = NO_FADE
                 process, result = self.run_process(cls, split_type="none")
                 self.assertIs(result, process.signals["COMPLETE"])
 

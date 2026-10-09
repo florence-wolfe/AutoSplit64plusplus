@@ -1,9 +1,9 @@
-""" Behavior of the X-Cam split processes in processes/xcam.py, with core stubbed """
+""" Behavior of the X-Cam split processes in processes/xcam.py, with split detection stubbed """
 import unittest
 
 import numpy as np
 
-from autosplit64 import core
+from autosplit64.core.constants import FADEOUT_PARTIAL
 from autosplit64.processes.xcam import ProcessXCam, ProcessXCamStartUpSegment
 from tests.test_standard_processes import ProcessTestCase
 
@@ -48,7 +48,7 @@ class XCamTest(ProcessTestCase):
         self.assertEqual(self.names(), [])
 
     def test_fadeout(self):
-        self.detection.fade_status = core.FADEOUT_PARTIAL
+        self.detection.fade_status = FADEOUT_PARTIAL
         self.detection.xcam_count = 2
         self.assertIs(self.process.execute(), self.process.signals["FADEOUT"])
         self.assertEqual(self.names(), [])
@@ -82,7 +82,7 @@ class XCamStartUpSegmentTest(ProcessTestCase):
         self.assertEqual(self.detection.fps, 10)
 
     def test_fadeout(self):
-        self.detection.fade_status = core.FADEOUT_PARTIAL
+        self.detection.fade_status = FADEOUT_PARTIAL
         self.detection.fadeout_count = 1
         self.detection.get_region.return_value = XCAM
         self.assertIs(self.process.execute(), self.process.signals["FADEOUT"])

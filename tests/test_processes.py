@@ -2,7 +2,7 @@ import unittest
 from types import SimpleNamespace
 from unittest import mock
 
-from autosplit64 import core
+from autosplit64.core.constants import FADEOUT_COMPLETE
 from autosplit64.core.processing import Process
 from autosplit64.processes import standard
 
@@ -20,7 +20,7 @@ class FadeoutNoStarResetTest(unittest.TestCase):
     def setUp(self):
         detection = SimpleNamespace(get_region=mock.Mock(return_value="reset region"),
                                     incoming_split=mock.Mock(return_value=False), enable_predictions=mock.Mock(),
-                                    fade_status=core.FADEOUT_COMPLETE)
+                                    fade_status=FADEOUT_COMPLETE)
         self.process = make_process(standard.ProcessFadeoutNoStar, detection, "RESET", "COMPLETE")
         self.process._black_threshold = 0.1
         self.process._split_occurred = False

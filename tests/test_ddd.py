@@ -1,11 +1,11 @@
-""" Behavior of the DDD split processes in processes/ddd.py, with core stubbed """
+""" Behavior of the DDD split processes in processes/ddd.py, with split detection stubbed """
 import unittest
 from types import SimpleNamespace
 from unittest import mock
 
 import numpy as np
 
-from autosplit64 import core
+from autosplit64.core.constants import FADEOUT_PARTIAL, NO_FADE
 from autosplit64.core import config
 from autosplit64.processes.ddd import ProcessDDDSplit, ProcessDDDSplitX
 from tests.test_standard_processes import ProcessTestCase
@@ -24,7 +24,7 @@ HAT[5:7, 5:7] = (10, 10, 200)
 class DDDSplitTest(unittest.TestCase):
     def setUp(self):
         self.split = mock.Mock()
-        self.detection = SimpleNamespace(split=self.split, fade_status=core.NO_FADE, get_region=mock.Mock(), fps=0)
+        self.detection = SimpleNamespace(split=self.split, fade_status=NO_FADE, get_region=mock.Mock(), fps=0)
         patcher = mock.patch.object(config, "get", side_effect=lambda section, key=None: SETTINGS[(section, key)])
         patcher.start()
         self.addCleanup(patcher.stop)
@@ -50,7 +50,7 @@ class DDDSplitTest(unittest.TestCase):
         self.split.assert_called_once()
 
     def test_fadeout(self):
-        self.detection.fade_status = core.FADEOUT_PARTIAL
+        self.detection.fade_status = FADEOUT_PARTIAL
         self.assertEqual(self.frames(NO_HAT), ["FADEOUT"])
         self.split.assert_not_called()
 
@@ -83,7 +83,7 @@ class DDDSplitXTest(ProcessTestCase):
         self.assertNotIn("split", self.names())
 
     def test_fadeout(self):
-        self.detection.fade_status = core.FADEOUT_PARTIAL
+        self.detection.fade_status = FADEOUT_PARTIAL
         self.detection.xcam_count = 1
         self.assertIs(self.process.execute(), self.process.signals["FADEOUT"])
         self.assertNotIn("split", self.names())
