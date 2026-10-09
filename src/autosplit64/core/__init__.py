@@ -63,29 +63,9 @@ ls_port: int = DEFAULT_LS_PORT
 
 game_version: str = GAME_JP
 
-# Split detection's state before it first starts. The Base that started last keeps it, and each start carries it
-# over from the last.
-_initial = SimpleNamespace(
-    fps=DEFAULT_FRAME_RATE,
-    current_time=0.0,
-    route=Route(),
-    route_length=0,
-    star_count=0,
-    previous_split_initial_star=0,
-    next_split_split_star=0,
-    last_split=0,
-    collection_time=0,
-    xcam_count=0,
-    xcam_percent=0.0,
-    in_xcam=False,
-    fadeout_count=0,
-    fadein_count=0,
-    fade_status=NO_FADE,
-    prediction_info=None,
-    execution_time=0.0,
-    start_on_reset=True,
-)
-STATE = tuple(vars(_initial))
+# Split detection's state before it first starts. The Base that started last keeps it.
+_initial = SimpleNamespace(**constants.INITIAL_STATE)
+STATE = tuple(constants.INITIAL_STATE)
 
 # The Base that started last
 _base = None

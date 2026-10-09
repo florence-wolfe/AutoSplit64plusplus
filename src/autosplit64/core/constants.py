@@ -59,3 +59,25 @@ MODEL_PATH = str(DATA_DIR / "model" / "star_predictor.onnx")
 MODEL_PATH_LEGACY = str(DATA_DIR / "model" / "default_model.onnx")
 MODEL_WIDTH = 67
 MODEL_HEIGHT = 40
+
+# Split detection's state before it first starts, which each start carries over from the last
+INITIAL_STATE = {
+    "fps": DEFAULT_FRAME_RATE,
+    "current_time": 0.0,
+    "route": None,
+    "route_length": 0,
+    "star_count": 0,
+    "previous_split_initial_star": 0,
+    "next_split_split_star": 0,
+    "last_split": 0,
+    "collection_time": 0,
+    "xcam_count": 0,
+    "xcam_percent": 0.0,
+    "in_xcam": False,
+    "fadeout_count": 0,
+    "fadein_count": 0,
+    "fade_status": NO_FADE,
+    "prediction_info": None,
+    "execution_time": 0.0,
+    "start_on_reset": True,
+}

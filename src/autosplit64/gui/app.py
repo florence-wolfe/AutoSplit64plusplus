@@ -68,6 +68,8 @@ class App(QtWidgets.QMainWindow):
 
         # Route
         self.route = None
+        # The split detection that started last, a Base, or None before the first start
+        self.detection = None
 
         # Dialogs
         self.dialogs = {
@@ -76,7 +78,7 @@ class App(QtWidgets.QMainWindow):
             "settings_dialog": SettingsDialog(self),
             "route_editor": RouteEditor(self),
             "reset_dialog": ResetGeneratorDialog(self),
-            "debug_dialog": DebugDialog(self)
+            "debug_dialog": DebugDialog(self, detection=lambda: self.detection)
         }
 
         self._routes = {}
@@ -407,7 +409,7 @@ class App(QtWidgets.QMainWindow):
         if not path:
             return
         try:
-            debug_info.save(path, *debug_info.capture_frame())
+            debug_info.save(path, *debug_info.capture_frame(self.detection))
         except OSError as e:
             QtWidgets.QMessageBox.warning(self, "Save Debug Info", f"Couldn't save the debug info:\n\n{e}")
             return

@@ -10,7 +10,6 @@ from unittest import mock
 import cv2
 import numpy as np
 
-from autosplit64 import core
 from autosplit64.core import config, debug_info, logs
 from autosplit64.core.constants import GAME_REGION, STAR_REGION
 
@@ -97,8 +96,8 @@ class CaptureFrameTest(unittest.TestCase):
         self.addCleanup(patcher.stop)
 
     def test_regions_are_drawn_on_the_frame(self):
-        with mock.patch.object(debug_info, "GameCapture", FakeCapture), mock.patch.object(core, "_base", None, create=True):
-            frame, error = debug_info.capture_frame()
+        with mock.patch.object(debug_info, "GameCapture", FakeCapture):
+            frame, error = debug_info.capture_frame(None)
         self.assertIsNone(error)
         self.assertEqual(frame.shape, (100, 200, 3))
         # Each region's outline, around the gray frame
@@ -109,8 +108,8 @@ class CaptureFrameTest(unittest.TestCase):
     def test_while_split_detection_runs_its_frame_is_used(self):
         detection = SimpleNamespace(_game_capture=FakeCapture(), is_alive=lambda: True)
         # A second capture would compete with the running one, and stop it when closed
-        with mock.patch.object(debug_info, "GameCapture") as new_capture, mock.patch.object(core, "_base", detection, create=True):
-            frame, error = debug_info.capture_frame()
+        with mock.patch.object(debug_info, "GameCapture") as new_capture:
+            frame, error = debug_info.capture_frame(detection)
         new_capture.assert_not_called()
         self.assertEqual(frame.shape, (100, 200, 3))
 
@@ -119,8 +118,7 @@ class CaptureFrameTest(unittest.TestCase):
         capture = FakeCapture()
         capture._window_image = None
         detection = SimpleNamespace(_game_capture=capture, is_alive=lambda: True)
-        with mock.patch.object(core, "_base", detection, create=True):
-            frame, error = debug_info.capture_frame()
+        frame, error = debug_info.capture_frame(detection)
         self.assertIsNone(frame)
         self.assertIn("hasn't captured", error)
 
@@ -129,8 +127,8 @@ class CaptureFrameTest(unittest.TestCase):
             def is_valid(self):
                 raise Exception("Could not find AmaRecTV.exe")
 
-        with mock.patch.object(debug_info, "GameCapture", Missing), mock.patch.object(core, "_base", None, create=True):
-            frame, error = debug_info.capture_frame()
+        with mock.patch.object(debug_info, "GameCapture", Missing):
+            frame, error = debug_info.capture_frame(None)
         self.assertIsNone(frame)
         self.assertEqual(error, "Could not find AmaRecTV.exe")
 

@@ -139,6 +139,7 @@ class AutoSplit64(QtCore.QObject):
 
     def start(self):
         core.init()
+        self.app.detection = core._base
         
         
         if not os.path.exists(resource_path(config.get("advanced", "reset_frame_one"))) or not os.path.exists(resource_path(config.get("advanced", "reset_frame_two"))):

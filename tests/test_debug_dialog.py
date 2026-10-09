@@ -12,6 +12,7 @@ from unittest import mock
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 from autosplit64.core import config, logs
+from autosplit64.core.model import PredictionInfo
 from autosplit64.gui.dialogs import debug_dialog
 from autosplit64.gui.dialogs.debug_dialog import DebugDialog, describe
 
@@ -208,6 +209,40 @@ class DebugDialogTest(unittest.TestCase):
         self.dialog.hide()
         # Which doesn't change the settings
         config.save_config.assert_not_called()
+
+
+class OutputReaderTest(unittest.TestCase):
+    """ What the Debug window shows, read from the split detection that started last """
+
+    def setUp(self):
+        for patcher in [mock.patch.object(config, "_config", {"general": {"output_update_rate": 10}}),
+                        mock.patch.object(debug_dialog, "livesplit_state", return_value="LiveSplit connected")]:
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def read(self, detection):
+        """ The reader's first output """
+        reader = debug_dialog.OutputReader(lambda: detection)
+        self.addCleanup(reader.deleteLater)
+        outputs = []
+        reader.output.connect(lambda output: (outputs.append(output), reader.stop()))
+        reader.run()
+        return outputs[0]
+
+    def test_before_split_detection_starts(self):
+        self.assertEqual(self.read(None), {
+            "fade_status": "NO_FADE", "fadeout_count": 0, "fadein_count": 0, "xcam_percent": 0.0, "xcam_count": 0,
+            "xcam_status": False, "prediction": None, "probability": None, "execution": 0.0, "status": None,
+            "livesplit": "LiveSplit connected"})
+
+    def test_from_split_detection(self):
+        detection = SimpleNamespace(fade_status="FADEOUT_PARTIAL", fadeout_count=2, fadein_count=1, xcam_percent=0.5,
+                                    xcam_count=3, in_xcam=True, prediction_info=PredictionInfo(16, 0.9),
+                                    execution_time=0.01, status=lambda: STATUS)
+        self.assertEqual(self.read(detection), {
+            "fade_status": "FADEOUT_PARTIAL", "fadeout_count": 2, "fadein_count": 1, "xcam_percent": 0.5,
+            "xcam_count": 3, "xcam_status": True, "prediction": 16, "probability": 0.9, "execution": 0.01,
+            "status": STATUS, "livesplit": "LiveSplit connected"})
 
 
 class RecentEventsTest(unittest.TestCase):

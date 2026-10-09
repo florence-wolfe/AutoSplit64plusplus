@@ -3,6 +3,7 @@ import os
 import threading
 from collections import deque
 from pathlib import Path
+from types import SimpleNamespace
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 
@@ -10,9 +11,8 @@ from ..constants import (
     ICON_PATH
 )
 
-from autosplit64 import core as as64
 from autosplit64.core import resource_utils, config, livesplit, livesplit_one, logs
-from autosplit64.core.constants import SPLIT_FADE_ONLY, SPLIT_FINAL, SPLIT_MIPS, SPLIT_MIPS_X, SPLIT_XCAM
+from autosplit64.core.constants import INITIAL_STATE, SPLIT_FADE_ONLY, SPLIT_FINAL, SPLIT_MIPS, SPLIT_MIPS_X, SPLIT_XCAM
 from autosplit64.gui.widgets import HLine
 
 # The connection to LiveSplit, as the dot in the main window shows it
@@ -129,7 +129,7 @@ class DebugDialog(QtWidgets.QDialog):
     # Fractions, of which only the first characters are shown
     SHORTENED = {"xcam_percent", "probability", "execution"}
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, detection=lambda: None):
         super().__init__(parent, QtCore.Qt.WindowType.WindowSystemMenuHint | QtCore.Qt.WindowType.WindowCloseButtonHint)
         self.setWindowTitle("Debug")
         self.setWindowIcon(QtGui.QIcon(resource_utils.base_path(ICON_PATH)))
@@ -137,6 +137,8 @@ class DebugDialog(QtWidgets.QDialog):
 
         # Output Reader
         self.output_reader = None
+        # The split detection that started last, or None
+        self._detection = detection
 
         layout = QtWidgets.QVBoxLayout()
         self.setLayout(layout)
@@ -263,7 +265,7 @@ class DebugDialog(QtWidgets.QDialog):
 
     def show(self):
         self.update_log_buttons()
-        self.output_reader = OutputReader(parent=self)
+        self.output_reader = OutputReader(self._detection, parent=self)
         self.update_le.setText(str(update_rate()))
 
         self.output_reader.start()
@@ -313,9 +315,11 @@ class DebugDialog(QtWidgets.QDialog):
 class OutputReader(QtCore.QThread):
     output = QtCore.pyqtSignal(dict)
 
-    def __init__(self, parent=None):
+    def __init__(self, detection, parent=None):
         super().__init__(parent)
 
+        # Gives the split detection that started last, or None
+        self._detection = detection
         self.running = True
         self.update_rate = update_rate()
         self._stopped = threading.Event()
@@ -326,27 +330,30 @@ class OutputReader(QtCore.QThread):
 
     def run(self):
         while self.running:
+            detection = self._detection()
+            # Before split detection first starts, its initial state
+            state = SimpleNamespace(**INITIAL_STATE) if detection is None else detection
             try:
-                prediction = as64.prediction_info.prediction
+                prediction = state.prediction_info.prediction
                 if prediction > 120:
                     prediction = "None"
-                probability = as64.prediction_info.probability
+                probability = state.prediction_info.probability
             except AttributeError:
                 prediction = None
                 probability = None
 
             output_data = {
-                "fade_status": as64.fade_status,
-                "fadeout_count": as64.fadeout_count,
-                "fadein_count": as64.fadein_count,
-                "xcam_percent": as64.xcam_percent,
-                "xcam_count": as64.xcam_count,
-                "xcam_status": as64.in_xcam,
+                "fade_status": state.fade_status,
+                "fadeout_count": state.fadeout_count,
+                "fadein_count": state.fadein_count,
+                "xcam_percent": state.xcam_percent,
+                "xcam_count": state.xcam_count,
+                "xcam_status": state.in_xcam,
                 "prediction": prediction,
                 "probability": probability,
-                "execution": as64.execution_time,
+                "execution": state.execution_time,
                 # Split detection, once it was started
-                "status": as64._base.status() if getattr(as64, "_base", None) else None,
+                "status": detection.status() if detection is not None else None,
                 "livesplit": livesplit_state(),
             }
 

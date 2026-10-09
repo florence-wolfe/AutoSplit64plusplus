@@ -7,7 +7,6 @@ import zipfile
 
 import cv2
 
-from autosplit64 import core
 from . import config, logs
 from .constants import (
     GAME_REGION,
@@ -52,9 +51,11 @@ def save(path, frame=None, frame_error=None):
             debug_zip.writestr("capture.txt", frame_error)
 
 
-def capture_frame():
-    """ A frame of the capture with the regions drawn on it, or None and why there's none """
-    detection = getattr(core, "_base", None)
+def capture_frame(detection):
+    """
+    A frame of the capture with the regions drawn on it, or None and why there's none. detection is the split
+    detection that started last, a Base, or None.
+    """
     # Split detection's own capture: closing a second one would stop the capture it shares with it
     if detection is not None and detection.is_alive():
         capture = detection._game_capture

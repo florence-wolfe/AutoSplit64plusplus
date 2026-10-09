@@ -2,6 +2,7 @@ import shutil
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
 from autosplit64 import main
@@ -48,6 +49,7 @@ class StartTest(unittest.TestCase):
     def test_processor_that_failed_to_generate_stops_the_start(self):
         autosplit64 = main.AutoSplit64.__new__(main.AutoSplit64)
         autosplit64.on_error = mock.Mock()
+        autosplit64.app = SimpleNamespace(detection=None)
         generate = lambda path: None if path == "ddd/ddd.processor" else mock.Mock()
         with mock.patch.object(main.core, "init"), mock.patch.object(main.core, "start") as start, \
              mock.patch.object(main, "register_processes"), \
