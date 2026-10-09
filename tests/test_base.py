@@ -10,7 +10,9 @@ from autosplit64.core.model import PredictionInfo
 def make_base(star_counts=(1, 2, 3, 4, 5, 6), current=3):
     """ A Base with a route of splits with the given star counts, without capture, model or timer """
     b = Base.__new__(Base)
-    b._route = SimpleNamespace(splits=[SimpleNamespace(star_count=s) for s in star_counts], initial_star=0)
+    splits = [SimpleNamespace(title=f"Split {s}", star_count=s, on_fadeout=1, on_fadein=0, split_type="Normal")
+              for s in star_counts]
+    b._route = SimpleNamespace(title="Route", splits=splits, initial_star=0, version="JP", timing="RTA")
     b._current_split = b._route.splits[current]
     return b
 
@@ -121,6 +123,94 @@ class GameVersionTest(unittest.TestCase):
 
     def test_route_that_failed_to_load(self):
         self.assertEqual(self.version_for(None), "US")
+
+
+class DetectionLogTest(unittest.TestCase):
+    """ What split detection does and why, in the session log """
+
+    def setUp(self):
+        self.as64 = SimpleNamespace(star_count=7, fadeout_count=1, fadein_count=0, xcam_count=0, last_split=0.0,
+                                    prediction_info=PredictionInfo(8, 0.97), fade_status="NO_FADE")
+        patcher = mock.patch.object(base, "as64", self.as64, create=True)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.livesplit = mock.Mock()
+        patcher = mock.patch.object(base, "livesplit", self.livesplit)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        b = self.base = Base.__new__(Base)
+        splits = [SimpleNamespace(title=title, star_count=stars, on_fadeout=1, on_fadein=0, split_type="Normal")
+                  for title, stars in (("WF 6", 6), ("CCM 8", 8), ("BitDW 9", 9))]
+        b._route = SimpleNamespace(title="16 Star", splits=splits, initial_star=0, version="JP", timing="RTA")
+        b._current_split = splits[1]
+        b._ls_socket = None
+        b._split_cooldown = 0.5
+        b._split_on_current_xcam = False
+        b._in_game = True
+        b._prediction_processing_length = 3
+        b._update_occurred = mock.Mock()
+
+    def logged(self, action):
+        with self.assertLogs("detection", "INFO") as logs:
+            action()
+        return "\n".join(logs.output)
+
+    def test_split_with_the_state_it_split_in(self):
+        log = self.logged(self.base.split)
+        self.livesplit.split.assert_called_once()
+        for part in ("Split", "CCM 8", "split 2 of 3", "star count 7", "needs 8", "fadeouts 1"):
+            self.assertIn(part, log)
+
+    def test_split_not_sent_and_why(self):
+        self.as64.last_split = base.time.time()
+        log = self.logged(self.base.split)
+        self.livesplit.split.assert_not_called()
+        self.assertIn("cooldown", log)
+
+    def test_timer_commands(self):
+        for command, words in (("undo", "Undid"), ("skip", "Skipped"), ("reset", "Reset"), ("restart", "Restarted")):
+            with self.subTest(command):
+                self.base.set_star_count = mock.Mock()
+                self.assertIn(words, self.logged(getattr(self.base, command)))
+
+    def test_star_count_change_with_its_prediction(self):
+        log = self.logged(lambda: self.base.set_star_count(8))
+        self.assertIn("Star count 7 -> 8", log)
+        self.assertIn("0.97", log)
+
+    def test_timer_moves_to_another_split(self):
+        self.assertIn("BitDW 9", self.logged(lambda: self.base.set_split_index(2)))
+
+    def test_in_game(self):
+        self.base._in_game = False
+        self.assertIn("In game", self.logged(lambda: self.base.set_in_game(True)))
+
+    def test_fades_counted(self):
+        b = self.base
+        b._game_capture, b._count_fades, b._black_threshold = mock.Mock(), True, 0.1
+        b._fade_start_time, b._minimum_fadeout_time = 0, 0.4
+        self.as64.current_time = 100.0
+        with mock.patch.object(base, "is_black", return_value=True):
+            log = self.logged(b.analyze_fade_status)
+        self.assertIn("Fadeout 2", log)
+        self.assertIn("CCM 8", log)
+
+    def test_setup_when_starting(self):
+        settings = {("game", "capture_source"): "window", ("game", "use_obs"): False, ("game", "process_name"): "Emulator",
+                    ("game", "capture_device"): "", ("game", "game_region"): [1, 2, 3, 4], ("game", "capture_size"): [5, 6],
+                    ("game", "vc_fix"): False, ("connection", "ls_connection_type"): 1, ("general", "srl_mode"): False,
+                    ("general", "operation_mode"): 0}
+        with mock.patch.object(base.config, "get", side_effect=lambda section, key=None: settings[(section, key)]):
+            setup = self.base._setup()
+        for part in ("16 Star", "JP", "RTA", "3 splits", "Emulator", "[1, 2, 3, 4]", "[5, 6]", "TCP", "Probability"):
+            self.assertIn(part, setup)
+
+    def test_errors(self):
+        self.base.stop = mock.Mock()
+        self.base._error_listener = mock.Mock()
+        with self.assertLogs("detection", "WARNING") as logs:
+            self.base._error_occurred("Could not connect to LiveSplit.")
+        self.assertIn("Could not connect to LiveSplit.", logs.output[0])
 
 
 class FirstSplitsTest(unittest.TestCase):

@@ -14,6 +14,8 @@ Ranked by what matters most to a runner, then by what makes the rest safer to do
 
 6. **Video files as a capture source in the Capture Editor.** The replay's video capture (`tests/replay.py`) is most of it. Lets people check their region, thresholds and route against a recording, and send one along with a bug report.
 
-7. **Save debug info.** The log only records warnings, and processor transitions only go to `print`. Add a menu item that saves the config, route, log, capture size and a frame with the regions drawn on it, for bug reports.
+7. **Save debug info.** Add a menu item that saves the session logs, config, route, reset templates and a frame with the regions drawn on it into one file, for bug reports.
 
-8. **Keep the macOS permissions across updates.** Every update needs the Screen Recording and Camera permissions again. macOS probably ties them to the code signature, so signing every release with the same self-signed certificate in CI may keep them, without an Apple developer account. Unverified: try it with two builds first.
+8. **Save the last 30 seconds of capture.** A menu item or hotkey that saves the frames split detection looked at in the last 30 seconds, so a bug report has the moment it went wrong even without a recording, and the replay in `tests/replay.py` can run on it. Keep them compressed in memory, roughly 30 MB for 30 seconds by estimate; measure the memory and CPU it takes first.
+
+9. **Keep the macOS permissions across updates.** Every update needs the Screen Recording and Camera permissions again. macOS probably ties them to the code signature, so signing every release with the same self-signed certificate in CI may keep them, without an Apple developer account. Unverified: try it with two builds first.

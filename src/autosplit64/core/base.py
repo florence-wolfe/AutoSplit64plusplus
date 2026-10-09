@@ -32,6 +32,13 @@ from .constants import (
 )
 
 
+# What split detection does and why, in the session log
+log = logging.getLogger("detection")
+# Settings' names for the connection and operation modes
+CONNECTION_MODES = ["Named Pipe", "TCP", "LiveSplit One"]
+OPERATION_MODES = ["Probability", "X-Cam"]
+
+
 class Base(Thread):
     # TODO: Add all error messages to constants with associated error code
     def __init__(self, module):
@@ -209,6 +216,8 @@ class Base(Thread):
         return True
 
     def stop(self):
+        if self._running:
+            log.info("Stopped")
         self._running = False
     	# stop the livesplit connection
         livesplit.disconnect(self._ls_socket)
@@ -226,6 +235,7 @@ class Base(Thread):
             # A failing check reports the error, which also stops split detection
             if not self.validity_check():
                 return
+            log.info("Started: %s", self._setup())
             self._start_occurred()
 
             self._processor_switch._current_processor = self._current_split.split_type
@@ -314,6 +324,7 @@ class Base(Thread):
             if as64.fade_status == NO_FADE and self._count_fades:
                 as64.fadeout_count += 1
                 as64.xcam_count = 0
+                log.info("Fadeout %d: %s", as64.fadeout_count, self._state())
 
             if is_black(self._game_capture.get_region(RESET_REGION), self._black_threshold) and as64.current_time - self._fade_start_time > self._minimum_fadeout_time:
                 as64.fade_status = FADEOUT_COMPLETE
@@ -323,6 +334,7 @@ class Base(Thread):
             if as64.fade_status == NO_FADE and self._count_fades:
                 as64.fadein_count += 1
                 as64.xcam_count = 0
+                log.info("Fade-in %d: %s", as64.fadein_count, self._state())
 
             if not is_white(self._game_capture.get_region(FADEIN_REGION), self._white_threshold):
                 as64.fade_status = FADEIN_COMPLETE
@@ -452,26 +464,32 @@ class Base(Thread):
     def split(self):
         # Cool-down period between splits
         if time.time() - as64.last_split < self._split_cooldown:
+            log.info("Split not sent, within the split cooldown: %s", self._state())
             return
 
         # Prevent splitting past the final split
         if self.split_index() == len(self._route.splits):
+            log.info("Split not sent, past the last split: %s", self._state())
             return
 
         # Prevent splitting twice on one X-Cam
         if self._split_on_current_xcam:
+            log.info("Split not sent, already split on this X-Cam: %s", self._state())
             return
         else:
             self._split_on_current_xcam = True
 
+        log.info("Split: %s", self._state())
         livesplit.split(self._ls_socket)
         as64.last_split = time.time()
 
     def reset(self):
+        log.info("Reset the timer: %s", self._state())
         livesplit.reset(self._ls_socket)
         self._reset_occured()
 
     def restart(self):
+        log.info("Restarted the timer: %s", self._state())
         livesplit.restart(self._ls_socket)
         self._reset_occured()
     
@@ -482,9 +500,11 @@ class Base(Thread):
         self._split_on_current_xcam = False
 
     def skip(self):
+        log.info("Skipped the split: %s", self._state())
         livesplit.skip(self._ls_socket)
 
     def undo(self):
+        log.info("Undid the split: %s", self._state())
         livesplit.undo(self._ls_socket)
 
     #
@@ -532,9 +552,15 @@ class Base(Thread):
             self._split_on_current_xcam = False
 
     def set_in_game(self, in_game):
+        if in_game != self._in_game:
+            log.info("In game" if in_game else "Not in game")
         self._in_game = in_game
 
     def set_star_count(self, star_count):
+        if star_count != as64.star_count:
+            prediction = as64.prediction_info
+            log.info("Star count %s -> %s, prediction %s", as64.star_count, star_count,
+                     f"{prediction.prediction} at {prediction.probability:.2f}" if prediction else "none")
         self._reset_fade_count()
         as64.xcam_count = 0
         as64.star_count = star_count
@@ -552,6 +578,7 @@ class Base(Thread):
         
         try:
             self._current_split = self._route.splits[index]
+            log.info("Timer on split %d: %s", index + 1, self._current_split.title)
 
             self._reset_fade_count()
             as64.xcam_count = 0
@@ -590,6 +617,7 @@ class Base(Thread):
         self._error_listener = listener
 
     def _error_occurred(self, error):
+        log.warning("Error: %s", error)
         try:
             self._error_listener(error)
         except AttributeError:
@@ -602,6 +630,29 @@ class Base(Thread):
             self._update_listener(self.split_index(), as64.star_count, self.current_split().star_count)
         except AttributeError:
             pass
+
+    def _state(self):
+        """ The split detection is on, what it needs and what's counted so far, for the log """
+        split = self._current_split
+        return (f"split {self.split_index() + 1} of {len(self._route.splits)}, {split.title} "
+                f"(needs {split.star_count} stars, fadeout {split.on_fadeout}, fade-in {split.on_fadein}), "
+                f"star count {as64.star_count}, fadeouts {as64.fadeout_count}, fade-ins {as64.fadein_count}")
+
+    def _setup(self):
+        """ The route and settings split detection runs with, for the log """
+        if config.get("game", "use_obs"):
+            source = "the OBS Plugin"
+        elif config.get("game", "capture_source") == "device":
+            source = f"video device {config.get('game', 'capture_device')}"
+        else:
+            source = f"window of {config.get('game', 'process_name')}"
+        route = self._route
+        return (f"route {route.title} ({route.version}, {route.timing}, {len(route.splits)} splits), "
+                f"capturing the {source}, game region {config.get('game', 'game_region')} "
+                f"of {config.get('game', 'capture_size')}, VC fix {config.get('game', 'vc_fix')}, "
+                f"connection mode {CONNECTION_MODES[config.get('connection', 'ls_connection_type')]}, "
+                f"operation mode {OPERATION_MODES[config.get('general', 'operation_mode')]}, "
+                f"SRL mode {config.get('general', 'srl_mode')}")
 
     def _reset_fade_count(self):
         as64.fadeout_count = 0
