@@ -23,6 +23,7 @@
 98.500 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
 98.533 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
 98.567 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+101.467 Star count flashed 4 times, running total -2
 126.833 Fade-in 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 1
 139.867 Star count 1 -> 2, prediction 2 at 0.98
 142.867 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 2, fadeouts 1, fade-ins 0

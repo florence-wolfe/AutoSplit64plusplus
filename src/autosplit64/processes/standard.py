@@ -1,3 +1,4 @@
+import logging
 import time
 
 import cv2
@@ -10,6 +11,9 @@ from autosplit64.core.resource_utils import resource_path
 from autosplit64.core import config
 from autosplit64.core.image_utils import is_black, is_white
 from autosplit64.core.processing import Process
+
+# What split detection does and why, in the session log
+log = logging.getLogger("detection")
 
 
 class ProcessWait(Process):
@@ -334,10 +338,8 @@ class ProcessFlashCheck(Process):
         self._prev_prediction = normalized_prediction
 
         if -10 < self._running_total < 10 and self._flash_count >= 4:
-            print("Flash Detected!")
-            print("Running Total:", self._running_total, "Flash Count:", self._flash_count)
+            log.info("Star count flashed %d times, running total %d", self._flash_count, self._running_total)
             if time.time() - core.collection_time > 15:
-                print("Increment Star from Flash!")
                 core.set_star_count(core.star_count + 1)
 
                 if core.current_split().star_count == core.star_count:

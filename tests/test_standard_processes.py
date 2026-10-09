@@ -317,7 +317,9 @@ class FlashCheckTest(ClockTestCase):
         return results
 
     def test_four_flashes_count_a_star(self):
-        self.assertEqual(self.flashes(), ["LOOP"] * 4 + ["COMPLETE"])
+        with self.assertLogs("detection") as logs:
+            self.assertEqual(self.flashes(), ["LOOP"] * 4 + ["COMPLETE"])
+        self.assertEqual(logs.output, ["INFO:detection:Star count flashed 4 times, running total 1"])
         self.assertEqual(core.star_count, 6)
         self.assertEqual(core.fadeout_count, 0)
         self.assertNotIn("skip", self.names())

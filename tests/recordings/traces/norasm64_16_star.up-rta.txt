@@ -12,4 +12,5 @@
 105.800 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
 106.233 Split: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
 106.267 Timer on split 2: WF 6
+109.517 Star count flashed 4 times, running total -1
 135.383 Fade-in 1: split 2 of 12, WF 6 (needs 6 stars, fadeout 1, fade-in 0), star count 1, fadeouts 0, fade-ins 1

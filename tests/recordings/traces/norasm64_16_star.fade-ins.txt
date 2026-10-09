@@ -13,6 +13,7 @@
 87.267 Fade-in 1: split 2 of 14, 1 stars, fade-in (needs 1 stars, fadeout 1, fade-in 1), star count 0, fadeouts 0, fade-ins 1
 102.633 Star count 0 -> 1, prediction 1 at 0.99
 105.800 Fadeout 1: split 2 of 14, 1 stars, fade-in (needs 1 stars, fadeout 1, fade-in 1), star count 1, fadeouts 1, fade-ins 0
+109.533 Star count flashed 4 times, running total -2
 135.400 Fade-in 1: split 2 of 14, 1 stars, fade-in (needs 1 stars, fadeout 1, fade-in 1), star count 1, fadeouts 1, fade-ins 1
 136.233 Split: split 2 of 14, 1 stars, fade-in (needs 1 stars, fadeout 1, fade-in 1), star count 1, fadeouts 1, fade-ins 1
 136.267 Timer on split 3: 2 stars, fade-in
