@@ -496,7 +496,7 @@ class SplitDetection(Thread):
         try:
             return self._route.splits.index(self._current_split)
         except ValueError:
-            print("ValueError: Current Split not found..")
+            log.warning("The current split %s isn't in the route", getattr(self._current_split, "title", None))
 
     def incoming_split(self, star_count=True, fadeout=True, fadein=True):
         if self.star_count != self._current_split.star_count and star_count:

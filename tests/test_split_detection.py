@@ -235,6 +235,12 @@ class DetectionLogTest(unittest.TestCase):
         for part in ("16 Star", "JP", "RTA", "3 splits", "Emulator", "[1, 2, 3, 4]", "[5, 6]", "TCP", "Probability"):
             self.assertIn(part, setup)
 
+    def test_current_split_not_in_the_route(self):
+        self.base._current_split = SimpleNamespace(title="Not in it")
+        with self.assertLogs("detection", "WARNING") as logs:
+            self.assertIsNone(self.base.split_index())
+        self.assertIn("isn't in the route", logs.output[0])
+
     def test_errors(self):
         self.base.stop = mock.Mock()
         self.base._error_listener = mock.Mock()
