@@ -143,7 +143,7 @@ class AutoSplit64(QtCore.QObject):
             livesplit.connect()
 
     def start(self):
-        detection = SplitDetection(self.app.detection)
+        detection = SplitDetection()
         self.app.detection = detection
         
         

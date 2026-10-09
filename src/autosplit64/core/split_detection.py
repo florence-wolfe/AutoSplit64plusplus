@@ -43,13 +43,12 @@ OPERATION_MODES = ["Probability", "X-Cam"]
 
 class SplitDetection(Thread):
     # TODO: Add all error messages to constants with associated error code
-    def __init__(self, previous):
-        """ previous is the split detection that started last, or None before the first start """
+    def __init__(self):
         super().__init__()
 
-        # Split detection's state, carried over from the last start like when it was the core module's
+        # Split detection's state, which each start begins afresh
         for name, value in INITIAL_STATE.items():
-            setattr(self, name, value if previous is None else getattr(previous, name))
+            setattr(self, name, value)
 
         # Load config
         config.load_config()

@@ -60,7 +60,7 @@ MODEL_PATH_LEGACY = str(DATA_DIR / "model" / "default_model.onnx")
 MODEL_WIDTH = 67
 MODEL_HEIGHT = 40
 
-# Split detection's state before it first starts, which each start carries over from the last
+# Split detection's state when it starts
 INITIAL_STATE = {
     "fps": DEFAULT_FRAME_RATE,
     "current_time": 0.0,

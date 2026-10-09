@@ -113,7 +113,7 @@ class GameVersionTest(unittest.TestCase):
              mock.patch.object(split_detection, "Model"), \
              mock.patch.object(split_detection, "GameCapture") as game_capture:
             game_capture.return_value.get_region_rect.return_value = [0, 0, 10, 10]
-            SplitDetection(None)
+            SplitDetection()
         return game_capture.call_args.args[4]
 
     def test_route_version(self):
@@ -127,7 +127,7 @@ class GameVersionTest(unittest.TestCase):
 
 
 class StateTest(unittest.TestCase):
-    """ Split detection's state, which each start carries over from the last """
+    """ Split detection's state, which each start begins afresh """
 
     def setUp(self):
         route = SimpleNamespace(version="JP", splits=[SimpleNamespace(star_count=1)], initial_star=0)
@@ -140,22 +140,22 @@ class StateTest(unittest.TestCase):
             self.addCleanup(patcher.stop)
         split_detection.GameCapture.return_value.get_region_rect.return_value = [0, 0, 10, 10]
 
-    def test_the_first_start_begins_with_the_initial_state(self):
-        detection = SplitDetection(None)
-        # Except the route's, which each start sets
-        route = ("route", "route_length", "star_count")
-        self.assertEqual({name: getattr(detection, name) for name in INITIAL_STATE if name not in route},
-                         {name: value for name, value in INITIAL_STATE.items() if name not in route})
+    def state(self, detection):
+        """ Its state, except the route's, which each start sets """
+        return {name: getattr(detection, name) for name in INITIAL_STATE if name not in ("route", "route_length", "star_count")}
 
-    def test_each_start_carries_the_state_over(self):
-        # Like when the core module kept it
-        first = SplitDetection(None)
+    def test_the_first_start_begins_with_the_initial_state(self):
+        self.assertEqual(self.state(SplitDetection()),
+                         {name: value for name, value in INITIAL_STATE.items() if name not in ("route", "route_length", "star_count")})
+
+    def test_a_later_start_begins_afresh(self):
+        # Not with what the last start left, like the stale star-skip window or X-Cam count
+        first = SplitDetection()
         first.fadeout_count, first.fps, first.prediction_info = 2, 15, PredictionInfo(7, 0.9)
-        first.star_count = 5
-        second = SplitDetection(first)
-        self.assertEqual((second.fadeout_count, second.fps, second.prediction_info), (2, 15, PredictionInfo(7, 0.9)))
-        # Except the route's, which each start sets
-        self.assertEqual(second.star_count, 0)
+        first.previous_split_initial_star, first.next_split_split_star, first.xcam_count = 8, 12, 3
+        second = SplitDetection()
+        self.assertEqual(self.state(second), self.state(SplitDetection()))
+        self.assertEqual((second.fadeout_count, second.previous_split_initial_star, second.xcam_count), (0, 0, 0))
 
 
 class DetectionLogTest(unittest.TestCase):

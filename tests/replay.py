@@ -404,7 +404,7 @@ def _replay(recording, start, end, templates, split_index, variant, route_path):
          mock.patch.object(split_detection, "livesplit", timer), mock.patch.object(split_detection, "GameCapture", video_capture):
         try:
             # Starting afresh, like the first start after the app opens
-            detection = split_detection.SplitDetection(None)
+            detection = split_detection.SplitDetection()
             failed = main.register_split_processors(detection, main.make_processes(detection))
             if failed:
                 raise RuntimeError(f"{failed} failed to generate")
