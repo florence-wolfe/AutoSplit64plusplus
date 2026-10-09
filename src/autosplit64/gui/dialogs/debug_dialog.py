@@ -76,7 +76,7 @@ def _stars(count):
 
 
 def describe(status, livesplit):
-    """ (status, split, what the split needs, what's counted) in words, from Base.status() and livesplit_state() """
+    """ (status, split, what the split needs, what's counted) in words, from SplitDetection.status() and livesplit_state() """
     if not status or not status["running"] or "split" not in status:
         return f"Not running · {livesplit}", "", "", ""
 

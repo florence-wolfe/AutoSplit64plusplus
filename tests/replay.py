@@ -26,7 +26,7 @@ from unittest import mock
 import cv2
 
 from autosplit64 import main
-from autosplit64.core import base, config, route_loader
+from autosplit64.core import config, route_loader, split_detection
 from autosplit64.core.constants import RESET_REGION
 from autosplit64.core.game_capture import GameCapture
 from autosplit64.core.image_utils import is_black
@@ -401,10 +401,10 @@ def _replay(recording, start, end, templates, split_index, variant, route_path):
     detection_log.setLevel(logging.INFO)
     detection_log.addHandler(tracer)
     with _replaying(recording, clock, _settings(recording, templates, variant, route_path)) as log, \
-         mock.patch.object(base, "livesplit", timer), mock.patch.object(base, "GameCapture", video_capture):
+         mock.patch.object(split_detection, "livesplit", timer), mock.patch.object(split_detection, "GameCapture", video_capture):
         try:
             # Starting afresh, like the first start after the app opens
-            detection = base.Base(None)
+            detection = split_detection.SplitDetection(None)
             failed = main.register_split_processors(detection, main.make_processes(detection))
             if failed:
                 raise RuntimeError(f"{failed} failed to generate")

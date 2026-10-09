@@ -19,7 +19,7 @@ from autosplit64.core.constants import (
     TIMING_FILE_SELECT,
     TIMING_UP_RTA,
 )
-from autosplit64.core.base import Base
+from autosplit64.core.split_detection import SplitDetection
 from autosplit64.core.processing import ProcessorGenerator
 from autosplit64.core.route_loader import load_or_none
 from autosplit64.core import config, livesplit, logs
@@ -65,7 +65,7 @@ def set_up_timing(detection):
 
 
 def make_processes(detection):
-    """ The processes, which run in detection, the Base that started, by the names the processor files use """
+    """ The processes, which run in detection, the split detection that started, by the names the processor files use """
     return {
         "WAIT": ProcessWait(detection),
         "RUN_START": ProcessRunStart(detection),
@@ -143,7 +143,7 @@ class AutoSplit64(QtCore.QObject):
             livesplit.connect()
 
     def start(self):
-        detection = Base(self.app.detection)
+        detection = SplitDetection(self.app.detection)
         self.app.detection = detection
         
         

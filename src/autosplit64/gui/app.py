@@ -68,7 +68,7 @@ class App(QtWidgets.QMainWindow):
 
         # Route
         self.route = None
-        # The split detection that started last, a Base, or None before the first start
+        # The split detection that started last, or None before the first start
         self.detection = None
 
         # Dialogs

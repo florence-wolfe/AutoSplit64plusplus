@@ -2,15 +2,15 @@ import unittest
 from types import SimpleNamespace
 from unittest import mock
 
-from autosplit64.core import base
-from autosplit64.core.base import Base
+from autosplit64.core import split_detection
+from autosplit64.core.split_detection import SplitDetection
 from autosplit64.core.constants import INITIAL_STATE
 from autosplit64.core.model import PredictionInfo
 
 
 def make_base(star_counts=(1, 2, 3, 4, 5, 6), current=3):
-    """ A Base with a route of splits with the given star counts, without capture, model or timer """
-    b = Base.__new__(Base)
+    """ A SplitDetection with a route of splits with the given star counts, without capture, model or timer """
+    b = SplitDetection.__new__(SplitDetection)
     splits = [SimpleNamespace(title=f"Split {s}", star_count=s, on_fadeout=1, on_fadein=0, split_type="Normal")
               for s in star_counts]
     b._route = SimpleNamespace(title="Route", splits=splits, initial_star=0, version="JP", timing="RTA")
@@ -45,10 +45,10 @@ class ValidityCheckTest(unittest.TestCase):
         self.base = make_base()
         self.base._error_occurred = mock.Mock()
         self.base._ls_socket = None
-        size = base.config.get("game", "capture_size")
+        size = split_detection.config.get("game", "capture_size")
         self.base._game_capture = mock.Mock(get_capture_size=mock.Mock(return_value=list(size)))
         self.base._model = mock.Mock(valid=mock.Mock(return_value=False))
-        patcher = mock.patch.object(base.livesplit, "check_connection", return_value=True)
+        patcher = mock.patch.object(split_detection.livesplit, "check_connection", return_value=True)
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -70,7 +70,7 @@ class RunTest(unittest.TestCase):
         b.validity_check = mock.Mock(return_value=False)
         b.stop = mock.Mock()
 
-        with mock.patch.object(base.livesplit, "connect"):
+        with mock.patch.object(split_detection.livesplit, "connect"):
             b.run()
 
         b.logger.error.assert_not_called()
@@ -93,8 +93,8 @@ class RunTest(unittest.TestCase):
         b.stop = mock.Mock(side_effect=lambda: setattr(b, "_running", False))
         b.fps = 30
 
-        with mock.patch.object(base.livesplit, "connect"), \
-             mock.patch.object(base.livesplit, "split_index", side_effect=ConnectionAbortedError("LiveSplit connection lost")):
+        with mock.patch.object(split_detection.livesplit, "connect"), \
+             mock.patch.object(split_detection.livesplit, "split_index", side_effect=ConnectionAbortedError("LiveSplit connection lost")):
             b.run()
 
         b._error_listener.assert_called_once_with("LiveSplit connection lost")
@@ -105,15 +105,15 @@ class GameVersionTest(unittest.TestCase):
     """ The version the capture regions are laid out for """
 
     def version_for(self, route, override=False):
-        real_get = base.config.get
+        real_get = split_detection.config.get
         settings = {("game", "override_version"): override, ("game", "version"): "US", ("route", "path"): "routes/missing.as64"}
-        with mock.patch.object(base.config, "load_config"), \
-             mock.patch.object(base.config, "get", side_effect=lambda section, key=None: settings.get((section, key), real_get(section, key))), \
-             mock.patch.object(base, "load_route", return_value=route), \
-             mock.patch.object(base, "Model"), \
-             mock.patch.object(base, "GameCapture") as game_capture:
+        with mock.patch.object(split_detection.config, "load_config"), \
+             mock.patch.object(split_detection.config, "get", side_effect=lambda section, key=None: settings.get((section, key), real_get(section, key))), \
+             mock.patch.object(split_detection, "load_route", return_value=route), \
+             mock.patch.object(split_detection, "Model"), \
+             mock.patch.object(split_detection, "GameCapture") as game_capture:
             game_capture.return_value.get_region_rect.return_value = [0, 0, 10, 10]
-            Base(None)
+            SplitDetection(None)
         return game_capture.call_args.args[4]
 
     def test_route_version(self):
@@ -131,17 +131,17 @@ class StateTest(unittest.TestCase):
 
     def setUp(self):
         route = SimpleNamespace(version="JP", splits=[SimpleNamespace(star_count=1)], initial_star=0)
-        real_get = base.config.get
-        for patcher in [mock.patch.object(base.config, "load_config"),
-                        mock.patch.object(base.config, "get", side_effect=lambda section, key=None: "routes/missing.as64" if section == "route" else real_get(section, key)),
-                        mock.patch.object(base, "load_route", return_value=route), mock.patch.object(base, "Model"),
-                        mock.patch.object(base, "GameCapture")]:
+        real_get = split_detection.config.get
+        for patcher in [mock.patch.object(split_detection.config, "load_config"),
+                        mock.patch.object(split_detection.config, "get", side_effect=lambda section, key=None: "routes/missing.as64" if section == "route" else real_get(section, key)),
+                        mock.patch.object(split_detection, "load_route", return_value=route), mock.patch.object(split_detection, "Model"),
+                        mock.patch.object(split_detection, "GameCapture")]:
             patcher.start()
             self.addCleanup(patcher.stop)
-        base.GameCapture.return_value.get_region_rect.return_value = [0, 0, 10, 10]
+        split_detection.GameCapture.return_value.get_region_rect.return_value = [0, 0, 10, 10]
 
     def test_the_first_start_begins_with_the_initial_state(self):
-        detection = Base(None)
+        detection = SplitDetection(None)
         # Except the route's, which each start sets
         route = ("route", "route_length", "star_count")
         self.assertEqual({name: getattr(detection, name) for name in INITIAL_STATE if name not in route},
@@ -149,10 +149,10 @@ class StateTest(unittest.TestCase):
 
     def test_each_start_carries_the_state_over(self):
         # Like when the core module kept it
-        first = Base(None)
+        first = SplitDetection(None)
         first.fadeout_count, first.fps, first.prediction_info = 2, 15, PredictionInfo(7, 0.9)
         first.star_count = 5
-        second = Base(first)
+        second = SplitDetection(first)
         self.assertEqual((second.fadeout_count, second.fps, second.prediction_info), (2, 15, PredictionInfo(7, 0.9)))
         # Except the route's, which each start sets
         self.assertEqual(second.star_count, 0)
@@ -163,10 +163,10 @@ class DetectionLogTest(unittest.TestCase):
 
     def setUp(self):
         self.livesplit = mock.Mock()
-        patcher = mock.patch.object(base, "livesplit", self.livesplit)
+        patcher = mock.patch.object(split_detection, "livesplit", self.livesplit)
         patcher.start()
         self.addCleanup(patcher.stop)
-        b = self.base = Base.__new__(Base)
+        b = self.base = SplitDetection.__new__(SplitDetection)
         splits = [SimpleNamespace(title=title, star_count=stars, on_fadeout=1, on_fadein=0, split_type="Normal")
                   for title, stars in (("WF 6", 6), ("CCM 8", 8), ("BitDW 9", 9))]
         b._route = SimpleNamespace(title="16 Star", splits=splits, initial_star=0, version="JP", timing="RTA")
@@ -192,7 +192,7 @@ class DetectionLogTest(unittest.TestCase):
             self.assertIn(part, log)
 
     def test_split_not_sent_and_why(self):
-        self.base.last_split = base.time.time()
+        self.base.last_split = split_detection.time.time()
         log = self.logged(self.base.split)
         self.livesplit.split.assert_not_called()
         self.assertIn("cooldown", log)
@@ -220,7 +220,7 @@ class DetectionLogTest(unittest.TestCase):
         b._game_capture, b._count_fades, b._black_threshold = mock.Mock(), True, 0.1
         b._fade_start_time, b._minimum_fadeout_time = 0, 0.4
         b.current_time = 100.0
-        with mock.patch.object(base, "is_black", return_value=True):
+        with mock.patch.object(split_detection, "is_black", return_value=True):
             log = self.logged(b.analyze_fade_status)
         self.assertIn("Fadeout 2", log)
         self.assertIn("CCM 8", log)
@@ -230,7 +230,7 @@ class DetectionLogTest(unittest.TestCase):
                     ("game", "capture_device"): "", ("game", "game_region"): [1, 2, 3, 4], ("game", "capture_size"): [5, 6],
                     ("game", "vc_fix"): False, ("connection", "ls_connection_type"): 1, ("general", "srl_mode"): False,
                     ("general", "operation_mode"): 0}
-        with mock.patch.object(base.config, "get", side_effect=lambda section, key=None: settings[(section, key)]):
+        with mock.patch.object(split_detection.config, "get", side_effect=lambda section, key=None: settings[(section, key)]):
             setup = self.base._setup()
         for part in ("16 Star", "JP", "RTA", "3 splits", "Emulator", "[1, 2, 3, 4]", "[5, 6]", "TCP", "Probability"):
             self.assertIn(part, setup)

@@ -136,7 +136,7 @@ class Transition(object):
 
 class Process(object):
     def __init__(self, core):
-        # The split detection the process runs in, the Base
+        # The split detection the process runs in
         self.core = core
         self.signals = {"LOOP": Signal()}
         self._transition_time = time.time()

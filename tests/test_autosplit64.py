@@ -52,13 +52,13 @@ class StartTest(unittest.TestCase):
         autosplit64.on_error = mock.Mock()
         autosplit64.app = SimpleNamespace(detection=None)
         generate = lambda path, processes: None if path == "ddd/ddd.processor" else mock.Mock()
-        with mock.patch.object(main, "Base") as base, \
+        with mock.patch.object(main, "SplitDetection") as detection, \
              mock.patch.object(main, "make_processes"), \
              mock.patch.object(main.os.path, "exists", return_value=True), \
              mock.patch.object(main.ProcessorGenerator, "generate", side_effect=generate):
             autosplit64.start()
 
-        base.return_value.start.assert_not_called()
+        detection.return_value.start.assert_not_called()
         self.assertIn("ddd/ddd.processor", autosplit64.on_error.call_args.args[0])
 
 

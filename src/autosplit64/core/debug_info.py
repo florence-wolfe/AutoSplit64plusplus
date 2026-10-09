@@ -54,7 +54,7 @@ def save(path, frame=None, frame_error=None):
 def capture_frame(detection):
     """
     A frame of the capture with the regions drawn on it, or None and why there's none. detection is the split
-    detection that started last, a Base, or None.
+    detection that started last, or None.
     """
     # Split detection's own capture: closing a second one would stop the capture it shares with it
     if detection is not None and detection.is_alive():

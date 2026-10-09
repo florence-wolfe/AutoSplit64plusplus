@@ -41,10 +41,10 @@ CONNECTION_MODES = ["Named Pipe", "TCP", "LiveSplit One"]
 OPERATION_MODES = ["Probability", "X-Cam"]
 
 
-class Base(Thread):
+class SplitDetection(Thread):
     # TODO: Add all error messages to constants with associated error code
     def __init__(self, previous):
-        """ previous is the split detection that started last, a Base, or None before the first start """
+        """ previous is the split detection that started last, or None before the first start """
         super().__init__()
 
         # Split detection's state, carried over from the last start like when it was the core module's
