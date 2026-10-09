@@ -271,6 +271,31 @@ class PostFadeoutTest(ClockTestCase):
     def test_complete_after_6_seconds(self):
         self.assertEqual([self.at(5.9), self.at(6)], ["LOOP", "COMPLETE"])
 
+    def test_split_on_the_xcam_count(self):
+        core.incoming_split.return_value = True
+        core.current_split().on_xcam = 2
+        core.xcam_count = 1
+        self.at(0.5)
+        self.assertNotIn("split", self.names())
+        core.xcam_count = 2
+        self.at(0.6)
+        self.assertIn("split", self.names())
+        self.assertEqual(core.xcam_count, 0)
+
+    def test_split_on_an_xcam_long_after_a_star(self):
+        # Unlike ProcessXCam, which splits on an X-Cam only within a second of a star
+        core.incoming_split.return_value = True
+        core.in_xcam = True
+        core.current_time = self.start + 0.5
+        self.at(0.5)
+        self.assertIn("split", self.names())
+
+    def test_no_xcam_split_before_the_split_is_incoming(self):
+        core.in_xcam = True
+        core.current_split().on_xcam = 0
+        self.at(0.5)
+        self.assertNotIn("split", self.names())
+
 
 class FlashCheckTest(ClockTestCase):
     """ ProcessFlashCheck: a star collected without a fadeout, from the star count flashing """
