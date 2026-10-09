@@ -2,9 +2,9 @@ import unittest
 from types import SimpleNamespace
 from unittest import mock
 
-from autosplit64 import core
 from autosplit64.core import base
 from autosplit64.core.base import Base
+from autosplit64.core.constants import INITIAL_STATE
 from autosplit64.core.model import PredictionInfo
 
 
@@ -113,7 +113,7 @@ class GameVersionTest(unittest.TestCase):
              mock.patch.object(base, "Model"), \
              mock.patch.object(base, "GameCapture") as game_capture:
             game_capture.return_value.get_region_rect.return_value = [0, 0, 10, 10]
-            Base(SimpleNamespace(**{name: getattr(core, name) for name in core.STATE}))
+            Base(None)
         return game_capture.call_args.args[4]
 
     def test_route_version(self):
@@ -127,12 +127,12 @@ class GameVersionTest(unittest.TestCase):
 
 
 class StateTest(unittest.TestCase):
-    """ Split detection's state, which the Base that started last keeps, and core reads and writes on it """
+    """ Split detection's state, which each start carries over from the last """
 
     def setUp(self):
         route = SimpleNamespace(version="JP", splits=[SimpleNamespace(star_count=1)], initial_star=0)
         real_get = base.config.get
-        for patcher in [mock.patch.dict(core.__dict__), mock.patch.object(base.config, "load_config"),
+        for patcher in [mock.patch.object(base.config, "load_config"),
                         mock.patch.object(base.config, "get", side_effect=lambda section, key=None: "routes/missing.as64" if section == "route" else real_get(section, key)),
                         mock.patch.object(base, "load_route", return_value=route), mock.patch.object(base, "Model"),
                         mock.patch.object(base, "GameCapture")]:
@@ -140,25 +140,22 @@ class StateTest(unittest.TestCase):
             self.addCleanup(patcher.stop)
         base.GameCapture.return_value.get_region_rect.return_value = [0, 0, 10, 10]
 
-    def test_core_reads_and_writes_the_last_base(self):
-        core.init()
-        detection = core._base
-        core.fadeout_count = 2
-        self.assertEqual(detection.fadeout_count, 2)
-        detection.fps = 15
-        self.assertEqual(core.fps, 15)
+    def test_the_first_start_begins_with_the_initial_state(self):
+        detection = Base(None)
+        # Except the route's, which each start sets
+        route = ("route", "route_length", "star_count")
+        self.assertEqual({name: getattr(detection, name) for name in INITIAL_STATE if name not in route},
+                         {name: value for name, value in INITIAL_STATE.items() if name not in route})
 
     def test_each_start_carries_the_state_over(self):
         # Like when the core module kept it
-        core.init()
-        first = core._base
-        core.fadeout_count, core.fps, core.prediction_info = 2, 15, PredictionInfo(7, 0.9)
-        core.star_count = 5
-        core.init()
-        self.assertIsNot(core._base, first)
-        self.assertEqual((core.fadeout_count, core.fps, core.prediction_info), (2, 15, PredictionInfo(7, 0.9)))
+        first = Base(None)
+        first.fadeout_count, first.fps, first.prediction_info = 2, 15, PredictionInfo(7, 0.9)
+        first.star_count = 5
+        second = Base(first)
+        self.assertEqual((second.fadeout_count, second.fps, second.prediction_info), (2, 15, PredictionInfo(7, 0.9)))
         # Except the route's, which each start sets
-        self.assertEqual(core.star_count, 0)
+        self.assertEqual(second.star_count, 0)
 
 
 class DetectionLogTest(unittest.TestCase):

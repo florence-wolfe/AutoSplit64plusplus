@@ -39,11 +39,12 @@ class TimingSetupTest(unittest.TestCase):
 
     def test_switching_back_to_rta_restarts_on_reset_again(self):
         # Start with an Up RTA route, then with an RTA route, in the same session
+        detection = SimpleNamespace()
         for timing, start_on_reset in [("Up RTA", False), ("RTA", True)]:
             with mock.patch.object(main, "route_timing", return_value=timing), \
                  mock.patch.object(main.ProcessorGenerator, "generate"):
-                main.set_up_timing()
-            self.assertIs(main.core.start_on_reset, start_on_reset)
+                main.set_up_timing(detection)
+            self.assertIs(detection.start_on_reset, start_on_reset)
 
 class StartTest(unittest.TestCase):
     def test_processor_that_failed_to_generate_stops_the_start(self):
@@ -51,13 +52,13 @@ class StartTest(unittest.TestCase):
         autosplit64.on_error = mock.Mock()
         autosplit64.app = SimpleNamespace(detection=None)
         generate = lambda path, processes: None if path == "ddd/ddd.processor" else mock.Mock()
-        with mock.patch.object(main.core, "init"), mock.patch.object(main.core, "start") as start, \
+        with mock.patch.object(main, "Base") as base, \
              mock.patch.object(main, "make_processes"), \
              mock.patch.object(main.os.path, "exists", return_value=True), \
              mock.patch.object(main.ProcessorGenerator, "generate", side_effect=generate):
             autosplit64.start()
 
-        start.assert_not_called()
+        base.return_value.start.assert_not_called()
         self.assertIn("ddd/ddd.processor", autosplit64.on_error.call_args.args[0])
 
 

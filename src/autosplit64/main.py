@@ -8,7 +8,6 @@ from PyQt6 import QtCore, QtWidgets, QtGui
 from autosplit64.gui import theme
 from autosplit64.gui.app import App
 from autosplit64.gui.constants import FONT_PATH, VERSION
-from autosplit64 import core
 from autosplit64.core.constants import (
     SPLIT_FADE_ONLY,
     SPLIT_FINAL,
@@ -20,6 +19,7 @@ from autosplit64.core.constants import (
     TIMING_FILE_SELECT,
     TIMING_UP_RTA,
 )
+from autosplit64.core.base import Base
 from autosplit64.core.processing import ProcessorGenerator
 from autosplit64.core.route_loader import load_or_none
 from autosplit64.core import config, livesplit, logs
@@ -58,9 +58,9 @@ def timing_setup(timing):
     return "standard/initial.processor", True
 
 
-def set_up_timing():
-    """ Set up the configured route's timing, and return its initial processor's file """
-    path, core.start_on_reset = timing_setup(route_timing())
+def set_up_timing(detection):
+    """ Set up the configured route's timing for detection, and return its initial processor's file """
+    path, detection.start_on_reset = timing_setup(route_timing())
     return path
 
 
@@ -95,10 +95,13 @@ def make_processes(detection):
     }
 
 
-def register_split_processors(processes):
-    """ Register each split type's processor of processes, returning the file of one that failed to generate, or None """
+def register_split_processors(detection, processes):
+    """
+    Register each split type's processor of processes with detection, returning the file of one that failed to
+    generate, or None
+    """
     processor_paths = {
-        SPLIT_INITIAL: set_up_timing(),
+        SPLIT_INITIAL: set_up_timing(detection),
         SPLIT_NORMAL: "standard/star_fade.processor",
         SPLIT_FADE_ONLY: "standard/fade_only.processor",
         SPLIT_XCAM: "standard/xcam_split.processor",
@@ -110,7 +113,7 @@ def register_split_processors(processes):
         processor = ProcessorGenerator.generate(path, processes)
         if processor is None:
             return path
-        core.register_split_processor(split_type, processor)
+        detection.register_split_processor(split_type, processor)
     return None
 
 
@@ -140,30 +143,32 @@ class AutoSplit64(QtCore.QObject):
             livesplit.connect()
 
     def start(self):
-        core.init()
-        self.app.detection = core._base
+        detection = Base(self.app.detection)
+        self.app.detection = detection
         
         
         if not os.path.exists(resource_path(config.get("advanced", "reset_frame_one"))) or not os.path.exists(resource_path(config.get("advanced", "reset_frame_two"))):
             self.on_error("Reset template files are missing!\n\nPlease generate reset templates first.")
             return
 
-        processes = make_processes(core._base)
+        processes = make_processes(detection)
 
-        failed = register_split_processors(processes)
+        failed = register_split_processors(detection, processes)
         # Without it, splits of this type would never happen
         if failed:
             self.on_error(f"Unable to load the split detection logic {failed}.\n\nSee the log for details.")
             return
 
-        core.set_update_listener(self.on_update)
-        core.set_error_listener(self.on_error)
-        core.set_start_listener(self.on_start)
+        detection.set_update_listener(self.on_update)
+        detection.set_error_listener(self.on_error)
+        detection.set_start_listener(self.on_start)
 
-        core.start()
+        detection.start()
 
     def stop(self):
-        core.stop()
+        # None before the first start
+        if self.app.detection is not None:
+            self.app.detection.stop()
 
     def on_start(self):
         self.started_changed.emit(True)

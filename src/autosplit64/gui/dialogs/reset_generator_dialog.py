@@ -12,11 +12,11 @@ from autosplit64.core import resource_utils
 
 from autosplit64.core.game_capture import GameCapture
 from autosplit64.core.image_utils import is_black
-from autosplit64.core import (
+from autosplit64.core import config
+from autosplit64.core.constants import (
     GAME_JP,
     RESET_REGION,
-    FADEOUT_REGION,
-    config
+    FADEOUT_REGION
 )
 
 

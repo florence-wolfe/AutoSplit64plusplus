@@ -13,7 +13,6 @@ Split detection runs as in the app, with the app's default settings, except:
 """
 import contextlib
 import copy
-import importlib
 import io
 import json
 import logging
@@ -26,7 +25,7 @@ from unittest import mock
 
 import cv2
 
-from autosplit64 import core, main
+from autosplit64 import main
 from autosplit64.core import base, config, route_loader
 from autosplit64.core.constants import RESET_REGION
 from autosplit64.core.game_capture import GameCapture
@@ -403,25 +402,22 @@ def _replay(recording, start, end, templates, split_index, variant, route_path):
     detection_log.addHandler(tracer)
     with _replaying(recording, clock, _settings(recording, templates, variant, route_path)) as log, \
          mock.patch.object(base, "livesplit", timer), mock.patch.object(base, "GameCapture", video_capture):
-        # Split detection keeps its state in the core module, which starts afresh like when the app opens
-        importlib.reload(core)
         try:
-            core.init()
-            failed = main.register_split_processors(main.make_processes(core._base))
+            # Starting afresh, like the first start after the app opens
+            detection = base.Base(None)
+            failed = main.register_split_processors(detection, main.make_processes(detection))
             if failed:
                 raise RuntimeError(f"{failed} failed to generate")
             # Like main.AutoSplit64.start, which sets all three
-            core.set_update_listener(lambda index, star_count, split_star: None)
-            core.set_start_listener(lambda: None)
-            core.set_error_listener(errors.append)
-            detection = core._base
+            detection.set_update_listener(lambda index, star_count, split_star: None)
+            detection.set_start_listener(lambda: None)
+            detection.set_error_listener(errors.append)
             clock.on_end = lambda: setattr(detection, "_running", False)
             detection.run()
             detection.stop()
         finally:
             for capture in captures:
                 capture.release()
-            importlib.reload(core)
             detection_log.removeHandler(tracer)
             detection_log.setLevel(level)
 

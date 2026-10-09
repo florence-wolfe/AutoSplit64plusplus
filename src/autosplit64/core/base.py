@@ -5,7 +5,7 @@ import logging
 import cv2
 import numpy as np
 
-from . import STATE, config, livesplit
+from . import config, livesplit
 from .game_capture import GameCapture
 from .model import Model, PredictionInfo
 from .image_utils import is_black, is_white, convert_to_cv2
@@ -29,7 +29,8 @@ from .constants import (
     MODEL_PATH_LEGACY,
     MODEL_WIDTH,
     MODEL_HEIGHT,
-    CONFIRMATION_MODE
+    CONFIRMATION_MODE,
+    INITIAL_STATE
 )
 
 
@@ -42,12 +43,13 @@ OPERATION_MODES = ["Probability", "X-Cam"]
 
 class Base(Thread):
     # TODO: Add all error messages to constants with associated error code
-    def __init__(self, module):
+    def __init__(self, previous):
+        """ previous is the split detection that started last, a Base, or None before the first start """
         super().__init__()
 
         # Split detection's state, carried over from the last start like when it was the core module's
-        for name in STATE:
-            setattr(self, name, getattr(module, name))
+        for name, value in INITIAL_STATE.items():
+            setattr(self, name, value if previous is None else getattr(previous, name))
 
         # Load config
         config.load_config()
@@ -147,8 +149,6 @@ class Base(Thread):
         #
         self._predictions = [PredictionInfo(0, 0)] * self._prediction_processing_length
 
-        # Export Variables
-        module._base = self
         self.route = self._route
 
         try:
@@ -156,30 +156,6 @@ class Base(Thread):
             self.star_count = self._route.initial_star
         except AttributeError:
             pass
-
-        # Export Functions
-        module.start = self.start
-        module.stop = self.stop
-        module.set_star_count = self.set_star_count
-        module.enable_predictions = self.enable_predictions
-        module.enable_fade_count = self.enable_fade_count
-        module.enable_xcam_count = self.enable_xcam_count
-        module.set_in_game = self.set_in_game
-        module.get_region = self.get_region
-        module.get_region_rect = self.get_region_rect
-        module.register_split_processor = self.register_split_processor
-        module.set_update_listener = self.set_update_listener
-        module.set_error_listener = self.set_error_listener
-        module.set_start_listener = self.set_start_listener
-        module.force_update = self._update_occurred
-        module.split = self.split
-        module.reset = self.reset
-        module.restart = self.restart
-        module.skip = self.skip
-        module.undo = self.undo
-        module.incoming_split = self.incoming_split
-        module.current_split = self.current_split
-        module.split_index = self.split_index
 
         self.logger = logging.getLogger(".log")
 
