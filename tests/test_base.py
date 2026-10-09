@@ -213,6 +213,31 @@ class DetectionLogTest(unittest.TestCase):
         self.assertIn("Could not connect to LiveSplit.", logs.output[0])
 
 
+class StatusTest(unittest.TestCase):
+    """ What split detection is doing, for the Debug window """
+
+    def setUp(self):
+        self.as64 = SimpleNamespace(star_count=7, fadeout_count=1, fadein_count=0, xcam_count=2)
+        patcher = mock.patch.object(base, "as64", self.as64, create=True)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_status(self):
+        b = make_base(star_counts=(6, 8, 9), current=1)
+        b._current_split.on_xcam = -1
+        b._running, b._in_game = True, False
+        self.assertEqual(b.status(), {
+            "running": True, "in_game": False, "split_index": 1, "split_count": 3, "split": "Split 8",
+            "split_type": "Normal", "needs_stars": 8, "needs_fadeouts": 1, "needs_fadeins": 0, "needs_xcams": -1,
+            "stars": 7, "fadeouts": 1, "fadeins": 0, "xcams": 2})
+
+    def test_without_a_route(self):
+        b = make_base()
+        b._route, b._current_split = None, None
+        b._running, b._in_game = False, False
+        self.assertEqual(b.status(), {"running": False, "in_game": False})
+
+
 class FirstSplitsTest(unittest.TestCase):
     """ Lookups of earlier splits at the start of the route mustn't wrap around to its end """
 

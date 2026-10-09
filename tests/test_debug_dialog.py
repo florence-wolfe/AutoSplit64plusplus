@@ -9,12 +9,49 @@ from unittest import mock
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 from autosplit64.core import config, logs
-from autosplit64.gui.dialogs.debug_dialog import DebugDialog
+from autosplit64.gui.dialogs.debug_dialog import DebugDialog, describe
 
 _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
 OUTPUT = {"fade_status": "FADEOUT_PARTIAL", "fadeout_count": 2, "fadein_count": 1, "xcam_percent": 0.123456789,
-          "xcam_count": 3, "xcam_status": True, "prediction": 16, "probability": 0.987654321, "execution": 0.0123456}
+          "xcam_count": 3, "xcam_status": True, "prediction": 16, "probability": 0.987654321, "execution": 0.0123456,
+          "status": None, "livesplit": "LiveSplit connected"}
+
+STATUS = {"running": True, "in_game": True, "split_index": 2, "split_count": 12, "split": "CCM 8", "split_type": "Normal",
+          "needs_stars": 8, "needs_fadeouts": 1, "needs_fadeins": 0, "needs_xcams": -1,
+          "stars": 7, "fadeouts": 0, "fadeins": 1, "xcams": 0}
+
+
+class DescribeTest(unittest.TestCase):
+    """ What split detection is doing, in words """
+
+    def test_in_a_run(self):
+        self.assertEqual(describe(STATUS, "LiveSplit connected"), (
+            "Running, in a run · LiveSplit connected", "Split 3 of 12: CCM 8",
+            "8 stars · fadeout 1 · fade-in 0", "7 stars · fadeouts 0 · fade-ins 1"))
+
+    def test_waiting_for_a_run(self):
+        status = dict(STATUS, in_game=False)
+        self.assertEqual(describe(status, "LiveSplit connected")[0], "Running, waiting for a run · LiveSplit connected")
+
+    def test_not_running(self):
+        for status in (None, dict(STATUS, running=False), {"running": False, "in_game": False}):
+            with self.subTest(status):
+                self.assertEqual(describe(status, "LiveSplit not connected"), ("Not running · LiveSplit not connected", "", "", ""))
+
+    def test_one_star(self):
+        self.assertEqual(describe(dict(STATUS, needs_stars=1, stars=1), "")[2:], ("1 star · fadeout 1 · fade-in 0", "1 star · fadeouts 0 · fade-ins 1"))
+
+    def test_what_each_split_type_needs(self):
+        for split_type, needs, counted in [
+                ("Fade", "fadeout 1 · fade-in 0", "7 stars · fadeouts 0 · fade-ins 1"),
+                ("X-Cam", "8 stars · fadeout 1 · fade-in 0 · X-Cam 2", "7 stars · fadeouts 0 · fade-ins 1 · X-Cams 1"),
+                ("Mips", "entering the DDD painting", "7 stars · fadeouts 0 · fade-ins 1"),
+                ("Mips-X", "an X-Cam at the DDD painting", "7 stars · X-Cams 1"),
+                ("Final", "grabbing the Grand Star", "7 stars · fadeouts 0 · fade-ins 1")]:
+            with self.subTest(split_type):
+                status = dict(STATUS, split_type=split_type, needs_xcams=2, xcams=1)
+                self.assertEqual(describe(status, "")[2:], (needs, counted))
 
 
 class DebugDialogTest(unittest.TestCase):
@@ -27,8 +64,8 @@ class DebugDialogTest(unittest.TestCase):
         self.addCleanup(self.dialog.deleteLater)
 
     def fields(self):
-        """ Each label's text and the read-only field under it """
-        grid = self.dialog.layout()
+        """ Each label's text and the read-only field under it, in Advanced """
+        grid = self.dialog.advanced.layout()
         shown = {}
         for i in range(grid.count()):
             label = grid.itemAt(i).widget()
@@ -57,6 +94,34 @@ class DebugDialogTest(unittest.TestCase):
         self.assertEqual(self.dialog.output_reader.update_rate, 25)
         self.assertEqual(config.get("general", "output_update_rate"), 25)
         config.save_config.assert_called_once()
+
+    def test_what_split_detection_is_doing(self):
+        self.dialog.display_output(dict(OUTPUT, status=STATUS))
+        self.assertEqual((self.dialog.status_lb.text(), self.dialog.split_lb.text(), self.dialog.needs_lb.text(),
+                          self.dialog.counted_lb.text()), describe(STATUS, "LiveSplit connected"))
+
+    def test_only_the_status_while_not_running(self):
+        self.dialog.display_output(dict(OUTPUT, status=None))
+        self.assertTrue(self.dialog.status_lb.isVisibleTo(self.dialog))
+        for label in (self.dialog.split_lb, self.dialog.needs_lb, self.dialog.counted_lb):
+            self.assertFalse(label.isVisibleTo(self.dialog))
+        self.dialog.display_output(dict(OUTPUT, status=STATUS))
+        for label in (self.dialog.split_lb, self.dialog.needs_lb, self.dialog.counted_lb):
+            self.assertTrue(label.isVisibleTo(self.dialog))
+
+    def test_advanced_is_collapsed_at_first(self):
+        self.assertFalse(self.dialog.advanced.isVisibleTo(self.dialog))
+        self.dialog.advanced_btn.click()
+        self.assertTrue(self.dialog.advanced.isVisibleTo(self.dialog))
+        self.assertIs(config.get("general", "debug_advanced"), True)
+        config.save_config.assert_called_once()
+
+    def test_advanced_stays_open(self):
+        config.set_key("general", "debug_advanced", True)
+        again = DebugDialog()
+        self.addCleanup(again.deleteLater)
+        self.assertTrue(again.advanced.isVisibleTo(again))
+        self.assertTrue(again.advanced_btn.isChecked())
 
     def test_title_and_resizable(self):
         self.assertEqual(self.dialog.windowTitle(), "Debug")

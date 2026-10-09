@@ -631,6 +631,21 @@ class Base(Thread):
         except AttributeError:
             pass
 
+    def status(self):
+        """ What split detection is doing, for the Debug window: the split it's on, what it needs and what's counted """
+        split = self._current_split
+        # Without a route, e.g. one that failed to load
+        if split is None:
+            return {"running": self._running, "in_game": self._in_game}
+        return {
+            "running": self._running, "in_game": self._in_game,
+            "split_index": self.split_index(), "split_count": len(self._route.splits),
+            "split": split.title, "split_type": split.split_type,
+            "needs_stars": split.star_count, "needs_fadeouts": split.on_fadeout, "needs_fadeins": split.on_fadein,
+            "needs_xcams": split.on_xcam,
+            "stars": as64.star_count, "fadeouts": as64.fadeout_count, "fadeins": as64.fadein_count, "xcams": as64.xcam_count,
+        }
+
     def _state(self):
         """ The split detection is on, what it needs and what's counted so far, for the log """
         split = self._current_split
