@@ -5,7 +5,7 @@ import logging
 import cv2
 import numpy as np
 
-from . import config, livesplit
+from . import STATE, config, livesplit
 from .game_capture import GameCapture
 from .model import Model, PredictionInfo
 from .image_utils import is_black, is_white, convert_to_cv2
@@ -45,8 +45,9 @@ class Base(Thread):
     def __init__(self, module):
         super().__init__()
 
-        global as64
-        as64 = module
+        # Split detection's state, carried over from the last start like when it was the core module's
+        for name in STATE:
+            setattr(self, name, getattr(module, name))
 
         # Load config
         config.load_config()
@@ -101,7 +102,7 @@ class Base(Thread):
         # Star Skip Error Correction
         self._matching_consecutive_predictions = 0
         self._minimum_consecutive_predictions = config.get("error", "minimum_consecutive_prediction")
-        self._previous_prediction = as64.prediction_info
+        self._previous_prediction = self.prediction_info
         self._max_star_skip = config.get("error", "max_star_skip")
         self._star_skip_enabled = config.get("error", "star_skip")
 
@@ -147,38 +148,38 @@ class Base(Thread):
         self._predictions = [PredictionInfo(0, 0)] * self._prediction_processing_length
 
         # Export Variables
-        as64._base = self
-        as64.route = self._route
+        module._base = self
+        self.route = self._route
 
         try:
-            as64.route_length = self._route_length
-            as64.star_count = self._route.initial_star
+            self.route_length = self._route_length
+            self.star_count = self._route.initial_star
         except AttributeError:
             pass
 
         # Export Functions
-        as64.start = self.start
-        as64.stop = self.stop
-        as64.set_star_count = self.set_star_count
-        as64.enable_predictions = self.enable_predictions
-        as64.enable_fade_count = self.enable_fade_count
-        as64.enable_xcam_count = self.enable_xcam_count
-        as64.set_in_game = self.set_in_game
-        as64.get_region = self.get_region
-        as64.get_region_rect = self.get_region_rect
-        as64.register_split_processor = self.register_split_processor
-        as64.set_update_listener = self.set_update_listener
-        as64.set_error_listener = self.set_error_listener
-        as64.set_start_listener = self.set_start_listener
-        as64.force_update = self._update_occurred
-        as64.split = self.split
-        as64.reset = self.reset
-        as64.restart = self.restart
-        as64.skip = self.skip
-        as64.undo = self.undo
-        as64.incoming_split = self.incoming_split
-        as64.current_split = self.current_split
-        as64.split_index = self.split_index
+        module.start = self.start
+        module.stop = self.stop
+        module.set_star_count = self.set_star_count
+        module.enable_predictions = self.enable_predictions
+        module.enable_fade_count = self.enable_fade_count
+        module.enable_xcam_count = self.enable_xcam_count
+        module.set_in_game = self.set_in_game
+        module.get_region = self.get_region
+        module.get_region_rect = self.get_region_rect
+        module.register_split_processor = self.register_split_processor
+        module.set_update_listener = self.set_update_listener
+        module.set_error_listener = self.set_error_listener
+        module.set_start_listener = self.set_start_listener
+        module.force_update = self._update_occurred
+        module.split = self.split
+        module.reset = self.reset
+        module.restart = self.restart
+        module.skip = self.skip
+        module.undo = self.undo
+        module.incoming_split = self.incoming_split
+        module.current_split = self.current_split
+        module.split_index = self.split_index
 
         self.logger = logging.getLogger(".log")
 
@@ -242,7 +243,7 @@ class Base(Thread):
             self._processor_switch._current_processor = self._current_split.split_type
             
             while self._running:
-                as64.current_time = time.time()
+                self.current_time = time.time()
                 try:
                     self._game_capture.capture()
 
@@ -268,8 +269,8 @@ class Base(Thread):
                     self._error_occurred("LiveSplit connection failed")
                 
                 try:
-                    as64.execution_time = time.time() - as64.current_time
-                    time.sleep(1 / as64.fps - as64.execution_time)
+                    self.execution_time = time.time() - self.current_time
+                    time.sleep(1 / self.fps - self.execution_time)
                 except ValueError:
                     pass
                 
@@ -304,16 +305,16 @@ class Base(Thread):
 
         output_1d = output.flatten()
 
-        as64.xcam_percent = np.count_nonzero(output_1d) / output_1d.size
+        self.xcam_percent = np.count_nonzero(output_1d) / output_1d.size
 
-        if as64.xcam_percent > self._xcam_threshold and output[int(self._xcam_point_x_ratio*self._xcam_region_width), int(self._xcam_point_y_ratio*self._xcam_region_height), 2] > 20:
-            as64.in_xcam = True
-            if as64.current_time - self._xcam_found_time > 0.5:
-                as64.xcam_count += 1
+        if self.xcam_percent > self._xcam_threshold and output[int(self._xcam_point_x_ratio*self._xcam_region_width), int(self._xcam_point_y_ratio*self._xcam_region_height), 2] > 20:
+            self.in_xcam = True
+            if self.current_time - self._xcam_found_time > 0.5:
+                self.xcam_count += 1
 
-            self._xcam_found_time = as64.current_time
+            self._xcam_found_time = self.current_time
         else:
-            as64.in_xcam = False
+            self.in_xcam = False
             self._split_on_current_xcam = False
 
     def analyze_fade_status(self):
@@ -322,28 +323,28 @@ class Base(Thread):
 
         # Determine the current fade status
         if is_black(star_region, self._black_threshold) and is_black(life_region, self._black_threshold):
-            if as64.fade_status == NO_FADE and self._count_fades:
-                as64.fadeout_count += 1
-                as64.xcam_count = 0
-                log.info("Fadeout %d: %s", as64.fadeout_count, self._state())
+            if self.fade_status == NO_FADE and self._count_fades:
+                self.fadeout_count += 1
+                self.xcam_count = 0
+                log.info("Fadeout %d: %s", self.fadeout_count, self._state())
 
-            if is_black(self._game_capture.get_region(RESET_REGION), self._black_threshold) and as64.current_time - self._fade_start_time > self._minimum_fadeout_time:
-                as64.fade_status = FADEOUT_COMPLETE
+            if is_black(self._game_capture.get_region(RESET_REGION), self._black_threshold) and self.current_time - self._fade_start_time > self._minimum_fadeout_time:
+                self.fade_status = FADEOUT_COMPLETE
             else:
-                as64.fade_status = FADEOUT_PARTIAL
+                self.fade_status = FADEOUT_PARTIAL
         elif is_white(star_region, self._white_threshold) and is_white(life_region, self._white_threshold):
-            if as64.fade_status == NO_FADE and self._count_fades:
-                as64.fadein_count += 1
-                as64.xcam_count = 0
-                log.info("Fade-in %d: %s", as64.fadein_count, self._state())
+            if self.fade_status == NO_FADE and self._count_fades:
+                self.fadein_count += 1
+                self.xcam_count = 0
+                log.info("Fade-in %d: %s", self.fadein_count, self._state())
 
             if not is_white(self._game_capture.get_region(FADEIN_REGION), self._white_threshold):
-                as64.fade_status = FADEIN_COMPLETE
+                self.fade_status = FADEIN_COMPLETE
             else:
-                as64.fade_status = FADEIN_PARTIAL
+                self.fade_status = FADEIN_PARTIAL
         else:
-            as64.fade_status = NO_FADE
-            self._fade_start_time = as64.current_time
+            self.fade_status = NO_FADE
+            self._fade_start_time = self.current_time
 
     def _analyze_star_count_probability_mode(self):
         try:
@@ -352,7 +353,7 @@ class Base(Thread):
                 (self._model.width, self._model.height)
             )
             try:
-                as64.prediction_info = self._model.predict(resized_image)
+                self.prediction_info = self._model.predict(resized_image)
             except AttributeError as e:
                 self._error_occurred(f"Model prediction failed: {str(e)}")
                 return
@@ -362,8 +363,8 @@ class Base(Thread):
 
         total_predictions = len(self._predictions)
 
-        if as64.star_count - 1 <= as64.prediction_info.prediction <= as64.star_count + 1 or as64.prediction_info.prediction > 120:
-            self._predictions.append(as64.prediction_info)
+        if self.star_count - 1 <= self.prediction_info.prediction <= self.star_count + 1 or self.prediction_info.prediction > 120:
+            self._predictions.append(self.prediction_info)
 
             # Limit number of predictions
             if total_predictions > self._prediction_processing_length:
@@ -371,15 +372,15 @@ class Base(Thread):
 
             # Handle Prediction
             prev_two_probabilities = [self._predictions[i].probability for i in range(total_predictions - 2, total_predictions)
-                                      if self._predictions[i].prediction == as64.star_count + 1]
+                                      if self._predictions[i].prediction == self.star_count + 1]
 
             try:
                 result = next(x for x, val in enumerate(prev_two_probabilities) if val >= self._probability_threshold)
 
                 if prev_two_probabilities[result ^ 1] >= self._confirmation_threshold:
-                    self.set_star_count(as64.star_count + 1)
-                    if as64.in_xcam:
-                        as64.xcam_count = 1
+                    self.set_star_count(self.star_count + 1)
+                    if self.in_xcam:
+                        self.xcam_count = 1
             except (StopIteration, IndexError):
                 pass
 
@@ -392,7 +393,7 @@ class Base(Thread):
                 (self._model.width, self._model.height)
             )
             try:
-                as64.prediction_info = self._model.predict(resized_image)
+                self.prediction_info = self._model.predict(resized_image)
             except AttributeError as e:
                 self._error_occurred(f"Model prediction failed: {str(e)}")
                 return
@@ -402,16 +403,16 @@ class Base(Thread):
 
         total_predictions = len(self._predictions)
 
-        if as64.star_count - 1 <= as64.prediction_info.prediction <= as64.star_count + 1 or as64.prediction_info.prediction > 120:
-            self._predictions.append(as64.prediction_info)
+        if self.star_count - 1 <= self.prediction_info.prediction <= self.star_count + 1 or self.prediction_info.prediction > 120:
+            self._predictions.append(self.prediction_info)
 
             # Limit number of predictions
             if total_predictions > self._prediction_processing_length:
                 self._predictions.pop(0)
 
-            if as64.prediction_info.prediction == as64.star_count + 1 and as64.prediction_info.probability > self._confirmation_threshold:
-                if as64.current_time - self._xcam_found_time < 1:
-                    self.set_star_count(as64.star_count + 1)
+            if self.prediction_info.prediction == self.star_count + 1 and self.prediction_info.probability > self._confirmation_threshold:
+                if self.current_time - self._xcam_found_time < 1:
+                    self.set_star_count(self.star_count + 1)
 
         self._star_error_check()
 
@@ -420,33 +421,33 @@ class Base(Thread):
         # TODO: Handle fadeouts correctly. See below.
         # If split is undone, need to get previous fadeout count, set it to current, and add the fadeout count of the
         # incorrect star
-        prev_star_probabilities = [p.probability for p in self._predictions if p.prediction == as64.star_count - 1]
+        prev_star_probabilities = [p.probability for p in self._predictions if p.prediction == self.star_count - 1]
 
         if len(prev_star_probabilities) >= self._minimum_undo_count:
             if sum(prev_star_probabilities) / len(prev_star_probabilities) > self._undo_prediction_threshold:
-                self.set_star_count(as64.star_count - 1)
+                self.set_star_count(self.star_count - 1)
                 self._undo_if_below_previous_split()
 
         try:
             # Predictions above 120 mean no star count was readable
-            if self._star_skip_enabled and (as64.previous_split_initial_star <= as64.prediction_info.prediction <= as64.next_split_split_star or as64.prediction_info.prediction > 120):
-                if as64.prediction_info.prediction == self._previous_prediction.prediction and as64.prediction_info.probability > self._probability_threshold:
+            if self._star_skip_enabled and (self.previous_split_initial_star <= self.prediction_info.prediction <= self.next_split_split_star or self.prediction_info.prediction > 120):
+                if self.prediction_info.prediction == self._previous_prediction.prediction and self.prediction_info.probability > self._probability_threshold:
                     self._matching_consecutive_predictions += 1
                 elif self._matching_consecutive_predictions > 0:
                     self._matching_consecutive_predictions = 0
 
-                if self._matching_consecutive_predictions >= self._minimum_consecutive_predictions and 0 < abs(as64.prediction_info.prediction - as64.star_count) <= self._max_star_skip and as64.prediction_info.prediction <= 120:
-                    self.set_star_count(as64.prediction_info.prediction)
+                if self._matching_consecutive_predictions >= self._minimum_consecutive_predictions and 0 < abs(self.prediction_info.prediction - self.star_count) <= self._max_star_skip and self.prediction_info.prediction <= 120:
+                    self.set_star_count(self.prediction_info.prediction)
                     self._undo_if_below_previous_split()
         except AttributeError:
             pass
 
-        self._previous_prediction = as64.prediction_info
+        self._previous_prediction = self.prediction_info
 
     def _undo_if_below_previous_split(self):
         """ Undo the previous split when the star count is now below the star count it split on """
         index = self.split_index()
-        if index > 0 and as64.star_count < self._route.splits[index - 1].star_count:
+        if index > 0 and self.star_count < self._route.splits[index - 1].star_count:
             self.undo()
 
     def get_region(self, region):
@@ -464,7 +465,7 @@ class Base(Thread):
 
     def split(self):
         # Cool-down period between splits
-        if time.time() - as64.last_split < self._split_cooldown:
+        if time.time() - self.last_split < self._split_cooldown:
             log.info("Split not sent, within the split cooldown: %s", self._state())
             return
 
@@ -482,7 +483,7 @@ class Base(Thread):
 
         log.info("Split: %s", self._state())
         livesplit.split(self._ls_socket)
-        as64.last_split = time.time()
+        self.last_split = time.time()
 
     def reset(self):
         log.info("Reset the timer: %s", self._state())
@@ -496,7 +497,7 @@ class Base(Thread):
     
     def _reset_occured(self):
         self.set_star_count(self._route.initial_star)
-        as64.xcam_count = 0
+        self.xcam_count = 0
         self._in_game = False
         self._split_on_current_xcam = False
 
@@ -523,14 +524,14 @@ class Base(Thread):
             print("ValueError: Current Split not found..")
 
     def incoming_split(self, star_count=True, fadeout=True, fadein=True):
-        if as64.star_count != self._current_split.star_count and star_count:
+        if self.star_count != self._current_split.star_count and star_count:
             return False
 
         # TODO: Make only one fade need to match
-        if as64.fadeout_count != self._current_split.on_fadeout and fadeout:
+        if self.fadeout_count != self._current_split.on_fadeout and fadeout:
             return False
 
-        if as64.fadein_count != self._current_split.on_fadein and fadein:
+        if self.fadein_count != self._current_split.on_fadein and fadein:
             return False
 
         return True
@@ -558,14 +559,14 @@ class Base(Thread):
         self._in_game = in_game
 
     def set_star_count(self, star_count):
-        if star_count != as64.star_count:
-            prediction = as64.prediction_info
-            log.info("Star count %s -> %s, prediction %s", as64.star_count, star_count,
+        if star_count != self.star_count:
+            prediction = self.prediction_info
+            log.info("Star count %s -> %s, prediction %s", self.star_count, star_count,
                      f"{prediction.prediction} at {prediction.probability:.2f}" if prediction else "none")
         self._reset_fade_count()
-        as64.xcam_count = 0
-        as64.star_count = star_count
-        as64.collection_time = time.time()
+        self.xcam_count = 0
+        self.star_count = star_count
+        self.collection_time = time.time()
         self._update_occurred()
         self._predictions = [PredictionInfo(0, 0)] * self._prediction_processing_length
 
@@ -582,16 +583,16 @@ class Base(Thread):
             log.info("Timer on split %d: %s", index + 1, self._current_split.title)
 
             self._reset_fade_count()
-            as64.xcam_count = 0
+            self.xcam_count = 0
 
             # The star count the previous split started from
             if index >= 2:
-                as64.previous_split_initial_star = self._route.splits[index - 2].star_count
+                self.previous_split_initial_star = self._route.splits[index - 2].star_count
             else:
-                as64.previous_split_initial_star = self._route.initial_star
+                self.previous_split_initial_star = self._route.initial_star
 
             try:
-                as64.next_split_split_star = self._route.splits[self.split_index() + 1].star_count
+                self.next_split_split_star = self._route.splits[self.split_index() + 1].star_count
             except IndexError:
                 pass
 
@@ -628,7 +629,7 @@ class Base(Thread):
 
     def _update_occurred(self):
         try:
-            self._update_listener(self.split_index(), as64.star_count, self.current_split().star_count)
+            self._update_listener(self.split_index(), self.star_count, self.current_split().star_count)
         except AttributeError:
             pass
 
@@ -644,7 +645,7 @@ class Base(Thread):
             "split": split.title, "split_type": split.split_type,
             "needs_stars": split.star_count, "needs_fadeouts": split.on_fadeout, "needs_fadeins": split.on_fadein,
             "needs_xcams": split.on_xcam,
-            "stars": as64.star_count, "fadeouts": as64.fadeout_count, "fadeins": as64.fadein_count, "xcams": as64.xcam_count,
+            "stars": self.star_count, "fadeouts": self.fadeout_count, "fadeins": self.fadein_count, "xcams": self.xcam_count,
         }
 
     def _state(self):
@@ -652,7 +653,7 @@ class Base(Thread):
         split = self._current_split
         return (f"split {self.split_index() + 1} of {len(self._route.splits)}, {split.title} "
                 f"(needs {split.star_count} stars, fadeout {split.on_fadeout}, fade-in {split.on_fadein}), "
-                f"star count {as64.star_count}, fadeouts {as64.fadeout_count}, fade-ins {as64.fadein_count}")
+                f"star count {self.star_count}, fadeouts {self.fadeout_count}, fade-ins {self.fadein_count}")
 
     def _setup(self):
         """ The route and settings split detection runs with, for the log """
@@ -671,5 +672,5 @@ class Base(Thread):
                 f"SRL mode {config.get('general', 'srl_mode')}")
 
     def _reset_fade_count(self):
-        as64.fadeout_count = 0
-        as64.fadein_count = 0
+        self.fadeout_count = 0
+        self.fadein_count = 0

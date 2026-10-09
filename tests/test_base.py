@@ -2,6 +2,7 @@ import unittest
 from types import SimpleNamespace
 from unittest import mock
 
+from autosplit64 import core
 from autosplit64.core import base
 from autosplit64.core.base import Base
 from autosplit64.core.model import PredictionInfo
@@ -90,9 +91,9 @@ class RunTest(unittest.TestCase):
         b._start_listener = mock.Mock()
         b._error_listener = mock.Mock()
         b.stop = mock.Mock(side_effect=lambda: setattr(b, "_running", False))
+        b.fps = 30
 
-        with mock.patch.object(base, "as64", SimpleNamespace(fps=30), create=True), \
-             mock.patch.object(base.livesplit, "connect"), \
+        with mock.patch.object(base.livesplit, "connect"), \
              mock.patch.object(base.livesplit, "split_index", side_effect=ConnectionAbortedError("LiveSplit connection lost")):
             b.run()
 
@@ -112,7 +113,7 @@ class GameVersionTest(unittest.TestCase):
              mock.patch.object(base, "Model"), \
              mock.patch.object(base, "GameCapture") as game_capture:
             game_capture.return_value.get_region_rect.return_value = [0, 0, 10, 10]
-            Base(SimpleNamespace(CONFIRMATION_MODE=0, prediction_info=None))
+            Base(SimpleNamespace(**{name: getattr(core, name) for name in core.STATE}))
         return game_capture.call_args.args[4]
 
     def test_route_version(self):
@@ -125,15 +126,45 @@ class GameVersionTest(unittest.TestCase):
         self.assertEqual(self.version_for(None), "US")
 
 
+class StateTest(unittest.TestCase):
+    """ Split detection's state, which the Base that started last keeps, and core reads and writes on it """
+
+    def setUp(self):
+        route = SimpleNamespace(version="JP", splits=[SimpleNamespace(star_count=1)], initial_star=0)
+        real_get = base.config.get
+        for patcher in [mock.patch.dict(core.__dict__), mock.patch.object(base.config, "load_config"),
+                        mock.patch.object(base.config, "get", side_effect=lambda section, key=None: "routes/missing.as64" if section == "route" else real_get(section, key)),
+                        mock.patch.object(base, "load_route", return_value=route), mock.patch.object(base, "Model"),
+                        mock.patch.object(base, "GameCapture")]:
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        base.GameCapture.return_value.get_region_rect.return_value = [0, 0, 10, 10]
+
+    def test_core_reads_and_writes_the_last_base(self):
+        core.init()
+        detection = core._base
+        core.fadeout_count = 2
+        self.assertEqual(detection.fadeout_count, 2)
+        detection.fps = 15
+        self.assertEqual(core.fps, 15)
+
+    def test_each_start_carries_the_state_over(self):
+        # Like when the core module kept it
+        core.init()
+        first = core._base
+        core.fadeout_count, core.fps, core.prediction_info = 2, 15, PredictionInfo(7, 0.9)
+        core.star_count = 5
+        core.init()
+        self.assertIsNot(core._base, first)
+        self.assertEqual((core.fadeout_count, core.fps, core.prediction_info), (2, 15, PredictionInfo(7, 0.9)))
+        # Except the route's, which each start sets
+        self.assertEqual(core.star_count, 0)
+
+
 class DetectionLogTest(unittest.TestCase):
     """ What split detection does and why, in the session log """
 
     def setUp(self):
-        self.as64 = SimpleNamespace(star_count=7, fadeout_count=1, fadein_count=0, xcam_count=0, last_split=0.0,
-                                    prediction_info=PredictionInfo(8, 0.97), fade_status="NO_FADE")
-        patcher = mock.patch.object(base, "as64", self.as64, create=True)
-        patcher.start()
-        self.addCleanup(patcher.stop)
         self.livesplit = mock.Mock()
         patcher = mock.patch.object(base, "livesplit", self.livesplit)
         patcher.start()
@@ -149,6 +180,8 @@ class DetectionLogTest(unittest.TestCase):
         b._in_game = True
         b._prediction_processing_length = 3
         b._update_occurred = mock.Mock()
+        vars(b).update(star_count=7, fadeout_count=1, fadein_count=0, xcam_count=0, last_split=0.0,
+                       prediction_info=PredictionInfo(8, 0.97), fade_status="NO_FADE")
 
     def logged(self, action):
         with self.assertLogs("detection", "INFO") as logs:
@@ -162,7 +195,7 @@ class DetectionLogTest(unittest.TestCase):
             self.assertIn(part, log)
 
     def test_split_not_sent_and_why(self):
-        self.as64.last_split = base.time.time()
+        self.base.last_split = base.time.time()
         log = self.logged(self.base.split)
         self.livesplit.split.assert_not_called()
         self.assertIn("cooldown", log)
@@ -189,7 +222,7 @@ class DetectionLogTest(unittest.TestCase):
         b = self.base
         b._game_capture, b._count_fades, b._black_threshold = mock.Mock(), True, 0.1
         b._fade_start_time, b._minimum_fadeout_time = 0, 0.4
-        self.as64.current_time = 100.0
+        b.current_time = 100.0
         with mock.patch.object(base, "is_black", return_value=True):
             log = self.logged(b.analyze_fade_status)
         self.assertIn("Fadeout 2", log)
@@ -216,14 +249,9 @@ class DetectionLogTest(unittest.TestCase):
 class StatusTest(unittest.TestCase):
     """ What split detection is doing, for the Debug window """
 
-    def setUp(self):
-        self.as64 = SimpleNamespace(star_count=7, fadeout_count=1, fadein_count=0, xcam_count=2)
-        patcher = mock.patch.object(base, "as64", self.as64, create=True)
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
     def test_status(self):
         b = make_base(star_counts=(6, 8, 9), current=1)
+        vars(b).update(star_count=7, fadeout_count=1, fadein_count=0, xcam_count=2)
         b._current_split.on_xcam = -1
         b._running, b._in_game = True, False
         self.assertEqual(b.status(), {
@@ -242,12 +270,9 @@ class FirstSplitsTest(unittest.TestCase):
     """ Lookups of earlier splits at the start of the route mustn't wrap around to its end """
 
     def setUp(self):
-        self.as64 = SimpleNamespace(star_count=5, prediction_info=PredictionInfo(4, 0.9), xcam_count=0,
-                                    previous_split_initial_star=0, next_split_split_star=0)
-        patcher = mock.patch.object(base, "as64", self.as64, create=True)
-        patcher.start()
-        self.addCleanup(patcher.stop)
         self.base = make_base(star_counts=(5, 8, 10, 120), current=0)
+        vars(self.base).update(star_count=5, prediction_info=PredictionInfo(4, 0.9), xcam_count=0,
+                               previous_split_initial_star=0, next_split_split_star=0)
         self.base.undo = mock.Mock()
         self.base._update_occurred = mock.Mock()
 
@@ -257,7 +282,7 @@ class FirstSplitsTest(unittest.TestCase):
         b._star_skip_enabled, b._previous_prediction = False, None
         # Confident predictions of one star less than counted
         b._predictions = [PredictionInfo(4, 0.95)] * 3
-        b.set_star_count = mock.Mock(side_effect=lambda count: setattr(self.as64, "star_count", count))
+        b.set_star_count = mock.Mock(side_effect=lambda count: setattr(b, "star_count", count))
 
         b._star_error_check()
 
@@ -267,19 +292,16 @@ class FirstSplitsTest(unittest.TestCase):
     def test_star_skip_window_at_second_split(self):
         self.base._reset_fade_count = mock.Mock()
         self.base.set_split_index(1)
-        self.assertEqual(self.as64.previous_split_initial_star, 0)
+        self.assertEqual(self.base.previous_split_initial_star, 0)
 
 
 class StarSkipTest(unittest.TestCase):
     """ Predictions above 120 mean no star count was readable, e.g. during a fade """
 
     def setUp(self):
-        self.as64 = SimpleNamespace(star_count=119, prediction_info=PredictionInfo(121, 0.99),
-                                    previous_split_initial_star=110, next_split_split_star=120)
-        patcher = mock.patch.object(base, "as64", self.as64, create=True)
-        patcher.start()
-        self.addCleanup(patcher.stop)
         b = self.base = make_base(star_counts=(110, 120), current=1)
+        vars(b).update(star_count=119, prediction_info=PredictionInfo(121, 0.99),
+                       previous_split_initial_star=110, next_split_split_star=120)
         b._predictions, b._minimum_undo_count = [], 3
         b._probability_threshold, b._max_star_skip = 0.6, 3
         # Enough matching predictions in a row to correct the star count
@@ -300,7 +322,7 @@ class StarSkipTest(unittest.TestCase):
 
     def test_star_skip_still_corrects_star_counts(self):
         self.base._star_skip_enabled = True
-        self.as64.prediction_info = self.base._previous_prediction = PredictionInfo(120, 0.99)
+        self.base.prediction_info = self.base._previous_prediction = PredictionInfo(120, 0.99)
         self.base._star_error_check()
         self.base.set_star_count.assert_called_once_with(120)
 

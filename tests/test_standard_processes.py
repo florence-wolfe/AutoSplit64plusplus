@@ -24,24 +24,31 @@ SETTINGS = {
 }
 
 
+def patch_detection(test, **state):
+    """ Split detection's state for the test, on a stand-in for the Base that started last, where core keeps it """
+    patcher = mock.patch.object(core, "_base", SimpleNamespace(**state))
+    patcher.start()
+    test.addCleanup(patcher.stop)
+
+
 class ProcessTestCase(unittest.TestCase):
     def setUp(self):
         self.calls = []
         record = lambda name: mock.Mock(side_effect=lambda *args, **kwargs: self.calls.append((name, *args)))
         splits = [SimpleNamespace(star_count=s, split_type=core.SPLIT_NORMAL, on_fadeout=1, on_fadein=0, on_xcam=-1) for s in (5, 10, 16)]
-        self.state = {
-            "fade_status": core.NO_FADE, "star_count": 5, "prediction_info": PredictionInfo(5, 0.9),
-            "route": SimpleNamespace(splits=splits, initial_star=0), "fadein_count": 0, "fadeout_count": 0,
-            "current_time": 100.0, "last_split": 0.0, "start_on_reset": True, "fps": 0.0,
-            "xcam_count": 0, "in_xcam": False, "collection_time": 0.0,
+        patch_detection(self, fade_status=core.NO_FADE, star_count=5, prediction_info=PredictionInfo(5, 0.9),
+                        route=SimpleNamespace(splits=splits, initial_star=0), fadein_count=0, fadeout_count=0,
+                        current_time=100.0, last_split=0.0, start_on_reset=True, fps=0.0,
+                        xcam_count=0, in_xcam=False, collection_time=0.0)
+        functions = {
             "split_index": lambda: 1, "current_split": lambda: splits[1], "incoming_split": mock.Mock(return_value=True),
             "get_region_rect": lambda region: [0, 0, 251, 137],
             "get_region": mock.Mock(return_value=np.zeros((137, 251, 3), np.uint8)),
         }
         for name in ("enable_fade_count", "enable_xcam_count", "enable_predictions", "set_in_game", "set_star_count",
                      "split", "reset", "undo", "skip"):
-            self.state[name] = record(name)
-        for name, value in self.state.items():
+            functions[name] = record(name)
+        for name, value in functions.items():
             patcher = mock.patch.object(core, name, value, create=True)
             patcher.start()
             self.addCleanup(patcher.stop)

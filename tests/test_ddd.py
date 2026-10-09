@@ -7,7 +7,7 @@ import numpy as np
 from autosplit64 import core
 from autosplit64.core import config
 from autosplit64.processes.ddd import ProcessDDDSplit, ProcessDDDSplitX
-from tests.test_standard_processes import ProcessTestCase
+from tests.test_standard_processes import ProcessTestCase, patch_detection
 
 SETTINGS = {
     ("split_ddd_enter", "hat_lower_bound"): [0, 0, 80],
@@ -23,8 +23,8 @@ HAT[5:7, 5:7] = (10, 10, 200)
 class DDDSplitTest(unittest.TestCase):
     def setUp(self):
         self.split = mock.Mock()
-        for name, value in {"split": self.split, "fade_status": core.NO_FADE, "get_region": mock.Mock(),
-                            "fps": 0}.items():
+        patch_detection(self, fade_status=core.NO_FADE, fps=0)
+        for name, value in {"split": self.split, "get_region": mock.Mock()}.items():
             patcher = mock.patch.object(core, name, value, create=True)
             patcher.start()
             self.addCleanup(patcher.stop)

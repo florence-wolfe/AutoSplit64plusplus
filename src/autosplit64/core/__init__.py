@@ -1,3 +1,6 @@
+import sys
+from types import ModuleType, SimpleNamespace
+
 from . import constants
 
 from . import config
@@ -58,29 +61,57 @@ class Route(object):
 ls_host: str = DEFAULT_LS_HOST
 ls_port: int = DEFAULT_LS_PORT
 
-fps: float = DEFAULT_FRAME_RATE
-current_time: float = 0.0
 game_version: str = GAME_JP
-route = Route()
-route_length: int = 0
-star_count: int = 0
-previous_split_initial_star: int = 0
-next_split_split_star: int = 0
-last_split: int = 0
-collection_time: int = 0
-xcam_count: int = 0
-xcam_percent: float = 0.0
-in_xcam: bool = False
-fadeout_count: int = 0
-fadein_count: int = 0
-fade_status: str = NO_FADE
-prediction_info = None
-execution_time: float = 0.0
-start_on_reset: bool = True
+
+# Split detection's state before it first starts. The Base that started last keeps it, and each start carries it
+# over from the last.
+_initial = SimpleNamespace(
+    fps=DEFAULT_FRAME_RATE,
+    current_time=0.0,
+    route=Route(),
+    route_length=0,
+    star_count=0,
+    previous_split_initial_star=0,
+    next_split_split_star=0,
+    last_split=0,
+    collection_time=0,
+    xcam_count=0,
+    xcam_percent=0.0,
+    in_xcam=False,
+    fadeout_count=0,
+    fadein_count=0,
+    fade_status=NO_FADE,
+    prediction_info=None,
+    execution_time=0.0,
+    start_on_reset=True,
+)
+STATE = tuple(vars(_initial))
+
+# The Base that started last
+_base = None
+
+
+class _Module(ModuleType):
+    """ The module, with split detection's state read and written on the Base that started last """
+
+
+def _forward(name):
+    def get(module):
+        return getattr(module._initial if module._base is None else module._base, name)
+
+    def set(module, value):
+        setattr(module._initial if module._base is None else module._base, name, value)
+
+    return property(get, set)
+
+
+for _name in STATE:
+    setattr(_Module, _name, _forward(_name))
+
+sys.modules[__name__].__class__ = _Module
 
 
 def init() -> None:
-    import sys
     from .base import Base
 
     module = sys.modules[__name__]
