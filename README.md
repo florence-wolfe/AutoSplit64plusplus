@@ -220,6 +220,7 @@ If it splits at the wrong time, or not at all, also send a recording of the run 
 AutoSplit64++ uses [uv](https://docs.astral.sh/uv/) to manage Python and its dependencies. [Install uv](https://docs.astral.sh/uv/getting-started/installation/), then run these from the repository. uv sets up Python 3.12 and the dependencies from `uv.lock` the first time.
 
 - Start AutoSplit64++: `uv run python -m autosplit64`
+- Start it for development: `uv run dev.py`, which starts it again whenever its code changes. `--open debug` (or `route-editor`, `settings`, `capture`, `reset-templates`, `about`) also opens that window each time. It ends when you quit AutoSplit64++, and after a crash, it waits for your next change.
 - Run the tests: `uv run python -m unittest`
 - Replay recorded runs in the tests: `uv run python -m tests.replay` downloads the videos of the runs in `tests/recordings` into `tests/recordings/cache` with yt-dlp. The tests then replay them through split detection and check its splits against the runner's, which takes a couple of minutes. Without the videos, these tests are skipped.
 - Add or update a dependency: `uv add <package>`, which updates `pyproject.toml` and `uv.lock`
