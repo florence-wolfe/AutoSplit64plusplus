@@ -1,15 +1,14 @@
 import sys
 import os
 from threading import Thread
-import logging
 from PyQt6 import QtCore, QtWidgets, QtGui
 from autosplit64.gui import theme
 from autosplit64.gui.app import App
-from autosplit64.gui.constants import FONT_PATH
+from autosplit64.gui.constants import FONT_PATH, VERSION
 from autosplit64 import core
 from autosplit64.core.processing import register_process, ProcessorGenerator
 from autosplit64.core.route_loader import load_or_none
-from autosplit64.core import config, livesplit
+from autosplit64.core import config, livesplit, logs
 from autosplit64.core.resource_utils import resource_path
 from autosplit64.processes.standard import (
     ProcessDummy,
@@ -164,6 +163,9 @@ class AutoSplit64(QtCore.QObject):
 
 
 def main():
+    # First, so the log has everything that goes wrong
+    logs.start_session(VERSION)
+
     # Create QT Application
     qt_app = QtWidgets.QApplication(sys.argv)
 
@@ -172,13 +174,6 @@ def main():
 
     # Add font to database
     QtGui.QFontDatabase.addApplicationFont(FONT_PATH)
-
-    logging.basicConfig(
-        level=logging.WARNING,
-        format='%(asctime)s:%(levelname)s:%(name)s:%(message)s',
-        filename=".log",
-        filemode='a'
-    )
 
     # Create main application
     autosplit64 = AutoSplit64(qt_app)

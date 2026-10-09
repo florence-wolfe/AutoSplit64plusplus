@@ -200,6 +200,8 @@ On macOS, each new version needs the Screen Recording and Camera permissions aga
 
 If you encounter any issues, please run through all steps below.
 
+When reporting a problem, include the log of the session it happened in: `AutoSplit64++.log`, and the session before it, `AutoSplit64++.old.log`. Each start of AutoSplit64++ begins a new log and keeps only the previous one, so a session's log is gone after two more starts. They are next to `AutoSplit64++.exe` on Windows, and in `~/Library/Application Support/AutoSplit64++/` on macOS.
+
 - Check the capture and game region are correct (`Right-Click -> Edit Coordinates`)
 - Check the dot in the top right corner. When using the TCP connection, make sure the LiveSplit Server is running (`Right-Click LiveSplit -> Control -> Start Server`)
 - Check the correct route is loaded, and that it's accurate (e.g. correct star counts, fadeout/fadein counts)

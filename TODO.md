@@ -17,5 +17,3 @@ Ranked by what matters most to a runner, then by what makes the rest safer to do
 7. **Save debug info.** The log only records warnings, and processor transitions only go to `print`. Add a menu item that saves the config, route, log, capture size and a frame with the regions drawn on it, for bug reports.
 
 8. **Keep the macOS permissions across updates.** Every update needs the Screen Recording and Camera permissions again. macOS probably ties them to the code signature, so signing every release with the same self-signed certificate in CI may keep them, without an Apple developer account. Unverified: try it with two builds first.
-
-9. **The updater's log line is never written.** `main.py` sets the log level to `WARNING`, but `updater.py` logs where the installer's log is with `.info(...)`.
