@@ -1,18 +1,56 @@
 0.000 Started: route greensuigi 16 Star No LBLJ (JP, File Select, 12 splits), capturing the window of AmaRecTV.exe, game region [291, 0, 989, 720] of [1280, 720], VC fix False, connection mode Named Pipe, operation mode Probability, SRL mode False
+0.000 Running ProcessFileSelectSplit
 2.067 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 0
+2.100 Running ProcessFadeoutResetOnly
 4.133 Reset the timer: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 0
+4.167 Running ProcessReset
+4.200 Running ProcessFileSelectSplit
+4.233 Running ProcessFadeoutResetOnly
+4.267 Running ProcessFileSelectSplit
 4.333 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 0
+4.367 Running ProcessFadeoutResetOnly
+9.367 Running ProcessFileSelectSplit
 9.833 Fade-in 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 0, fade-ins 1
 10.867 Fade-in 2: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 0, fade-ins 2
 14.033 Split: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 0, fade-ins 0
 14.033 In game
+14.267 Running ProcessStarCount
 65.767 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 0
+65.933 Running ProcessFadeout
+67.000 Running ProcessPostFadeout
+73.067 Running ProcessStarCount
 78.067 Fade-in 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 1
+78.233 Running ProcessFadein
+79.167 Running ProcessStarCount
+79.333 Running ProcessFadein
+79.367 Running ProcessStarCount
+79.533 Running ProcessFadein
+79.567 Running ProcessStarCount
+79.733 Running ProcessFadein
+79.767 Running ProcessStarCount
+79.933 Running ProcessFadein
+80.767 Running ProcessStarCount
 94.267 Star count 0 -> 1, prediction 1 at 0.99
 97.433 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+97.600 Running ProcessFadeout
 97.967 Split: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
 98.000 Timer on split 2: WF 6
+99.033 Running ProcessPostFadeout
+100.500 Running ProcessFlashCheck
 101.467 Star count flashed 4 times, running total -2
+101.500 Running ProcessStarCount
 126.833 Fade-in 1: split 2 of 12, WF 6 (needs 6 stars, fadeout 1, fade-in 0), star count 1, fadeouts 0, fade-ins 1
+127.000 Running ProcessFadein
+128.000 Running ProcessStarCount
+128.167 Running ProcessFadein
+128.200 Running ProcessStarCount
+128.367 Running ProcessFadein
+128.400 Running ProcessStarCount
+128.567 Running ProcessFadein
+128.600 Running ProcessStarCount
+128.767 Running ProcessFadein
+129.533 Running ProcessStarCount
 139.867 Star count 1 -> 2, prediction 2 at 0.98
 142.867 Fadeout 1: split 2 of 12, WF 6 (needs 6 stars, fadeout 1, fade-in 0), star count 2, fadeouts 1, fade-ins 0
+143.033 Running ProcessFadeout
+144.467 Running ProcessPostFadeout

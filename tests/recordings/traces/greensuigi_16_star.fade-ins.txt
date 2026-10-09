@@ -1,98 +1,349 @@
 0.000 Started: route greensuigi 16 Star No LBLJ, fade-ins (JP, RTA, 14 splits), capturing the window of AmaRecTV.exe, game region [291, 0, 989, 720] of [1280, 720], VC fix False, connection mode Named Pipe, operation mode Probability, SRL mode False
+0.000 Running ProcessRunStart
+2.300 Running ProcessFadeoutResetOnly
 4.133 Reset the timer: split 1 of 14, 0 stars, fade-in (needs 0 stars, fadeout 1, fade-in 1), star count 0, fadeouts 0, fade-ins 0
 4.133 Split: split 1 of 14, 0 stars, fade-in (needs 0 stars, fadeout 1, fade-in 1), star count 0, fadeouts 0, fade-ins 0
+4.167 Running ProcessReset
+4.200 Running ProcessRunStart
+4.367 Running ProcessFadeoutResetOnly
+9.367 Running ProcessRunStart
 49.367 In game
+49.533 Running ProcessStarCount
 65.700 Fadeout 1: split 1 of 14, 0 stars, fade-in (needs 0 stars, fadeout 1, fade-in 1), star count 0, fadeouts 1, fade-ins 0
+65.867 Running ProcessFadeout
+67.000 Running ProcessPostFadeout
+73.067 Running ProcessStarCount
 78.067 Fade-in 1: split 1 of 14, 0 stars, fade-in (needs 0 stars, fadeout 1, fade-in 1), star count 0, fadeouts 1, fade-ins 1
+78.233 Running ProcessFadein
 79.133 Split: split 1 of 14, 0 stars, fade-in (needs 0 stars, fadeout 1, fade-in 1), star count 0, fadeouts 1, fade-ins 1
 79.167 Timer on split 2: 1 stars, fade-in
+79.167 Running ProcessStarCount
+79.333 Running ProcessFadein
+79.367 Running ProcessStarCount
+79.533 Running ProcessFadein
+79.567 Running ProcessStarCount
+79.733 Running ProcessFadein
+79.767 Running ProcessStarCount
+79.933 Running ProcessFadein
+80.767 Running ProcessStarCount
 94.267 Star count 0 -> 1, prediction 1 at 0.99
 97.433 Fadeout 1: split 2 of 14, 1 stars, fade-in (needs 1 stars, fadeout 1, fade-in 1), star count 1, fadeouts 1, fade-ins 0
+97.600 Running ProcessFadeout
+99.033 Running ProcessPostFadeout
+100.500 Running ProcessFlashCheck
 101.467 Star count flashed 4 times, running total -2
+101.500 Running ProcessStarCount
 126.833 Fade-in 1: split 2 of 14, 1 stars, fade-in (needs 1 stars, fadeout 1, fade-in 1), star count 1, fadeouts 1, fade-ins 1
+127.000 Running ProcessFadein
 127.967 Split: split 2 of 14, 1 stars, fade-in (needs 1 stars, fadeout 1, fade-in 1), star count 1, fadeouts 1, fade-ins 1
 128.000 Timer on split 3: 2 stars, fade-in
+128.000 Running ProcessStarCount
+128.167 Running ProcessFadein
+128.200 Running ProcessStarCount
+128.367 Running ProcessFadein
+128.400 Running ProcessStarCount
+128.567 Running ProcessFadein
+128.600 Running ProcessStarCount
+128.767 Running ProcessFadein
+129.533 Running ProcessStarCount
 139.867 Star count 1 -> 2, prediction 2 at 0.98
 142.867 Fadeout 1: split 3 of 14, 2 stars, fade-in (needs 2 stars, fadeout 1, fade-in 1), star count 2, fadeouts 1, fade-ins 0
+143.033 Running ProcessFadeout
+144.467 Running ProcessPostFadeout
+150.533 Running ProcessStarCount
 152.033 Fade-in 1: split 3 of 14, 2 stars, fade-in (needs 2 stars, fadeout 1, fade-in 1), star count 2, fadeouts 1, fade-ins 1
+152.200 Running ProcessFadein
 153.167 Split: split 3 of 14, 2 stars, fade-in (needs 2 stars, fadeout 1, fade-in 1), star count 2, fadeouts 1, fade-ins 1
 153.200 Timer on split 4: 3 stars, fade-in
+153.200 Running ProcessStarCount
+153.367 Running ProcessFadein
+153.400 Running ProcessStarCount
+153.567 Running ProcessFadein
+153.600 Running ProcessStarCount
+153.767 Running ProcessFadein
+153.800 Running ProcessStarCount
+153.967 Running ProcessFadein
+154.733 Running ProcessStarCount
 166.233 Star count 2 -> 3, prediction 3 at 0.99
 169.233 Fadeout 1: split 4 of 14, 3 stars, fade-in (needs 3 stars, fadeout 1, fade-in 1), star count 3, fadeouts 1, fade-ins 0
+169.400 Running ProcessFadeout
+170.700 Running ProcessPostFadeout
+176.767 Running ProcessStarCount
 180.267 Fade-in 1: split 4 of 14, 3 stars, fade-in (needs 3 stars, fadeout 1, fade-in 1), star count 3, fadeouts 1, fade-ins 1
+180.433 Running ProcessFadein
 181.333 Split: split 4 of 14, 3 stars, fade-in (needs 3 stars, fadeout 1, fade-in 1), star count 3, fadeouts 1, fade-ins 1
 181.367 Timer on split 5: 4 stars, fade-in
+181.367 Running ProcessStarCount
+181.533 Running ProcessFadein
+181.567 Running ProcessStarCount
+181.733 Running ProcessFadein
+181.767 Running ProcessStarCount
+181.933 Running ProcessFadein
+181.967 Running ProcessStarCount
+182.133 Running ProcessFadein
+182.933 Running ProcessStarCount
 192.767 Star count 3 -> 4, prediction 4 at 0.97
 195.767 Fadeout 1: split 5 of 14, 4 stars, fade-in (needs 4 stars, fadeout 1, fade-in 1), star count 4, fadeouts 1, fade-ins 0
+195.933 Running ProcessFadeout
+197.333 Running ProcessPostFadeout
+203.400 Running ProcessStarCount
 204.900 Fade-in 1: split 5 of 14, 4 stars, fade-in (needs 4 stars, fadeout 1, fade-in 1), star count 4, fadeouts 1, fade-ins 1
+205.067 Running ProcessFadein
 206.033 Split: split 5 of 14, 4 stars, fade-in (needs 4 stars, fadeout 1, fade-in 1), star count 4, fadeouts 1, fade-ins 1
 206.067 Timer on split 6: 5 stars, fade-in
+206.067 Running ProcessStarCount
+206.233 Running ProcessFadein
+206.267 Running ProcessStarCount
+206.433 Running ProcessFadein
+206.467 Running ProcessStarCount
+206.633 Running ProcessFadein
+206.667 Running ProcessStarCount
+206.833 Running ProcessFadein
+207.600 Running ProcessStarCount
 243.600 Star count 4 -> 5, prediction 5 at 0.99
 246.600 Fadeout 1: split 6 of 14, 5 stars, fade-in (needs 5 stars, fadeout 1, fade-in 1), star count 5, fadeouts 1, fade-ins 0
+246.767 Running ProcessFadeout
+248.167 Running ProcessPostFadeout
+254.233 Running ProcessStarCount
 255.900 Fade-in 1: split 6 of 14, 5 stars, fade-in (needs 5 stars, fadeout 1, fade-in 1), star count 5, fadeouts 1, fade-ins 1
+256.067 Running ProcessFadein
 257.000 Split: split 6 of 14, 5 stars, fade-in (needs 5 stars, fadeout 1, fade-in 1), star count 5, fadeouts 1, fade-ins 1
 257.033 Timer on split 7: 6 stars, fade-in
+257.033 Running ProcessStarCount
+257.200 Running ProcessFadein
+257.233 Running ProcessStarCount
+257.400 Running ProcessFadein
+257.433 Running ProcessStarCount
+257.600 Running ProcessFadein
+257.633 Running ProcessStarCount
+257.800 Running ProcessFadein
+258.567 Running ProcessStarCount
 272.733 Star count 5 -> 6, prediction 6 at 1.00
 275.900 Fadeout 1: split 7 of 14, 6 stars, fade-in (needs 6 stars, fadeout 1, fade-in 1), star count 6, fadeouts 1, fade-ins 0
+276.067 Running ProcessFadeout
+277.467 Running ProcessPostFadeout
+283.533 Running ProcessStarCount
 303.700 Fade-in 1: split 7 of 14, 6 stars, fade-in (needs 6 stars, fadeout 1, fade-in 1), star count 6, fadeouts 1, fade-ins 1
+303.867 Running ProcessFadein
 304.700 Split: split 7 of 14, 6 stars, fade-in (needs 6 stars, fadeout 1, fade-in 1), star count 6, fadeouts 1, fade-ins 1
 304.733 Timer on split 8: 7 stars, fade-in
+304.733 Running ProcessStarCount
+304.900 Running ProcessFadein
+304.933 Running ProcessStarCount
+305.100 Running ProcessFadein
+305.133 Running ProcessStarCount
+305.300 Running ProcessFadein
+305.333 Running ProcessStarCount
+305.500 Running ProcessFadein
+306.300 Running ProcessStarCount
 316.800 Star count 6 -> 7, prediction 7 at 0.99
 320.133 Fadeout 1: split 8 of 14, 7 stars, fade-in (needs 7 stars, fadeout 1, fade-in 1), star count 7, fadeouts 1, fade-ins 0
+320.300 Running ProcessFadeout
+321.733 Running ProcessPostFadeout
+327.800 Running ProcessStarCount
 329.467 Fade-in 1: split 8 of 14, 7 stars, fade-in (needs 7 stars, fadeout 1, fade-in 1), star count 7, fadeouts 1, fade-ins 1
+329.633 Running ProcessFadein
 330.467 Split: split 8 of 14, 7 stars, fade-in (needs 7 stars, fadeout 1, fade-in 1), star count 7, fadeouts 1, fade-ins 1
 330.500 Timer on split 9: 9 stars, fade-in
+330.500 Running ProcessStarCount
+330.667 Running ProcessFadein
+330.700 Running ProcessStarCount
+330.867 Running ProcessFadein
+330.900 Running ProcessStarCount
+331.067 Running ProcessFadein
+331.100 Running ProcessStarCount
+331.267 Running ProcessFadein
+332.067 Running ProcessStarCount
 350.567 Star count 7 -> 8, prediction 8 at 0.97
 354.400 Fadeout 1: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 8, fadeouts 1, fade-ins 0
+354.567 Running ProcessFadeout
+355.900 Running ProcessPostFadeout
+361.967 Running ProcessStarCount
 380.633 Fadeout 2: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 8, fadeouts 2, fade-ins 0
+380.800 Running ProcessFadeout
+382.133 Running ProcessPostFadeout
+388.200 Running ProcessStarCount
 427.533 Star count 8 -> 9, prediction 9 at 0.99
 432.867 Fadeout 1: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 9, fadeouts 1, fade-ins 0
+433.033 Running ProcessFadeout
+434.200 Running ProcessPostFadeout
+440.267 Running ProcessStarCount
 463.433 Fadeout 2: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 9, fadeouts 2, fade-ins 0
+463.600 Running ProcessFadeout
+465.033 Running ProcessPostFadeout
+469.833 Running ProcessFlashCheck
+471.867 Running ProcessStarCount
 472.533 Fadeout 3: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 9, fadeouts 3, fade-ins 0
+472.700 Running ProcessFadeout
+474.033 Running ProcessPostFadeout
+475.233 Running ProcessFlashCheck
 475.333 Fadeout 4: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 9, fadeouts 4, fade-ins 0
+475.367 Running ProcessFadeout
+477.000 Running ProcessPostFadeout
+483.067 Running ProcessStarCount
 488.067 Fadeout 5: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 9, fadeouts 5, fade-ins 0
+488.233 Running ProcessFadeout
+488.967 Running ProcessPostFadeout
+495.033 Running ProcessStarCount
 504.200 Fade-in 1: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 9, fadeouts 5, fade-ins 1
+504.367 Running ProcessFadein
 505.300 Split: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 9, fadeouts 5, fade-ins 1
 505.333 Timer on split 10: 10 stars, fade-in
+505.333 Running ProcessStarCount
+505.500 Running ProcessFadein
+505.533 Running ProcessStarCount
+505.700 Running ProcessFadein
+505.733 Running ProcessStarCount
+505.900 Running ProcessFadein
+505.933 Running ProcessStarCount
+506.100 Running ProcessFadein
+506.833 Running ProcessStarCount
+507.000 Running ProcessFadein
+507.033 Running ProcessStarCount
 517.367 Fadeout 1: split 10 of 14, 10 stars, fade-in (needs 10 stars, fadeout 1, fade-in 1), star count 9, fadeouts 1, fade-ins 0
+517.533 Running ProcessFadeout
+518.867 Running ProcessPostFadeout
 520.533 Star count 9 -> 10, prediction 10 at 0.98
 523.667 Fadeout 1: split 10 of 14, 10 stars, fade-in (needs 10 stars, fadeout 1, fade-in 1), star count 10, fadeouts 1, fade-ins 0
+523.667 Running ProcessFlashCheck
+523.700 Running ProcessFadeout
+525.200 Running ProcessPostFadeout
+526.667 Running ProcessFlashCheck
 527.767 Star count flashed 4 times, running total -2
+527.800 Running ProcessStarCount
 532.967 Fade-in 1: split 10 of 14, 10 stars, fade-in (needs 10 stars, fadeout 1, fade-in 1), star count 10, fadeouts 1, fade-ins 1
+533.133 Running ProcessFadein
 533.967 Split: split 10 of 14, 10 stars, fade-in (needs 10 stars, fadeout 1, fade-in 1), star count 10, fadeouts 1, fade-ins 1
 534.000 Timer on split 11: 11 stars, fade-in
+534.000 Running ProcessStarCount
+534.167 Running ProcessFadein
+534.200 Running ProcessStarCount
+534.367 Running ProcessFadein
+534.400 Running ProcessStarCount
+534.567 Running ProcessFadein
+534.600 Running ProcessStarCount
+534.767 Running ProcessFadein
+535.533 Running ProcessStarCount
 542.533 Star count 10 -> 11, prediction 11 at 0.98
 545.533 Fadeout 1: split 11 of 14, 11 stars, fade-in (needs 11 stars, fadeout 1, fade-in 1), star count 11, fadeouts 1, fade-ins 0
+545.700 Running ProcessFadeout
+546.967 Running ProcessPostFadeout
+548.100 Running ProcessFlashCheck
 549.200 Star count flashed 4 times, running total -2
+549.233 Running ProcessStarCount
 557.067 Fade-in 1: split 11 of 14, 11 stars, fade-in (needs 11 stars, fadeout 1, fade-in 1), star count 11, fadeouts 1, fade-ins 1
+557.233 Running ProcessFadein
 558.067 Split: split 11 of 14, 11 stars, fade-in (needs 11 stars, fadeout 1, fade-in 1), star count 11, fadeouts 1, fade-ins 1
 558.100 Timer on split 12: 12 stars, fade-in
+558.100 Running ProcessStarCount
+558.267 Running ProcessFadein
+558.300 Running ProcessStarCount
+558.467 Running ProcessFadein
+558.500 Running ProcessStarCount
+558.667 Running ProcessFadein
+558.700 Running ProcessStarCount
+558.867 Running ProcessFadein
+559.567 Running ProcessStarCount
 575.067 Star count 11 -> 12, prediction 12 at 0.79
 577.233 Fadeout 1: split 12 of 14, 12 stars, fade-in (needs 12 stars, fadeout 1, fade-in 1), star count 12, fadeouts 1, fade-ins 0
+577.400 Running ProcessFadeout
+578.733 Running ProcessPostFadeout
+583.133 Running ProcessFlashCheck
+585.167 Running ProcessStarCount
 586.333 Fade-in 1: split 12 of 14, 12 stars, fade-in (needs 12 stars, fadeout 1, fade-in 1), star count 12, fadeouts 1, fade-ins 1
+586.500 Running ProcessFadein
 587.300 Split: split 12 of 14, 12 stars, fade-in (needs 12 stars, fadeout 1, fade-in 1), star count 12, fadeouts 1, fade-ins 1
 587.333 Timer on split 13: 14 stars, fade-in
+587.333 Running ProcessStarCount
+587.500 Running ProcessFadein
+587.533 Running ProcessStarCount
+587.700 Running ProcessFadein
+587.733 Running ProcessStarCount
+587.900 Running ProcessFadein
+587.933 Running ProcessStarCount
+588.100 Running ProcessFadein
+588.867 Running ProcessStarCount
 601.533 Star count 12 -> 13, prediction 13 at 0.72
 604.533 Fadeout 1: split 13 of 14, 14 stars, fade-in (needs 14 stars, fadeout 0, fade-in 1), star count 13, fadeouts 1, fade-ins 0
+604.700 Running ProcessFadeout
+606.033 Running ProcessPostFadeout
+610.433 Running ProcessFlashCheck
+612.467 Running ProcessStarCount
 624.133 Star count 13 -> 14, prediction 14 at 0.98
 631.467 Fade-in 1: split 13 of 14, 14 stars, fade-in (needs 14 stars, fadeout 0, fade-in 1), star count 14, fadeouts 0, fade-ins 1
+631.633 Running ProcessFadein
 632.433 Split: split 13 of 14, 14 stars, fade-in (needs 14 stars, fadeout 0, fade-in 1), star count 14, fadeouts 0, fade-ins 1
 632.467 Timer on split 14: 15 stars, fade-in
+632.467 Running ProcessStarCount
+632.633 Running ProcessFadein
+632.667 Running ProcessStarCount
+632.833 Running ProcessFadein
+632.867 Running ProcessStarCount
+633.033 Running ProcessFadein
+633.067 Running ProcessStarCount
+633.233 Running ProcessFadein
+634.000 Running ProcessStarCount
 645.333 Star count 14 -> 15, prediction 15 at 0.98
 648.500 Fadeout 1: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 15, fadeouts 1, fade-ins 0
+648.667 Running ProcessFadeout
+649.933 Running ProcessPostFadeout
+654.800 Running ProcessFlashCheck
+656.833 Running ProcessStarCount
 687.000 Fade-in 1: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 15, fadeouts 1, fade-ins 1
+687.167 Running ProcessFadein
 688.100 Split: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 15, fadeouts 1, fade-ins 1
+688.133 Running ProcessStarCount
+688.300 Running ProcessFadein
 688.300 Split not sent, within the split cooldown: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 15, fadeouts 1, fade-ins 1
+688.333 Running ProcessStarCount
+688.500 Running ProcessFadein
 688.500 Split not sent, within the split cooldown: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 15, fadeouts 1, fade-ins 1
+688.533 Running ProcessStarCount
+688.700 Running ProcessFadein
 688.700 Split: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 15, fadeouts 1, fade-ins 1
+688.733 Running ProcessStarCount
+688.900 Running ProcessFadein
+689.667 Running ProcessStarCount
 722.167 Star count 15 -> 16, prediction 16 at 0.99
 725.667 Fadeout 1: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 1, fade-ins 0
+725.833 Running ProcessFadeout
+727.100 Running ProcessPostFadeout
+731.167 Running ProcessFlashCheck
+733.200 Running ProcessStarCount
 733.533 Fadeout 2: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 2, fade-ins 0
+733.700 Running ProcessFadeout
+735.067 Running ProcessPostFadeout
+741.133 Running ProcessStarCount
 768.967 Fadeout 3: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 3, fade-ins 0
+769.133 Running ProcessFadeout
+770.367 Running ProcessPostFadeout
+776.433 Running ProcessStarCount
 806.600 Fadeout 4: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 4, fade-ins 0
+806.767 Running ProcessFadeout
+808.067 Running ProcessPostFadeout
+812.933 Running ProcessFlashCheck
+814.967 Running ProcessStarCount
 815.967 Fadeout 5: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 5, fade-ins 0
+816.133 Running ProcessFadeout
+817.467 Running ProcessPostFadeout
 818.933 Fadeout 6: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 6, fade-ins 0
+819.000 Running ProcessFadeout
+820.700 Running ProcessPostFadeout
+826.767 Running ProcessStarCount
 827.933 Fadeout 7: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 7, fade-ins 0
+828.100 Running ProcessFadeout
+828.800 Running ProcessPostFadeout
+834.867 Running ProcessStarCount
 850.700 Fadeout 8: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 8, fade-ins 0
+850.867 Running ProcessFadeout
+852.333 Running ProcessPostFadeout
+858.400 Running ProcessStarCount
 890.900 Fadeout 9: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 9, fade-ins 0
+891.067 Running ProcessFadeout
+892.367 Running ProcessPostFadeout
+898.433 Running ProcessStarCount
 956.767 Fadeout 10: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 10, fade-ins 0
+956.933 Running ProcessFadeout
+957.400 Running ProcessPostFadeout
+958.533 Running ProcessFlashCheck
+960.567 Running ProcessStarCount

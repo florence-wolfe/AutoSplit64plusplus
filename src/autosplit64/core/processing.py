@@ -8,6 +8,8 @@ from pathlib import Path
 LOGIC_DIR = Path(__file__).resolve().parent.parent / "logic"
 
 log = logging.getLogger(".log")
+# What split detection does and why, in the session log
+detection_log = logging.getLogger("detection")
 
 class ProcessorGenerator(object):
     INITIAL_PROCESS = "initial_process"
@@ -184,7 +186,7 @@ class Processor(Process):
         # If transitioning from a different process, call on_transition
         if self._current_process != self._prev_process:
             self._current_process.on_transition()
-            print("Transition:", type(self._current_process).__name__)
+            detection_log.info("Running %s", type(self._current_process).__name__)
 
         # Execute current process
         result = self._current_process.execute()
