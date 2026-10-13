@@ -22,7 +22,6 @@ INIT_PATH = "resources/gui/buttons/wall_init_btn.png"
 STAR_PATH = "resources/gui/buttons/star.png"
 STAR_HOVER_PATH = "resources/gui/buttons/refresh_pipes_icon.png"
 BACKGROUND_PATH = "resources/gui/gui_bg.png"
-ABOUT_PATH = "resources/gui/about_bg.png"
 ROUTES_DIR = "routes"
 PLACEHOLDER_PATH = "resources/gui/obs_error.png"
 

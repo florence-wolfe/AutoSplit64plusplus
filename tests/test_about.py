@@ -20,12 +20,15 @@ class AboutTest(unittest.TestCase):
         QTest.mouseClick(self.about, QtCore.Qt.MouseButton.LeftButton)
         self.assertTrue(self.about.isVisible())
 
+    def qml(self, name):
+        return self.about.view.rootObject().findChild(QtCore.QObject, name)
+
     def test_authors(self):
-        self.assertEqual(self.about.author_lb.text().splitlines()[0], "Flo Wolfe")
+        self.assertEqual(self.qml("authors").property("text").splitlines()[0], "Flo Wolfe")
 
     def test_github(self):
         with mock.patch.object(QtGui.QDesktopServices, "openUrl") as open_url:
-            self.about.github_btn.click()
+            QtCore.QMetaObject.invokeMethod(self.qml("github"), "clicked")
         self.assertEqual(open_url.call_args.args[0].toString(), "https://github.com/florence-wolfe/AutoSplit64plusplus")
 
 
