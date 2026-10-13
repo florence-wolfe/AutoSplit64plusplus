@@ -110,7 +110,7 @@ class GameCapture(object):
                 raise Exception("AutoSplit64++ needs the Screen Recording permission to capture the game.\n\n"
                                 "Open Configure Capture to allow it. If you just allowed it, restart AutoSplit64++.")
             if not bool(self._hwnd):
-                raise Exception(f"Could not find {self._process_name}\n\nMake sure it's running and visible, "
+                raise Exception("Could not find configured capture source.\n\nMake sure it's running and visible, "
                                 "or set up what to capture in Configure Capture.")
 
     def capture(self) -> None:
