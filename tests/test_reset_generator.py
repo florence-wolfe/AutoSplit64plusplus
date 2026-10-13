@@ -6,10 +6,11 @@ from unittest import mock
 
 import cv2
 import numpy as np
-from PyQt6 import QtGui, QtWidgets
+from PyQt6 import QtCore, QtWidgets
 
 from autosplit64.core import config
 from autosplit64.gui.dialogs.reset_generator_dialog import ResetGenerator, ResetGeneratorDialog
+from tests.qt import qml, wait_until
 
 _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
@@ -33,16 +34,34 @@ class ResetGeneratorDialogTest(unittest.TestCase):
     def shade(self, name):
         return int(cv2.imread(str(self.dir / name)).mean() / 40 + 0.5)
 
+    def shown(self):
+        """ The files of the images shown above the defaults """
+        return [Path(QtCore.QUrl(url).toLocalFile()).name for url in self.dialog.templates.values["shown"]]
+
+    def qml(self, name):
+        return qml(self.dialog.view, name)
+
+    def choose(self, column, number):
+        """ Choose a generated frame like the spin box does """
+        spin_box = self.qml(f"frame{column}")
+        spin_box.setProperty("value", number)
+        QtCore.QMetaObject.invokeMethod(spin_box, "valueModified")
+
     def test_generated_frames_are_shown(self):
         self.dialog.on_generate()
-        self.assertFalse(self.dialog.gen_1_px.pixmap().isNull())
-        self.assertEqual((self.dialog.gen_1_sb.value(), self.dialog.gen_2_sb.value()), (2, 3))
-        self.assertTrue(self.dialog.apply_btn.isEnabled())
+        self.assertEqual(self.shown(), ["generated_temp_2.jpg", "generated_temp_3.jpg"])
+        self.assertEqual([self.qml(f"frame{column}").property("value") for column in (0, 1)], [2, 3])
+        self.assertTrue(self.qml("apply").property("enabled"))
+
+    def test_choosing_a_frame_shows_it(self):
+        self.dialog.on_generate()
+        self.choose(1, 5)
+        self.assertEqual(self.shown(), ["generated_temp_2.jpg", "generated_temp_5.jpg"])
 
     def test_apply_keeps_the_chosen_frames(self):
         self.dialog.on_generate()
-        self.dialog.gen_1_sb.setValue(1)
-        self.dialog.gen_2_sb.setValue(4)
+        self.choose(0, 1)
+        self.choose(1, 4)
         self.dialog.apply_clicked()
 
         self.assertEqual(sorted(p.name for p in self.dir.iterdir()), ["generated_reset_one.jpg", "generated_reset_two.jpg"])
@@ -71,16 +90,26 @@ class ResetGeneratorDialogTest(unittest.TestCase):
             self.dialog.show()
         self.addCleanup(self.dialog.close)
 
-        def shade(label):
-            image = label.pixmap().toImage()
-            return round(QtGui.QColor(image.pixel(image.width() // 2, image.height() // 2)).red() / 40)
-        self.assertEqual((shade(self.dialog.gen_1_px), shade(self.dialog.gen_2_px)), (1, 4))
-        self.assertFalse(self.dialog.apply_btn.isEnabled())
+        self.assertEqual(self.shown(), ["generated_reset_one.jpg", "generated_reset_two.jpg"])
+        self.assertFalse(self.qml("apply").property("enabled"))
 
     def test_cancel_removes_the_generated_frames(self):
         (self.dir / "generated_reset_one.jpg").write_bytes(b"earlier")
         self.dialog.cancel_clicked()
         self.assertEqual([p.name for p in self.dir.iterdir()], ["generated_reset_one.jpg"])
+
+    def test_an_error_is_shown_and_closing_it_closes_the_window(self):
+        with mock.patch("autosplit64.gui.dialogs.reset_generator_dialog.ResetGenerator"):
+            self.dialog.show()
+        self.addCleanup(self.dialog.close)
+        self.dialog.on_error("No game capture")
+        error = self.qml("error")
+        self.assertEqual((error.property("visible"), error.property("text")), (True, "No game capture"))
+
+        QtCore.QMetaObject.invokeMethod(error, "close")
+        # Once it has faded out
+        wait_until(lambda: not self.dialog.isVisible())
+        self.assertFalse(self.dialog.isVisible())
 
     def test_closing_removes_the_generated_frames(self):
         self.dialog.close()
@@ -91,16 +120,16 @@ class ResetGeneratorDialogTest(unittest.TestCase):
         # How long is up to the runner, who resets the console
         with mock.patch("time.monotonic", return_value=100):
             self.dialog.generate_clicked()
-        self.assertEqual(self.dialog.generate_btn.text(), "Reset your console… 0 s")
+        self.assertEqual(self.qml("generate").property("text"), "Reset your console… 0 s")
         self.assertTrue(self.dialog._wait_timer.isActive())
         with mock.patch("time.monotonic", return_value=112.5):
             self.dialog._wait_timer.timeout.emit()
-        self.assertEqual(self.dialog.generate_btn.text(), "Reset your console… 12 s")
+        self.assertEqual(self.qml("generate").property("text"), "Reset your console… 12 s")
 
     def test_capturing_once_the_reset_is_seen(self):
         self.dialog.generate_clicked()
         self.dialog.on_reset_seen()
-        self.assertEqual(self.dialog.generate_btn.text(), "Capturing…")
+        self.assertEqual(self.qml("generate").property("text"), "Capturing…")
         self.assertFalse(self.dialog._wait_timer.isActive())
 
     def test_stops_counting_when_generated_or_cancelled(self):
@@ -109,7 +138,7 @@ class ResetGeneratorDialogTest(unittest.TestCase):
             finish()
             self.assertFalse(self.dialog._wait_timer.isActive())
             if finish == self.dialog.on_generate:
-                self.assertEqual(self.dialog.generate_btn.text(), "Generate")
+                self.assertEqual(self.qml("generate").property("text"), "Generate")
 
 
 class ResetGeneratorTest(unittest.TestCase):

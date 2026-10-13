@@ -8,6 +8,7 @@ import cv2
 from ..constants import (
     ICON_PATH
 )
+from ..qml_view import qml_view
 from autosplit64.core import resource_utils
 
 from autosplit64.core.game_capture import GameCapture
@@ -20,103 +21,82 @@ from autosplit64.core.constants import (
 )
 
 
-class ResetGeneratorHelpDialog(QtWidgets.QDialog):
-    LINES = ["AutoSplit64's reset feature works based on matching the second and third frame of the Super Mario 64 logo that appears when launching the game.",
-             "If the colours or capture size of your particular game feed differ from the default standard it may be required to generate custom templates from your game capture.",
-             "While in-game, press generate, then RESET your console. Ensure the generated images look similar to the examples. "]
+def image_url(path, version):
+    """ The QML image source for path, a different one for each version of the file """
+    return QtCore.QUrl.fromLocalFile(os.path.abspath(path)).toString() + f"?{version}"
 
-    def __init__(self, parent=None):
-        super().__init__(parent, QtCore.Qt.WindowType.WindowSystemMenuHint | QtCore.Qt.WindowType.WindowCloseButtonHint)
-        self.setWindowTitle("Reset Template Generator Help")
-        self.setWindowIcon(QtGui.QIcon(resource_utils.base_path(ICON_PATH)))
-        self.resize(400, 260)
 
-        text_edit = QtWidgets.QTextEdit()
-        text_edit.setEnabled(False)
-        text_edit.append("\n\n\n".join(self.LINES))
-        ok_btn = QtWidgets.QPushButton("OK")
-        ok_btn.clicked.connect(self.hide)
+class Templates(QtCore.QObject):
+    """
+    What ResetGeneratorDialog.qml shows, in values: the generate button's status, whether it's busy, whether
+    frames were generated, the frame chosen for each template, and the images shown. Its other signals are
+    the QML's clicks, and failed() shows an error.
+    """
+    changed = QtCore.pyqtSignal()
+    generate = QtCore.pyqtSignal()
+    apply = QtCore.pyqtSignal()
+    cancel = QtCore.pyqtSignal()
+    failed = QtCore.pyqtSignal(str)
+    # The error was closed
+    dismiss = QtCore.pyqtSignal()
 
-        button_layout = QtWidgets.QHBoxLayout()
-        button_layout.addStretch()
-        button_layout.addWidget(ok_btn)
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(text_edit)
-        layout.addLayout(button_layout)
+    def __init__(self):
+        super().__init__()
+        self._values = {"status": "Generate", "busy": False, "generated": False, "chosen": [2, 3], "shown": ["", ""]}
+        self._version = 0
+
+    @QtCore.pyqtProperty("QVariantMap", notify=changed)
+    def values(self):
+        return self._values
+
+    def update(self, **values):
+        self._values.update(values)
+        self.changed.emit()
+
+    def show_images(self, paths):
+        # A new version each time: the generated frames are written to the same files
+        self._version += 1
+        self.update(shown=[image_url(path, self._version) for path in paths])
+
+    @QtCore.pyqtSlot(int, int)
+    def choose(self, column, number):
+        chosen = list(self._values["chosen"])
+        chosen[column] = number
+        self.update(chosen=chosen)
+        paths = [ResetGeneratorDialog._temp_path(number) for number in chosen]
+        self.show_images(paths)
 
 
 class ResetGeneratorDialog(QtWidgets.QDialog):
     applied = QtCore.pyqtSignal()
 
     TEMPLATE_DIR = "templates/"
-    FRAME_WIDTH = 251
-    FRAME_HEIGHT = 137
 
     def __init__(self, parent=None):
         super().__init__(parent, QtCore.Qt.WindowType.WindowSystemMenuHint | QtCore.Qt.WindowType.WindowCloseButtonHint)
         self.setWindowTitle("Reset Template Generator")
         self.setWindowIcon(QtGui.QIcon(resource_utils.base_path(ICON_PATH)))
-        self.resize(400, 200)
+        self.resize(620, 480)
 
         self._reset_generator = None
-        self.help_dialog = ResetGeneratorHelpDialog(self)
         # Counts the wait for the runner to reset the console, which takes as long as they take
         self._wait_timer = QtCore.QTimer(self)
         self._wait_timer.setInterval(1000)
         self._wait_timer.timeout.connect(self._show_wait)
         self._wait_start = 0
 
-        self.apply_btn = QtWidgets.QPushButton("Apply")
-        self.generate_btn = QtWidgets.QPushButton("Generate")
-        cancel_btn = QtWidgets.QPushButton("Cancel")
-        help_btn = QtWidgets.QPushButton("Help")
-
-        layout = QtWidgets.QGridLayout(self)
-        # Frames two and three of the logo: the generated frame chosen for each, above the default
-        self.gen_1_sb, self.gen_1_px = self._add_frame_column(layout, 0, "Two", "one")
-        self.gen_2_sb, self.gen_2_px = self._add_frame_column(layout, 1, "Three", "two")
-
-        button_layout = QtWidgets.QHBoxLayout()
-        button_layout.addStretch()
-        for button in (help_btn, cancel_btn, self.generate_btn, self.apply_btn):
-            button_layout.addWidget(button)
-        layout.addLayout(button_layout, 5, 0, 1, 2)
-
-        self.generate_btn.clicked.connect(self.generate_clicked)
-        self.apply_btn.clicked.connect(self.apply_clicked)
-        cancel_btn.clicked.connect(self.cancel_clicked)
-        help_btn.clicked.connect(self.help_dialog.show)
-
-    def _add_frame_column(self, layout, column, frame, default):
-        spin_box = QtWidgets.QSpinBox()
-        spin_box.setMaximumWidth(40)
-        spin_box.setRange(1, ResetGenerator.CAPTURE_COUNT)
-        spin_box.setValue(column + 2)
-        generated = QtWidgets.QLabel()
-        generated.setFixedSize(self.FRAME_WIDTH, self.FRAME_HEIGHT)
-        spin_box.valueChanged.connect(lambda number: self._show_frame(generated, number))
-        default_px = QtWidgets.QLabel()
-        default_px.setFixedSize(self.FRAME_WIDTH, self.FRAME_HEIGHT)
-        self._show_image(default_px, config.get_default("advanced", f"reset_frame_{default}"))
-
-        top_layout = QtWidgets.QHBoxLayout()
-        top_layout.addWidget(spin_box)
-        top_layout.addWidget(QtWidgets.QLabel(f"Generated Frame {frame}:"))
-        layout.addLayout(top_layout, 1, column)
-        layout.addWidget(generated, 2, column)
-        layout.addWidget(QtWidgets.QLabel(f"Desired Frame {frame}:"), 3, column)
-        layout.addWidget(default_px, 4, column)
-        return spin_box, generated
+        self.templates = Templates()
+        self.templates.generate.connect(self.generate_clicked)
+        self.templates.apply.connect(self.apply_clicked)
+        self.templates.cancel.connect(self.cancel_clicked)
+        self.templates.dismiss.connect(self.hide)
+        defaults = [image_url(config.get_default("advanced", f"reset_frame_{name}"), 0) for name in ("one", "two")]
+        self.view = qml_view(self, "ResetGeneratorDialog", templates=self.templates, defaults=defaults,
+                             captureCount=ResetGenerator.CAPTURE_COUNT)
 
     @classmethod
     def _temp_path(cls, number):
         return f"{cls.TEMPLATE_DIR}generated_temp_{number}.jpg"
-
-    def _show_frame(self, label, number):
-        self._show_image(label, self._temp_path(number))
-
-    def _show_image(self, label, path):
-        label.setPixmap(QtGui.QPixmap(path).scaledToWidth(self.FRAME_WIDTH).scaledToHeight(self.FRAME_HEIGHT))
 
     def _remove_temp_files(self):
         for number in range(1, ResetGenerator.CAPTURE_COUNT + 1):
@@ -130,13 +110,8 @@ class ResetGeneratorDialog(QtWidgets.QDialog):
         self._reset_generator.reset_seen.connect(self.on_reset_seen)
 
         # The templates in use until new ones are generated
-        self._show_image(self.gen_1_px, config.get("advanced", "reset_frame_one"))
-        self._show_image(self.gen_2_px, config.get("advanced", "reset_frame_two"))
-        self.generate_btn.setText("Generate")
-        self.generate_btn.setEnabled(True)
-        self.apply_btn.setEnabled(False)
-        self.gen_1_sb.setEnabled(False)
-        self.gen_2_sb.setEnabled(False)
+        self.templates.show_images([config.get("advanced", "reset_frame_one"), config.get("advanced", "reset_frame_two")])
+        self.templates.update(status="Generate", busy=False, generated=False)
         super().show()
 
     def hide(self):
@@ -147,23 +122,23 @@ class ResetGeneratorDialog(QtWidgets.QDialog):
         self._wait_start = time.monotonic()
         self._show_wait()
         self._wait_timer.start()
-        self.generate_btn.setEnabled(False)
+        self.templates.update(busy=True)
         self._reset_generator.start()
 
     def _show_wait(self):
-        self.generate_btn.setText(f"Reset your console… {int(time.monotonic() - self._wait_start)} s")
+        self.templates.update(status=f"Reset your console… {int(time.monotonic() - self._wait_start)} s")
 
     def on_reset_seen(self):
         self._wait_timer.stop()
-        self.generate_btn.setText("Capturing…")
+        self.templates.update(status="Capturing…")
 
     def apply_clicked(self):
-        for name, spin_box in (("one", self.gen_1_sb), ("two", self.gen_2_sb)):
+        for name, number in zip(("one", "two"), self.templates.values["chosen"]):
             template = f"{self.TEMPLATE_DIR}generated_reset_{name}.jpg"
             with contextlib.suppress(FileNotFoundError):
                 os.remove(template)
             with contextlib.suppress(FileNotFoundError):
-                os.rename(self._temp_path(spin_box.value()), template)
+                os.rename(self._temp_path(number), template)
             config.set_key("advanced", f"reset_frame_{name}", template)
         self._remove_temp_files()
         config.save_config()
@@ -180,15 +155,8 @@ class ResetGeneratorDialog(QtWidgets.QDialog):
 
     def on_generate(self):
         self._wait_timer.stop()
-        self._show_frame(self.gen_1_px, 2)
-        self._show_frame(self.gen_2_px, 3)
-        self.gen_1_sb.setValue(2)
-        self.gen_2_sb.setValue(3)
-        self.generate_btn.setText("Generate")
-        self.generate_btn.setEnabled(True)
-        self.apply_btn.setEnabled(True)
-        self.gen_1_sb.setEnabled(True)
-        self.gen_2_sb.setEnabled(True)
+        self.templates.update(chosen=[2, 3], status="Generate", busy=False, generated=True)
+        self.templates.show_images([self._temp_path(2), self._temp_path(3)])
 
     def closeEvent(self, event):
         self._wait_timer.stop()
@@ -197,17 +165,10 @@ class ResetGeneratorDialog(QtWidgets.QDialog):
         super().closeEvent(event)
 
     def on_error(self, error):
+        # The window closes once the error is
         self._wait_timer.stop()
-        self.generate_btn.setText("Generate")
-        self.generate_btn.setEnabled(True)
-        self.apply_btn.setEnabled(False)
-
-        msg = QtWidgets.QMessageBox(self)
-        msg.setIcon(QtWidgets.QMessageBox.Icon.Warning)
-        msg.setWindowTitle("Error")
-        msg.setText(error)
-        msg.exec()
-        self.hide()
+        self.templates.update(status="Generate", busy=False, generated=False)
+        self.templates.failed.emit(error)
 
 
 class ResetGenerator(QtCore.QThread):

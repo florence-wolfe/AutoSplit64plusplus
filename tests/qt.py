@@ -1,3 +1,5 @@
+import time
+
 from PyQt6 import QtCore, QtWidgets, sip
 
 
@@ -21,5 +23,14 @@ def qml_items(view):
 
 
 def qml(view, name):
-    """ The QML item with that objectName in a qml_view() """
-    return next((item for item in qml_items(view) if item.objectName() == name), None)
+    """ The QML item with that objectName in a qml_view(), or popup: those aren't items """
+    objects = qml_items(view) + view.rootObject().findChildren(QtCore.QObject)
+    return next((item for item in objects if item.objectName() == name), None)
+
+
+def wait_until(condition, timeout=2):
+    """ Process events until condition() is true, e.g. once a QML transition ended, or timeout seconds passed """
+    deadline = time.monotonic() + timeout
+    while not condition() and time.monotonic() < deadline:
+        QtWidgets.QApplication.processEvents()
+        time.sleep(0.01)

@@ -1,0 +1,28 @@
+import QtQuick
+import QtQuick.Controls.Material
+
+// A message over the window it's in, with an OK button. The heading is in its content: Dialog's own title
+// is in a header whose height loops back through the dialog's once its text wraps.
+Dialog {
+    id: dialog
+    property string heading
+    property string text
+    anchors.centerIn: parent
+    width: parent.width - 96
+    modal: true
+    standardButtons: Dialog.Ok
+    // A popup doesn't take the Material colors of the item it's in, see ThemedPane
+    Material.theme: parent.Material.theme
+    Material.accent: parent.Material.accent
+    Material.background: parent.Material.background
+    Material.foreground: parent.Material.foreground
+    // Material's dims the window light for its light theme, and the window's theme doesn't reach it either
+    Overlay.modal: Rectangle { color: Qt.rgba(0, 0, 0, 0.5) }
+
+    Column {
+        width: dialog.width - dialog.leftPadding - dialog.rightPadding
+        spacing: 16
+        Label { text: dialog.heading; font.pixelSize: 20 }
+        Label { width: parent.width; text: dialog.text; wrapMode: Text.Wrap; lineHeight: 1.2 }
+    }
+}
