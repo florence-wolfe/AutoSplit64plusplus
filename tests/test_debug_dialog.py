@@ -15,6 +15,7 @@ from autosplit64.core import config, logs
 from autosplit64.core.model import PredictionInfo
 from autosplit64.gui.dialogs import debug_dialog
 from autosplit64.gui.dialogs.debug_dialog import DebugDialog, describe
+from tests.qt import qml
 
 _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
@@ -68,56 +69,55 @@ class DebugDialogTest(unittest.TestCase):
         self.dialog = DebugDialog()
         self.addCleanup(self.dialog.deleteLater)
 
-    def fields(self):
-        """ Each label's text and the read-only field under it, in Advanced """
-        grid = self.dialog.advanced.layout()
-        shown = {}
-        for i in range(grid.count()):
-            label = grid.itemAt(i).widget()
-            if isinstance(label, QtWidgets.QLabel) and label.text().endswith(":") and label.text() != "Update Rate:":
-                row, column, _, _ = grid.getItemPosition(i)
-                shown[label.text()] = grid.itemAtPosition(row + 1, column).widget()
-        return shown
+    def qml(self, name):
+        return qml(self.dialog.view, name)
 
-    def test_shows_the_output_under_each_label(self):
+    def text(self, name):
+        return self.qml(name).property("text")
+
+    def click(self, name):
+        QtCore.QMetaObject.invokeMethod(self.qml(name), "clicked")
+
+    def set_update_rate(self, rate):
+        """ Like typing it in the spin box """
+        spin_box = self.qml("updateRate")
+        spin_box.setProperty("value", rate)
+        QtCore.QMetaObject.invokeMethod(spin_box, "valueModified")
+
+    def test_shows_the_output_in_advanced(self):
         self.dialog.display_output(OUTPUT)
-        shown = {label: field.text() for label, field in self.fields().items()}
-        self.assertEqual(shown, {
-            "Fade Status:": "FADEOUT_PARTIAL", "Fade-out Count:": "2", "Fade-in Count:": "1",
-            "X-Cam Percent:": "0.1234", "X-Cam Count:": "3", "X-Cam Status:": "True",
-            "Prediction:": "16", "Probability:": "0.9876", "Execution Time:": "0.0123"})
-
-    def test_output_fields_are_read_only(self):
-        for label, field in self.fields().items():
-            with self.subTest(label):
-                self.assertFalse(field.isEnabled())
+        keys = ["fade_status", "fadeout_count", "fadein_count", "xcam_percent", "xcam_count", "xcam_status",
+                "prediction", "probability", "execution"]
+        self.assertEqual({key: self.text(key) for key in keys}, {
+            "fade_status": "FADEOUT_PARTIAL", "fadeout_count": "2", "fadein_count": "1",
+            "xcam_percent": "0.1234", "xcam_count": "3", "xcam_status": "True",
+            "prediction": "16", "probability": "0.9876", "execution": "0.0123"})
 
     def test_changing_the_update_rate_saves_it(self):
         self.dialog.output_reader = SimpleNamespace(update_rate=10)
-        self.dialog.update_le.setText("25")
-        self.dialog.update_le.editingFinished.emit()
+        self.set_update_rate(25)
         self.assertEqual(self.dialog.output_reader.update_rate, 25)
         self.assertEqual(config.get("general", "output_update_rate"), 25)
         config.save_config.assert_called_once()
 
     def test_what_split_detection_is_doing(self):
         self.dialog.display_output(dict(OUTPUT, status=STATUS))
-        self.assertEqual((self.dialog.status_lb.text(), self.dialog.split_lb.text(), self.dialog.needs_lb.text(),
-                          self.dialog.counted_lb.text()), describe(STATUS, "LiveSplit connected"))
+        self.assertEqual(tuple(self.text(name) for name in ("status", "split", "needs", "counted")),
+                         describe(STATUS, "LiveSplit connected"))
 
     def test_only_the_status_while_not_running(self):
         self.dialog.display_output(dict(OUTPUT, status=None))
-        self.assertTrue(self.dialog.status_lb.isVisibleTo(self.dialog))
-        for label in (self.dialog.split_lb, self.dialog.needs_lb, self.dialog.counted_lb):
-            self.assertFalse(label.isVisibleTo(self.dialog))
+        self.assertTrue(self.qml("status").property("visible"))
+        for name in ("split", "progress"):
+            self.assertFalse(self.qml(name).property("visible"))
         self.dialog.display_output(dict(OUTPUT, status=STATUS))
-        for label in (self.dialog.split_lb, self.dialog.needs_lb, self.dialog.counted_lb):
-            self.assertTrue(label.isVisibleTo(self.dialog))
+        for name in ("split", "progress"):
+            self.assertTrue(self.qml(name).property("visible"))
 
     def test_advanced_is_collapsed_at_first(self):
-        self.assertFalse(self.dialog.advanced.isVisibleTo(self.dialog))
-        self.dialog.advanced_btn.click()
-        self.assertTrue(self.dialog.advanced.isVisibleTo(self.dialog))
+        self.assertFalse(self.qml("advanced").property("visible"))
+        self.click("advancedButton")
+        self.assertTrue(self.qml("advanced").property("visible"))
         self.assertIs(config.get("general", "debug_advanced"), True)
         config.save_config.assert_called_once()
 
@@ -125,8 +125,13 @@ class DebugDialogTest(unittest.TestCase):
         config.set_key("general", "debug_advanced", True)
         again = DebugDialog()
         self.addCleanup(again.deleteLater)
-        self.assertTrue(again.advanced.isVisibleTo(again))
-        self.assertTrue(again.advanced_btn.isChecked())
+        self.assertTrue(qml(again.view, "advanced").property("visible"))
+
+    def test_showing_advanced_makes_the_window_tall_enough(self):
+        self.dialog.resize(360, 200)
+        self.click("advancedButton")
+        QtWidgets.QApplication.processEvents()
+        self.assertGreaterEqual(self.dialog.height(), self.dialog.view.rootObject().property("implicitHeight"))
 
     def test_title_and_resizable(self):
         self.assertEqual(self.dialog.windowTitle(), "Debug")
@@ -144,7 +149,7 @@ class DebugDialogTest(unittest.TestCase):
 
     def test_opens_the_logs_in_the_text_editor(self):
         with mock.patch.object(QtGui.QDesktopServices, "openUrl") as open_url:
-            self.dialog.open_log_btn.click()
+            self.click("openLog")
         self.assertEqual(open_url.call_args.args[0], QtCore.QUrl.fromLocalFile(str(Path(logs.LOG_FILE).absolute())))
 
     def test_previous_log_only_when_there_is_one(self):
@@ -152,30 +157,27 @@ class DebugDialogTest(unittest.TestCase):
         self.addCleanup(shutil.rmtree, directory)
         with contextlib.chdir(directory):
             self.dialog.update_log_buttons()
-            self.assertFalse(self.dialog.open_old_log_btn.isEnabled())
+            self.assertFalse(self.qml("openOldLog").property("enabled"))
             Path(logs.OLD_LOG_FILE).write_text("previous session")
             self.dialog.update_log_buttons()
-            self.assertTrue(self.dialog.open_old_log_btn.isEnabled())
+            self.assertTrue(self.qml("openOldLog").property("enabled"))
             with mock.patch.object(QtGui.QDesktopServices, "openUrl") as open_url:
-                self.dialog.open_old_log_btn.click()
+                self.click("openOldLog")
             self.assertEqual(open_url.call_args.args[0], QtCore.QUrl.fromLocalFile(str(Path(logs.OLD_LOG_FILE).absolute())))
 
     def test_save_debug_info(self):
         saved = mock.Mock()
         self.dialog.save_debug_info.connect(saved)
-        self.dialog.save_debug_info_btn.click()
+        self.click("saveInfo")
         saved.assert_called_once()
 
     def test_update_rate_is_explained(self):
-        for widget in (self.dialog.update_lb, self.dialog.update_le):
-            self.assertIn("times a second", widget.toolTip())
-            self.assertIn("Split detection itself isn't affected", widget.toolTip())
+        self.assertIn("times a second", self.text("updateRateHelp"))
+        self.assertIn("Split detection itself isn't affected", self.text("updateRateHelp"))
 
     def test_update_rate_is_1_to_30(self):
-        validator = self.dialog.update_le.validator()
-        self.assertNotEqual(validator.validate("0", 0)[0], QtGui.QValidator.State.Acceptable)
-        self.assertEqual(validator.validate("1", 0)[0], QtGui.QValidator.State.Acceptable)
-        self.assertEqual(validator.validate("30", 0)[0], QtGui.QValidator.State.Acceptable)
+        spin_box = self.qml("updateRate")
+        self.assertEqual((spin_box.property("from"), spin_box.property("to")), (1, 30))
 
     def test_saved_update_rate_of_0_is_1(self):
         # Allowed before, which divided by zero in the thread
@@ -183,16 +185,15 @@ class DebugDialogTest(unittest.TestCase):
         self.dialog.show()
         self.addCleanup(self.dialog.close)
         self.assertEqual(self.dialog.output_reader.update_rate, 1)
-        self.assertEqual(self.dialog.update_le.text(), "1")
+        self.assertEqual(self.qml("updateRate").property("value"), 1)
 
     def test_reopening_shows_the_changed_update_rate(self):
         self.dialog.show()
-        self.dialog.update_le.setText("25")
-        self.dialog.update_le.editingFinished.emit()
+        self.set_update_rate(25)
         self.dialog.close()
         self.dialog.show()
         self.addCleanup(self.dialog.close)
-        self.assertEqual(self.dialog.update_le.text(), "25")
+        self.assertEqual(self.qml("updateRate").property("value"), 25)
 
     def test_closing_stops_the_output_reader(self):
         # Deleting the window while its thread runs would abort AutoSplit64++
@@ -263,7 +264,9 @@ class RecentEventsTest(unittest.TestCase):
         return text
 
     def lines(self, dialog=None):
-        return (dialog or self.dialog).events.toPlainText().splitlines()
+        model = qml((dialog or self.dialog).view, "lines")
+        role = next(role for role, name in model.roleNames().items() if name == b"line")
+        return [model.data(model.index(row, 0), role) for row in range(model.rowCount())]
 
     def test_new_lines_with_their_time(self):
         text = self.log()
@@ -299,16 +302,16 @@ class RecentEventsTest(unittest.TestCase):
     def test_reading_further_up_stays_there(self):
         for _ in range(50):
             self.log()
-        bar = self.dialog.events.verticalScrollBar()
+        events = qml(self.dialog.view, "events")
         self.dialog.show()
         self.addCleanup(self.dialog.close)
         QtWidgets.QApplication.processEvents()
-        bar.setValue(0)
+        QtCore.QMetaObject.invokeMethod(events, "positionViewAtBeginning")
         self.log()
-        self.assertEqual(bar.value(), 0)
-        bar.setValue(bar.maximum())
+        self.assertTrue(events.property("atYBeginning"))
+        QtCore.QMetaObject.invokeMethod(events, "positionViewAtEnd")
         self.log()
-        self.assertEqual(bar.value(), bar.maximum())
+        self.assertTrue(events.property("atYEnd"))
 
 
 if __name__ == "__main__":

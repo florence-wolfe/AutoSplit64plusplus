@@ -13,7 +13,7 @@ from ..constants import (
 
 from autosplit64.core import resource_utils, config, livesplit, livesplit_one, logs
 from autosplit64.core.constants import INITIAL_STATE, SPLIT_FADE_ONLY, SPLIT_FINAL, SPLIT_MIPS, SPLIT_MIPS_X, SPLIT_XCAM
-from autosplit64.gui.widgets import HLine
+from autosplit64.gui.qml_view import qml_view
 
 # The connection to LiveSplit, as the dot in the main window shows it
 LIVESPLIT_STATES = {"connected": "LiveSplit connected", "waiting": "waiting for LiveSplit One",
@@ -103,29 +103,46 @@ def describe(status, livesplit):
             needs, counted)
 
 
+class Debug(QtCore.QObject):
+    """
+    What DebugDialog.qml shows, in values: what split detection is doing, its fields, whether Advanced is
+    shown, the update rate and whether there's a previous log. line() is each new event, after lines, and
+    its other signals are the QML's changes and clicks.
+    """
+    changed = QtCore.pyqtSignal()
+    line = QtCore.pyqtSignal(str)
+    advanced_toggled = QtCore.pyqtSignal(bool)
+    update_rate_changed = QtCore.pyqtSignal(int)
+    open_log = QtCore.pyqtSignal()
+    open_old_log = QtCore.pyqtSignal()
+    save_info = QtCore.pyqtSignal()
+
+    def __init__(self, lines):
+        super().__init__()
+        self._lines = lines
+        self._values = {"status": "", "split": "", "needs": "", "counted": "", "fields": {}, "advanced": False,
+                        "updateRate": 1, "oldLog": False}
+
+    @QtCore.pyqtProperty("QVariantMap", notify=changed)
+    def values(self):
+        return self._values
+
+    @QtCore.pyqtProperty("QVariantList", constant=True)
+    def lines(self):
+        return self._lines
+
+    def update(self, **values):
+        self._values.update(values)
+        self.changed.emit()
+
+
 class DebugDialog(QtWidgets.QDialog):
     open_capture = QtCore.pyqtSignal()
     save_debug_info = QtCore.pyqtSignal()
 
     # Before it's resized
-    DEFAULT_SIZE = (300, 400)
+    DEFAULT_SIZE = (360, 480)
 
-    # Rows of up to two (label, output key) fields, each label above its field, or one field
-    # (label, output key, True) as wide as two. A number is a line between groups of rows, with
-    # that much space around it.
-    ROWS = [
-        # Wide enough for the longest status, FADEOUT_COMPLETE
-        [("Fade Status:", "fade_status", True)],
-        [("Fade-out Count:", "fadeout_count"), ("Fade-in Count:", "fadein_count")],
-        5,
-        [("X-Cam Percent:", "xcam_percent")],
-        [("X-Cam Count:", "xcam_count"), ("X-Cam Status:", "xcam_status")],
-        0,
-        [("Prediction:", "prediction"), ("Probability:", "probability")],
-        0,
-        [("Execution Time:", "execution")],
-        5,
-    ]
     # Fractions, of which only the first characters are shown
     SHORTENED = {"xcam_percent", "probability", "execution"}
 
@@ -140,125 +157,33 @@ class DebugDialog(QtWidgets.QDialog):
         # The split detection that started last, or None
         self._detection = detection
 
-        layout = QtWidgets.QVBoxLayout()
-        self.setLayout(layout)
-
-        # What split detection is doing
-        self.status_lb, self.split_lb, self.needs_lb, self.counted_lb = (QtWidgets.QLabel() for _ in range(4))
-        self.needs_lb.setToolTip("What the current split needs for split detection to split")
-        self.counted_lb.setToolTip("What split detection counted since the last split or star")
-        basics = self._basics = QtWidgets.QFormLayout()
-        basics.addRow(self.status_lb)
-        basics.addRow(self.split_lb)
-        basics.addRow("Needs:", self.needs_lb)
-        basics.addRow("Counted:", self.counted_lb)
-        layout.addLayout(basics)
-
-        # What split detection did in this session, the latest at the bottom
-        self.events = QtWidgets.QPlainTextEdit()
-        self.events.setReadOnly(True)
-        self.events.setMaximumBlockCount(DetectionEvents.MAX)
-        self.events.setToolTip("What split detection did in this session, like in the log")
         events = detection_events()
-        self.events.setPlainText("\n".join(events.lines()))
-        events.signal.line.connect(self._add_event)
-        layout.addWidget(QtWidgets.QLabel("Recent events:"))
-        layout.addWidget(self.events, 1)
-
-        # Everything else split detection sees, collapsed at first
-        self.advanced_btn = QtWidgets.QToolButton()
-        self.advanced_btn.setText("Advanced")
-        self.advanced_btn.setToolTip("Fades, X-Cams, star predictions and timings")
-        self.advanced_btn.setCheckable(True)
-        self.advanced_btn.setAutoRaise(True)
-        self.advanced_btn.setToolButtonStyle(QtCore.Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        layout.addWidget(self.advanced_btn)
-        self.advanced = QtWidgets.QWidget()
-        grid = QtWidgets.QGridLayout(self.advanced)
-        grid.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.advanced)
-
-        # Each output key's field
-        self.fields = {}
-        row = 0
-        for fields in self.ROWS:
-            if isinstance(fields, int):
-                if fields:
-                    grid.addItem(QtWidgets.QSpacerItem(10, fields), row, 0)
-                grid.addWidget(HLine(), row + 1, 0, 1, 4)
-                if fields:
-                    grid.addItem(QtWidgets.QSpacerItem(10, fields), row + 2, 0)
-                row += 3
-                continue
-            for column, (text, key, *wide) in enumerate(fields):
-                label = QtWidgets.QLabel(text)
-                label.setFixedWidth(100)
-                self.fields[key] = QtWidgets.QLineEdit()
-                self.fields[key].setDisabled(True)
-                if wide:
-                    grid.addWidget(self.fields[key], row + 1, column, 1, 2)
-                else:
-                    self.fields[key].setFixedWidth(100)
-                    grid.addWidget(self.fields[key], row + 1, column)
-                grid.addWidget(label, row, column)
-            row += 2
-
-        self.update_lb = QtWidgets.QLabel("Update Rate:")
-        self.update_lb.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
-        self.update_le = QtWidgets.QLineEdit()
-        self.update_le.setValidator(QtGui.QIntValidator(1, 30, self))
-        for widget in (self.update_lb, self.update_le):
-            widget.setToolTip("How many times a second this window shows split detection's latest values, from 1 to 30. "
-                              "Split detection itself isn't affected.")
-        update_rate_layout = QtWidgets.QHBoxLayout()
-        update_rate_layout.addWidget(self.update_lb)
-        update_rate_layout.addWidget(self.update_le)
-        grid.addLayout(update_rate_layout, row, 1)
-
-        # The logs open in the text editor
-        self.open_log_btn = QtWidgets.QPushButton("Open Log")
-        self.open_log_btn.setToolTip("This session's log")
-        self.open_old_log_btn = QtWidgets.QPushButton("Open Previous Log")
-        self.open_old_log_btn.setToolTip("The previous session's log")
-        self.save_debug_info_btn = QtWidgets.QPushButton("Save Debug Info")
-        self.save_debug_info_btn.setToolTip("Save the logs, settings, route and a captured frame in one file, for a bug report")
-        buttons = QtWidgets.QGridLayout()
-        buttons.addWidget(self.open_log_btn, 0, 0)
-        buttons.addWidget(self.open_old_log_btn, 0, 1)
-        buttons.addWidget(self.save_debug_info_btn, 1, 0, 1, 2)
-        layout.addLayout(buttons)
+        self.debug = Debug(events.lines())
+        events.signal.line.connect(self.debug.line)
+        self.debug.advanced_toggled.connect(self._show_advanced)
+        self.debug.update_rate_changed.connect(self._update_rate_changed)
+        self.debug.open_log.connect(lambda: self._open(logs.LOG_FILE))
+        self.debug.open_old_log.connect(lambda: self._open(logs.OLD_LOG_FILE))
+        self.debug.save_info.connect(self.save_debug_info)
+        self.view = qml_view(self, "DebugDialog", debug=self.debug, maxEvents=DetectionEvents.MAX)
+        # Tall enough for what's shown, e.g. Advanced. Queued: resizing while the QML renders a frame breaks it.
+        self.view.rootObject().implicitHeightChanged.connect(self._fit, QtCore.Qt.ConnectionType.QueuedConnection)
+        self._fit()
 
         self._show_advanced(bool(config.get("general", "debug_advanced")), save=False)
 
-        # Connections
-        self.update_le.editingFinished.connect(self._update_rate_changed)
-        self.open_log_btn.clicked.connect(lambda: self._open(logs.LOG_FILE))
-        self.open_old_log_btn.clicked.connect(lambda: self._open(logs.OLD_LOG_FILE))
-        self.save_debug_info_btn.clicked.connect(self.save_debug_info)
-        self.advanced_btn.toggled.connect(self._show_advanced)
+    def _fit(self):
+        self.setMinimumHeight(int(self.view.rootObject().property("implicitHeight")))
 
     def _show_advanced(self, shown, save=True):
-        self.advanced_btn.setChecked(shown)
-        self.advanced_btn.setArrowType(QtCore.Qt.ArrowType.DownArrow if shown else QtCore.Qt.ArrowType.RightArrow)
-        self.advanced.setVisible(shown)
-        # Taller for Advanced, if it doesn't fit
-        if shown:
-            self.resize(self.width(), max(self.height(), self.sizeHint().height()))
+        self.debug.update(advanced=shown)
         if save:
             config.set_key("general", "debug_advanced", shown)
             config.save_config()
 
-    def _add_event(self, line):
-        # Following the latest, unless reading further up
-        bar = self.events.verticalScrollBar()
-        following = bar.value() == bar.maximum()
-        self.events.appendPlainText(line)
-        if following:
-            bar.setValue(bar.maximum())
-
     def update_log_buttons(self):
         """ The previous session's log is there from the second session on """
-        self.open_old_log_btn.setEnabled(os.path.exists(logs.OLD_LOG_FILE))
+        self.debug.update(oldLog=os.path.exists(logs.OLD_LOG_FILE))
 
     def _open(self, log):
         QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(Path(log).absolute())))
@@ -266,7 +191,7 @@ class DebugDialog(QtWidgets.QDialog):
     def show(self):
         self.update_log_buttons()
         self.output_reader = OutputReader(self._detection, parent=self)
-        self.update_le.setText(str(update_rate()))
+        self.debug.update(updateRate=update_rate())
 
         self.output_reader.start()
         self.output_reader.output.connect(self.display_output)
@@ -274,15 +199,11 @@ class DebugDialog(QtWidgets.QDialog):
         super().show()
 
     def display_output(self, output):
-        for label, text in zip((self.status_lb, self.split_lb, self.needs_lb, self.counted_lb),
-                               describe(output["status"], output["livesplit"])):
-            label.setText(text)
-        # Only the status while it isn't running
-        for row in (1, 2, 3):
-            self._basics.setRowVisible(row, bool(self.split_lb.text()))
-        for key, field in self.fields.items():
-            text = str(output[key])
-            field.setText(text[:6] if key in self.SHORTENED else text)
+        status, split, needs, counted = describe(output["status"], output["livesplit"])
+        fields = {key: str(output[key])[:6] if key in self.SHORTENED else str(output[key])
+                  for key in ("fade_status", "fadeout_count", "fadein_count", "xcam_percent", "xcam_count", "xcam_status",
+                              "prediction", "probability", "execution")}
+        self.debug.update(status=status, split=split, needs=needs, counted=counted, fields=fields)
 
     def _stop_reader(self):
         # Started when the dialog is shown
@@ -303,13 +224,11 @@ class DebugDialog(QtWidgets.QDialog):
         self._stop_reader()
         super().closeEvent(e)
 
-    def _update_rate_changed(self):
-        try:
-            self.output_reader.update_rate = int(self.update_le.text())
-            config.set_key("general", "output_update_rate", self.output_reader.update_rate)
-            config.save_config()
-        except ValueError:
-            pass
+    def _update_rate_changed(self, rate):
+        self.output_reader.update_rate = rate
+        self.debug.update(updateRate=rate)
+        config.set_key("general", "output_update_rate", rate)
+        config.save_config()
 
 
 class OutputReader(QtCore.QThread):

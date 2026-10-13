@@ -4,7 +4,7 @@ from unittest import mock
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 from autosplit64.gui.app import App
-from tests.qt import close_window
+from tests.qt import close_window, qml
 
 _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
@@ -93,7 +93,7 @@ class MenuActionsTest(unittest.TestCase):
              mock.patch("autosplit64.gui.app.debug_info.save", side_effect=error) as save, \
              mock.patch.object(QtWidgets.QMessageBox, "information") as information, \
              mock.patch.object(QtWidgets.QMessageBox, "warning") as warning:
-            self.app.dialogs["debug_dialog"].save_debug_info_btn.click()
+            QtCore.QMetaObject.invokeMethod(qml(self.app.dialogs["debug_dialog"].view, "saveInfo"), "clicked")
         return dialog, save, information, warning
 
     def test_save_debug_info(self):
