@@ -1,19 +1,12 @@
-import os
-from pathlib import Path
-
-from PyQt6 import QtCore, QtGui, QtQuickWidgets, QtWidgets
+from PyQt6 import QtCore, QtGui, QtWidgets
 
 from autosplit64.core import resource_utils
 from autosplit64.core import config
 from autosplit64.gui import theme
+from autosplit64.gui.qml_view import qml_view
 from autosplit64.gui.constants import (
     ICON_PATH
 )
-
-# Material's compact sizes, which suit a desktop window. Read when the style is first loaded.
-os.environ.setdefault("QT_QUICK_CONTROLS_MATERIAL_VARIANT", "Dense")
-
-QML = Path(__file__).parent.parent / "qml" / "SettingsDialog.qml"
 
 
 def show_theme(name):
@@ -90,20 +83,10 @@ class SettingsDialog(QtWidgets.QDialog):
         self.setWindowIcon(QtGui.QIcon(resource_utils.resource_path(ICON_PATH)))
         self.resize(780, 640)
 
-        self.view = QtQuickWidgets.QQuickWidget()
-        self.view.setResizeMode(QtQuickWidgets.QQuickWidget.ResizeMode.SizeRootObjectToView)
-        # The view's child: the view deletes its QML before its children, so the QML never sees it deleted
-        self.settings = Settings(self.view)
+        self.settings = Settings()
         self.settings.applied.connect(self._applied)
         self.settings.cancelled.connect(self.hide)
-        self.view.rootContext().setContextProperty("settings", self.settings)
-        self.view.setSource(QtCore.QUrl.fromLocalFile(str(QML)))
-        if self.view.status() == QtQuickWidgets.QQuickWidget.Status.Error:
-            raise RuntimeError("\n".join(error.toString() for error in self.view.errors()))
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.view)
+        self.view = qml_view(self, "SettingsDialog", settings=self.settings)
 
     def show(self):
         self.settings.load()

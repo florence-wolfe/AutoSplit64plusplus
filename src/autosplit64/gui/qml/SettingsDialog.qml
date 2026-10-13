@@ -4,19 +4,8 @@ import QtQuick.Controls.Material
 
 // The settings window's content. `settings` is the Python Settings object (settings_dialog.py), which
 // holds the values: fields show settings.get() whenever it emits loaded(), and settings.set() their edits.
-Pane {
+ThemedPane {
     id: root
-    padding: 0
-
-    // Material's controls are sized for touch, even Dense ones: fields and selects are this tall instead
-    readonly property int fieldHeight: 32
-
-    // Material's colors from the app's theme, so the theme setting applies here too
-    SystemPalette { id: system }
-    Material.theme: system.window.hslLightness < 0.5 ? Material.Dark : Material.Light
-    Material.accent: system.highlight
-    Material.background: system.window
-    Material.foreground: system.windowText
 
     ColumnLayout {
         anchors.fill: parent
@@ -251,13 +240,6 @@ Pane {
         }
     }
 
-    component Heading: Label {
-        Layout.columnSpan: 2
-        Layout.topMargin: 16
-        color: root.Material.accent
-        font.weight: Font.DemiBold
-    }
-
     component SettingSwitch: Switch {
         id: field
         required property string section
@@ -293,24 +275,12 @@ Pane {
         }
     }
 
-    component CompactField: TextField {
-        implicitHeight: root.fieldHeight
-        topPadding: 0
-        bottomPadding: 0
-        verticalAlignment: TextInput.AlignVCenter
-    }
-
-    component CompactCombo: ComboBox {
-        implicitHeight: root.fieldHeight
-    }
-
     // Only acceptable text is set, see `validator`
     component SettingField: CompactField {
         id: field
         required property string section
         required property string key
         Layout.preferredWidth: 160
-        selectByMouse: true
         onTextEdited: if (acceptableInput) settings.set(section, key, text)
         Connections { target: settings; function onLoaded() { field.text = String(settings.get(field.section, field.key)) } }
     }
@@ -330,11 +300,8 @@ Pane {
         validator: DoubleValidator { notation: DoubleValidator.StandardNotation; locale: "C" }
     }
 
-    component SettingSpinBox: SpinBox {
+    component SettingSpinBox: CompactSpinBox {
         id: field
-        implicitHeight: root.fieldHeight
-        topPadding: 0
-        bottomPadding: 0
         required property string section
         required property string key
         editable: true
@@ -352,13 +319,11 @@ Pane {
         CompactField {
             id: path
             Layout.fillWidth: true
-            selectByMouse: true
             onTextEdited: settings.set_path(field.section, field.key, text)
         }
-        Button {
+        CompactButton {
             text: "Browse"
             flat: true
-            implicitHeight: root.fieldHeight
             onClicked: {
                 const chosen = settings.browse(field.title)
                 if (chosen) {
