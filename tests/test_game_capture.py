@@ -57,5 +57,12 @@ class StartWithoutScreenRecordingTest(unittest.TestCase):
         with self.assertRaisesRegex(Exception, "(?s)Could not find configured capture source.*Configure Capture"):
             capture.is_valid()
 
+    def test_logs_the_window_it_didnt_find(self):
+        # Only in the log, for bug reports: the message says to set up the capture
+        capture = self.capture(granted=True)
+        with self.assertLogs(".log", "WARNING") as logs, self.assertRaises(Exception):
+            capture.is_valid()
+        self.assertIn("Emulator", logs.output[0])
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,3 +1,4 @@
+import logging
 import sys
 
 from . import capture_shmem
@@ -110,6 +111,7 @@ class GameCapture(object):
                 raise Exception("AutoSplit64++ needs the Screen Recording permission to capture the game.\n\n"
                                 "Open Configure Capture to allow it. If you just allowed it, restart AutoSplit64++.")
             if not bool(self._hwnd):
+                logging.getLogger(".log").warning("Could not find the window to capture: %s", self._process_name)
                 raise Exception("Could not find configured capture source.\n\nMake sure it's running and visible, "
                                 "or set up what to capture in Configure Capture.")
 
