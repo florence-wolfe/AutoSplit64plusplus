@@ -160,7 +160,8 @@ ThemedPane {
         ToolTip.visible: statusHover.hovered && !copied.visible
         ToolTip.text: main.values.statusTip
         TapHandler { onTapped: copied.show("Copied " + main.copy_status(), 2500) }
-        ToolTip { id: copied }
+        // Where the hover tooltip is, see ToolTips.qml
+        ToolTip { id: copied; x: -width - 8; y: (parent.height - height) / 2 }
     }
 
     // The installed version, with a dot when there's an update, at the bottom left of the right panel
@@ -180,15 +181,15 @@ ThemedPane {
     }
 
     // The menu, opening upwards from the bottom right corner
-    AbstractButton {
+    ToolButton {
         id: menuButton
         objectName: "menuButton"
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.margins: 8
-        width: 18
-        height: 14
-        // Also where the platform has no hover effects: it's the button's only look besides its lines
+        anchors.margins: 2
+        width: 32
+        height: 32
+        // Also where the platform has no hover effects
         hoverEnabled: true
         HoverHandler { cursorShape: Qt.PointingHandCursor }
         ToolTip.visible: hovered
@@ -203,21 +204,22 @@ ThemedPane {
             })
             menu.popup(menuButton.x + menuButton.width - menu.width, menuButton.y)
         }
-        contentItem: Column {
-            topPadding: 1
-            spacing: 3
-            Repeater {
-                model: 3
-                Rectangle {
-                    x: 2
-                    width: 14
-                    height: 2
-                    radius: 1
-                    color: menuButton.hovered ? system.text : main.values.muted
+        // Three lines, centered
+        contentItem: Item {
+            Column {
+                anchors.centerIn: parent
+                spacing: 3
+                Repeater {
+                    model: 3
+                    Rectangle {
+                        width: 14
+                        height: 2
+                        radius: 1
+                        color: menuButton.hovered ? system.text : main.values.muted
+                    }
                 }
             }
         }
-        background: null
     }
 
     // The menu's entries come from main.menu(), each time it opens, so routes and checks are current
@@ -252,6 +254,8 @@ ThemedPane {
         id: menuComponent
         Menu {
             popupType: Popup.Window
+            // As tall as the other entries, see itemComponent: the menu makes those that open submenus
+            delegate: MenuItem { implicitHeight: 32 }
             Material.theme: root.Material.theme
             Material.accent: root.Material.accent
             Material.background: root.Material.background
@@ -261,7 +265,9 @@ ThemedPane {
 
     Component {
         id: itemComponent
+        // Material's are sized for touch, like CompactField's controls
         MenuItem {
+            implicitHeight: 32
             property string key
             property string tip
             onTriggered: main.trigger(key)
@@ -273,7 +279,7 @@ ThemedPane {
 
     Component {
         id: separatorComponent
-        MenuSeparator {}
+        MenuSeparator { verticalPadding: 2 }
     }
 
     // A picture, another while hovered

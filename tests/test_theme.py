@@ -109,8 +109,8 @@ class ThemedWidgetsTest(unittest.TestCase):
     def test_menu_button_and_version_follow_the_text_color(self):
         muted = theme.muted(self.palette).getRgb()[:3]
         button = self.item("menuButton")
-        # The middle of its middle line
-        self.assertEqual(self.pixel(button.x() + 9, button.y() + 7), muted)
+        # The middle of its middle line, at its center
+        self.assertEqual(self.pixel(button.x() + 16, button.y() + 16), muted)
         self.assertEqual(self.window.main.values["muted"], theme.muted(self.palette).name())
 
     def test_update_dot_is_the_themes_green(self):
