@@ -29,6 +29,14 @@ class TipWindowTest(unittest.TestCase):
         self.tips.show("A tooltip", x, self.screen.top() + 300, 50, 20)
         self.assertEqual(self.tips.view.geometry().left(), x + 50 + GAP)
 
+    def test_long_ones_wrap(self):
+        # The window as wide as the wrapped text, not the text on one line
+        self.tips.show("A tooltip " * 30, self.screen.left() + 900, self.screen.top() + 300, 50, 20)
+        one_line = self.tips.view.rootObject().property("implicitHeight")
+        self.assertLessEqual(self.tips.view.width(), 320 + 16)
+        self.tips.show("A tooltip", self.screen.left() + 900, self.screen.top() + 300, 50, 20)
+        self.assertGreater(one_line, self.tips.view.rootObject().property("implicitHeight"))
+
     def test_hide(self):
         self.tips.show("A tooltip", self.screen.left() + 400, self.screen.top() + 300, 50, 20)
         self.tips.hide()

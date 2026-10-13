@@ -9,7 +9,8 @@ Rectangle {
     SystemPalette { id: system }
     Material.theme: system.window.hslLightness < 0.5 ? Material.Dark : Material.Light
 
-    implicitWidth: label.implicitWidth + 16
+    // As wide as the label once it wraps: its implicit width is on one line
+    implicitWidth: label.width + 16
     implicitHeight: label.implicitHeight + 10
     radius: 4
     color: Material.tooltipColor
