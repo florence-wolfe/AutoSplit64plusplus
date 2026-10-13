@@ -300,8 +300,9 @@ class RecentEventsTest(unittest.TestCase):
             self.assertTrue(lines[0].endswith(texts[10]))
 
     def test_reading_further_up_stays_there(self):
-        for _ in range(50):
-            self.log()
+        # Wrapping, as with Windows' wider font: then ListView estimates the lines' heights
+        for i in range(50):
+            self.log(f"Split: {uuid.uuid4()}" + (" and a longer explanation of what split detection did" * (1 + i % 2)))
         events = qml(self.dialog.view, "events")
         self.dialog.show()
         self.addCleanup(self.dialog.close)

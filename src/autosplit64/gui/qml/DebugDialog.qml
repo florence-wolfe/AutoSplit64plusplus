@@ -60,7 +60,8 @@ ThemedPane {
                 anchors.margins: 8
                 clip: true
 
-                // Following the latest, unless scrolled further up. Kept as the lines and the size change.
+                // Following the latest, unless scrolled further up. Kept as lines are added and the size changes, not
+                // as contentHeight does: ListView changes it while scrolling, as it estimates lines that wrap
                 property bool following: true
                 property bool positioning: false
                 function follow() {
@@ -70,8 +71,12 @@ ThemedPane {
                     positionViewAtEnd()
                     positioning = false
                 }
-                onContentYChanged: if (!positioning) following = atYEnd
-                onContentHeightChanged: follow()
+                // Whether the newest line is at the bottom, from where the lines are: atYEnd compares with contentHeight,
+                // which ListView estimates while lines wrap to different heights, so it can be true further up
+                function newestShown() {
+                    return count === 0 || indexAt(width / 2, contentY + height - 1) === count - 1
+                }
+                onContentYChanged: if (!positioning) following = newestShown()
                 onHeightChanged: follow()
                 model: ListModel { id: lines; objectName: "lines" }
                 delegate: Label {
@@ -167,6 +172,7 @@ ThemedPane {
         lines.append({ line: line })
         if (lines.count > maxEvents)
             lines.remove(0)
+        events.follow()
     }
 
     Component.onCompleted: {
