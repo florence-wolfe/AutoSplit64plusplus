@@ -13,6 +13,9 @@ from autosplit64.core.processing import Process, Signal
 # What split detection does and why, in the session log
 log = logging.getLogger("detection")
 
+# _star_visible's threshold for any yellow at all, rather than the Grand Star
+NO_YELLOW_THRESHOLD = 0.9999
+
 
 class ProcessFindFinalStage(Process):
     def __init__(self, core):
@@ -46,12 +49,17 @@ class ProcessFindFinalStage(Process):
 
 
 class ProcessFindFinalStar(Process):
+    # How long the Grand Star shows before it counts as spawned. It shows for about 7.5 s before Mario can grab it,
+    # while other yellow in the fight, like explosions, Bowser and the close-up of Mario after the last hit, shows
+    # for under 2 s at a time.
+    SPAWN_SECONDS = 4
+
     def __init__(self, core):
         super().__init__(core)
         self.register_signal("SPAWNED")
         self.register_signal("FADEOUT")
-        self._iteration_value = {0: 1, 1: 4, 2: 1}
-        self._looping_iteration = 0
+        # When the yellow that may be the Grand Star showed, or None
+        self._seen_since = None
 
         self.star_lower_bound = config.get("split_final_star", "star_lower_bound")
         self.star_upper_bound = config.get("split_final_star", "star_upper_bound")
@@ -59,28 +67,26 @@ class ProcessFindFinalStar(Process):
     def execute(self):
         if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
-        if self._star_visible() and self.loop_time() > 20:
-            if self._looping_iteration == len(self._iteration_value):
-                log.info("Grand Star spawned")
-                return self.signals["SPAWNED"]
-            else:
-                try:
-                    log.info("Grand Star seen, iteration %d", self._looping_iteration)
-                    time.sleep(self._iteration_value[self._looping_iteration])
-                except IndexError:
-                    pass
-
-            self._looping_iteration += 1
-
+        if self.loop_time() <= 20:
             return self.signals["LOOP"]
-        else:
-            self._looping_iteration = 0
+
+        if self._seen_since is None:
+            if self._star_visible():
+                log.info("Grand Star seen")
+                self._seen_since = time.time()
+        # Only a frame without any yellow ends it, so the star moving past the top of the region doesn't
+        elif not self._star_visible(NO_YELLOW_THRESHOLD):
+            log.info("Grand Star gone after %.2f s", time.time() - self._seen_since)
+            self._seen_since = None
+        elif time.time() - self._seen_since >= self.SPAWN_SECONDS:
+            log.info("Grand Star spawned")
+            return self.signals["SPAWNED"]
 
         return self.signals["LOOP"]
 
     def on_transition(self):
         self.core.fps = 29.97
-        self._looping_iteration = 0
+        self._seen_since = None
 
         super().on_transition()
 
@@ -108,7 +114,8 @@ class ProcessFinalStarSplit(Process):
         if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
 
-        if not self._star_visible():
+        # Grabbing the Grand Star leaves no yellow, while it moving past the top of the region leaves its sparkles
+        if not self._star_visible(NO_YELLOW_THRESHOLD):
             self.core.split()
             log.info("Grand Star grabbed")
             return self.signals["COMPLETE"]
