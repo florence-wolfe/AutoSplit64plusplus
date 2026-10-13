@@ -2,27 +2,36 @@ import copy
 import unittest
 from unittest import mock
 
-from PyQt6 import QtWidgets
+from PyQt6 import QtCore, QtWidgets
 
 from autosplit64.core import config
 from autosplit64.gui import theme
-from autosplit64.gui.dialogs.settings_dialog import ConnectionMenu, SettingsDialog
+from autosplit64.gui.dialogs.settings_dialog import SettingsDialog
 
 _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
 
-class ConnectionMenuTest(unittest.TestCase):
+def qml(dialog, name):
+    """ The dialog's QML item with that objectName """
+    return dialog.view.rootObject().findChild(QtCore.QObject, name)
+
+
+def choose(combo, index):
+    """ Choose the combo box's item, like clicking it does """
+    combo.setProperty("currentIndex", index)
+    QtCore.QMetaObject.invokeMethod(combo, "activated", QtCore.Q_ARG(int, index))
+
+
+class ConnectionSettingsTest(unittest.TestCase):
     def shown_fields(self, mode):
-        menu = ConnectionMenu()
-        self.addCleanup(menu.deleteLater)
-        menu.ls_mode_combo.setCurrentText(mode)
-        fields = {"pipe host": menu.ls_pipe_host_le, "TCP host": menu.host_le, "TCP port": menu.port_le,
-                  "LiveSplit One port": menu.lso_port_le}
-        labels = [menu.ls_pipe_host_lb, menu.host_lb, menu.port_lb, menu.lso_port_lb]
-        # Each field's label is shown and hidden with it
-        for field, label in zip(fields.values(), labels):
-            self.assertEqual(field.isHidden(), label.isHidden())
-        return [name for name, field in fields.items() if not field.isHidden()]
+        dialog = SettingsDialog()
+        self.addCleanup(dialog.deleteLater)
+        # Visible means shown: on the page that's open
+        dialog.show()
+        qml(dialog, "nav").setProperty("currentIndex", 1)
+        choose(qml(dialog, "mode"), ["Named Pipe", "TCP", "LiveSplit One"].index(mode))
+        fields = {"pipe host": "pipeHost", "TCP host": "tcpHost", "TCP port": "tcpPort", "LiveSplit One port": "lsoPort"}
+        return [name for name, field in fields.items() if qml(dialog, field).property("visible")]
 
     def test_only_the_selected_modes_settings_are_shown(self):
         self.assertEqual(self.shown_fields("Named Pipe"), ["pipe host"])
@@ -73,6 +82,54 @@ class SettingsDialogTest(unittest.TestCase):
                 with self.subTest(f"{section}.{key}"):
                     self.assertIs(type(settings[section][key]), type(value))
 
+    def test_edits_keep_the_settings_types(self):
+        """ QML sends text, and numbers that are all floats """
+        settings = copy.deepcopy(self.SETTINGS)
+        for patcher in [mock.patch.object(config, "_config", settings), mock.patch.object(config, "save_config")]:
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        dialog = SettingsDialog()
+        self.addCleanup(dialog.deleteLater)
+        dialog.show()
+
+        for section, key, value in [("connection", "ls_port", "4321"), ("thresholds", "reset_threshold", "0.5"),
+                                    ("general", "operation_mode", 0.0), ("split_xcam", "lower_bound", [1.0, 2.0, 3.0]),
+                                    ("error", "star_skip", True)]:
+            dialog.settings.set(section, key, value)
+        dialog.apply_clicked()
+
+        self.assertEqual([settings["connection"]["ls_port"], settings["thresholds"]["reset_threshold"],
+                          settings["general"]["operation_mode"], settings["split_xcam"]["lower_bound"],
+                          settings["error"]["star_skip"]], [4321, 0.5, 0, [1, 2, 3], True])
+        self.assertIs(type(settings["general"]["operation_mode"]), int)
+        self.assertIs(type(settings["split_xcam"]["lower_bound"][0]), int)
+
+    def test_deleting_it_has_no_qml_errors(self):
+        """ Like quitting does: the QML mustn't outlive the settings it uses """
+        messages = []
+        previous = QtCore.qInstallMessageHandler(lambda mode, context, message: messages.append(message))
+        self.addCleanup(QtCore.qInstallMessageHandler, previous)
+        dialog = SettingsDialog()
+
+        dialog.deleteLater()
+        _app.sendPostedEvents(None, QtCore.QEvent.Type.DeferredDelete)
+        self.assertEqual([message for message in messages if "SettingsDialog.qml" in message], [])
+
+    def test_showing_again_forgets_unapplied_edits(self):
+        settings = copy.deepcopy(self.SETTINGS)
+        for patcher in [mock.patch.object(config, "_config", settings), mock.patch.object(config, "save_config")]:
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        dialog = SettingsDialog()
+        self.addCleanup(dialog.deleteLater)
+        dialog.show()
+        dialog.settings.set("connection", "ls_port", "4321")
+        dialog.hide()
+
+        dialog.show()
+        dialog.apply_clicked()
+        self.assertEqual(settings["connection"]["ls_port"], 1234)
+
 
 
 class ThemeSettingTest(unittest.TestCase):
@@ -89,34 +146,37 @@ class ThemeSettingTest(unittest.TestCase):
         self.dialog = SettingsDialog()
         self.addCleanup(self.dialog.deleteLater)
         self.dialog.show()
-        self.combo = self.dialog.menus[0].theme_combo
+        self.combo = qml(self.dialog, "theme")
+
+    def choose(self, name):
+        choose(self.combo, theme.themes().index(name))
 
     def test_shows_the_saved_theme(self):
-        self.assertEqual(self.combo.currentText(), "Dracula")
-        self.assertEqual(self.combo.itemText(0), "Default")
+        self.assertEqual(self.combo.property("currentText"), "Dracula")
+        self.assertEqual(theme.themes()[0], "default")
 
     def test_choosing_shows_the_theme_without_saving_it(self):
-        self.combo.setCurrentText("Nord")
+        self.choose("nord")
         self.assertEqual(theme.current(), "nord")
         self.assertEqual(self.settings["general"]["theme"], "dracula")
 
     def test_apply_keeps_it(self):
-        self.combo.setCurrentText("Nord")
+        self.choose("nord")
         self.dialog.apply_clicked()
         self.assertEqual((theme.current(), self.settings["general"]["theme"]), ("nord", "nord"))
 
     def test_cancel_close_and_escape_go_back_to_the_saved_theme(self):
-        for close in (self.dialog.cancel_btn.click, self.dialog.close, self.dialog.reject):
+        for close in (self.dialog.settings.cancel, self.dialog.close, self.dialog.reject):
             with self.subTest(close.__name__):
                 self.dialog.show()
-                self.combo.setCurrentText("Nord")
+                self.choose("nord")
                 close()
                 self.assertEqual((theme.current(), self.settings["general"]["theme"]), ("dracula", "dracula"))
 
     def test_theme_that_doesnt_exist_shows_the_default(self):
         self.settings["general"]["theme"] = "removed_theme"
         self.dialog.show()
-        self.assertEqual(self.combo.currentText(), "Default")
+        self.assertEqual(self.combo.property("currentText"), "Default")
 
 
 if __name__ == "__main__":
