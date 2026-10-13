@@ -4,7 +4,7 @@ Shows the app's QML, in gui/qml, in its widgets. The QML uses Qt Quick Controls'
 import os
 from pathlib import Path
 
-from PyQt6 import QtCore, QtQuick, QtQuickWidgets, QtWidgets
+from PyQt6 import QtCore, QtQml, QtQuick, QtQuickWidgets, QtWidgets
 
 # Material's compact sizes. Read when the style is first loaded.
 os.environ.setdefault("QT_QUICK_CONTROLS_MATERIAL_VARIANT", "Dense")
@@ -25,6 +25,8 @@ def _load(view, name, context, images):
         if isinstance(value, QtCore.QObject):
             value.setParent(view)
         view.rootContext().setContextProperty(key, value)
+    tooltips = QtQml.QQmlComponent(view.engine(), QtCore.QUrl.fromLocalFile(str(QML_DIR / "ToolTips.qml"))).create()
+    tooltips.setParent(view)
     view.setSource(QtCore.QUrl.fromLocalFile(str(QML_DIR / f"{name}.qml")))
     if view.errors():
         raise RuntimeError("\n".join(error.toString() for error in view.errors()))
