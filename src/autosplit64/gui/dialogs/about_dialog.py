@@ -6,7 +6,6 @@ from ..constants import (
     ICON_PATH,
     TITLE,
     GITHUB_REPO,
-    DISCORD_LINK
 )
 from ..qml_view import qml_view
 from autosplit64.core import resource_utils
@@ -27,4 +26,4 @@ class AboutDialog(QtWidgets.QDialog):
 
         self.view = qml_view(self, "AboutDialog", links=Links(), title=TITLE, version=VERSION, authors=AUTHOR,
                              icon=QtCore.QUrl.fromLocalFile(resource_utils.resource_path(ICON_PATH)),
-                             githubUrl=f"https://github.com/{GITHUB_REPO}", discordUrl=DISCORD_LINK)
+                             githubUrl=f"https://github.com/{GITHUB_REPO}")

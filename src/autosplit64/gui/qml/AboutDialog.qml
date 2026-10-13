@@ -29,7 +29,6 @@ ThemedPane {
                 Layout.topMargin: 16
                 spacing: 8
                 Button { objectName: "github"; text: "GitHub"; highlighted: true; onClicked: links.open(githubUrl) }
-                Button { objectName: "discord"; text: "Discord"; flat: true; onClicked: links.open(discordUrl) }
             }
         }
     }

@@ -9,7 +9,6 @@ TITLE = "AutoSplit64++"
 AUTHOR = "Flo Wolfe\nDavi Be\nSynozure"
 
 GITHUB_REPO = "florence-wolfe/AutoSplit64plusplus"
-DISCORD_LINK = "https://discord.gg/VmrQQBpPSK"
 
 WIDTH = 365
 HEIGHT = 259
