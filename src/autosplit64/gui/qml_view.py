@@ -12,11 +12,15 @@ os.environ.setdefault("QT_QUICK_CONTROLS_MATERIAL_VARIANT", "Dense")
 QML_DIR = Path(__file__).parent / "qml"
 
 
-def _load(view, name, context):
+def _load(view, name, context, images):
     """
-    Shows qml/<name>.qml in view, which reads context's values by their names. Its objects become the
-    view's children: the view deletes its QML before its children, so the QML never sees them deleted.
+    Shows qml/<name>.qml in view, which reads context's values by their names, and images' QQuickImageProviders'
+    pictures as image://<name>/... Its objects become the view's children: the view deletes its QML before its
+    children, so the QML never sees them deleted.
     """
+    for key, provider in images.items():
+        # The engine owns it
+        view.engine().addImageProvider(key, provider)
     for key, value in context.items():
         if isinstance(value, QtCore.QObject):
             value.setParent(view)
@@ -32,11 +36,11 @@ def _fill(parent, widget):
     layout.addWidget(widget)
 
 
-def qml_view(parent, name, **context):
+def qml_view(parent, name, images={}, **context):
     """ Fills parent with a view of qml/<name>.qml, see _load() """
     view = QtQuickWidgets.QQuickWidget()
     view.setResizeMode(QtQuickWidgets.QQuickWidget.ResizeMode.SizeRootObjectToView)
-    _load(view, name, context)
+    _load(view, name, context, images)
     _fill(parent, view)
     return view
 
@@ -48,6 +52,6 @@ def qml_window(parent, name, **context):
     """
     view = QtQuick.QQuickView()
     view.setResizeMode(QtQuick.QQuickView.ResizeMode.SizeRootObjectToView)
-    _load(view, name, context)
+    _load(view, name, context, {})
     _fill(parent, QtWidgets.QWidget.createWindowContainer(view, parent))
     return view

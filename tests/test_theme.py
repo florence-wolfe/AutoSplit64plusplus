@@ -106,13 +106,6 @@ class ThemedWidgetsTest(unittest.TestCase):
         for row in (second, third):
             self.assertLess(max(abs(a - b) for a, b in zip(row, self.color(Role.Base))), 60)
 
-    def test_divider_line(self):
-        from autosplit64.gui.widgets import HLine
-        line = HLine()
-        line.resize(50, 3)
-        image = line.grab().toImage()
-        self.assertEqual(image.pixelColor(25, 1).getRgb()[:3], self.palette.color(Role.Window).darker(140).getRgb()[:3])
-
     def test_menu_button_and_version_follow_the_text_color(self):
         muted = theme.muted(self.palette).getRgb()[:3]
         button = self.item("menuButton")
