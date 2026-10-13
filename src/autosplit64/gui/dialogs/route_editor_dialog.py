@@ -1,17 +1,17 @@
+import os
 from os import path
 import sys
 from json import JSONDecodeError
 import re
 import xml.etree.ElementTree as ET
-from functools import partial
 
 from PyQt6 import QtWidgets, QtCore, QtGui
-from PyQt6.QtGui import QIcon, QIntValidator
+from PyQt6.QtGui import QIcon
 
 from autosplit64.core import resource_utils
 from autosplit64.core import route_loader, config
 from autosplit64.core.route import Route, Split
-from autosplit64.gui.widgets import TableWidgetDragRows, HLine
+from autosplit64.gui.qml_view import qml_view
 from autosplit64.gui.constants import (
     ICON_PATH
 )
@@ -27,11 +27,136 @@ from autosplit64.core.constants import (
     TIMING_FILE_SELECT
 )
 
-# The split table's columns
-ICON, TITLE, STAR_COUNT, FADEOUT, FADEIN, XCAM, SPLIT_TYPE = range(7)
+# A split's counts, as the route editor shows them
+STAR_COUNT, FADEOUT, FADEIN, XCAM = "star_count", "fadeout", "fadein", "xcam"
 
-EDITABLE = QtCore.Qt.ItemFlag.ItemIsSelectable | QtCore.Qt.ItemFlag.ItemIsEditable | QtCore.Qt.ItemFlag.ItemIsEnabled
-NOT_EDITABLE = QtCore.Qt.ItemFlag.ItemIsSelectable | QtCore.Qt.ItemFlag.ItemIsEnabled
+
+class Splits(QtCore.QAbstractListModel):
+    """
+    The route's splits for RouteEditor.qml, as shown: each a dict of its icon's path, title, counts as text,
+    "-" for those its split type doesn't use, and split type. Also which are selected, and the current one.
+    """
+    KEYS = ["icon", "icon_url", "title", STAR_COUNT, FADEOUT, FADEIN, XCAM, "split_type", "unused", "selected"]
+    icon_clicked = QtCore.pyqtSignal(int)
+
+    def __init__(self, unused_counts):
+        super().__init__()
+        self._unused_counts = unused_counts
+        self.rows = []
+        self.selected = set()
+        # The row inserting above and below is from, or -1
+        self.current = -1
+
+    def rowCount(self, parent=QtCore.QModelIndex()):
+        return 0 if parent.isValid() else len(self.rows)
+
+    def roleNames(self):
+        return {QtCore.Qt.ItemDataRole.UserRole + i: key.encode() for i, key in enumerate(self.KEYS)}
+
+    def data(self, index, role):
+        key = self.KEYS[role - QtCore.Qt.ItemDataRole.UserRole]
+        row = self.rows[index.row()]
+        if key == "selected":
+            return index.row() in self.selected
+        if key == "unused":
+            return sorted(self._unused_counts.get(row["split_type"], ()))
+        if key == "icon_url":
+            return QtCore.QUrl.fromLocalFile(os.path.abspath(row["icon"])).toString() if row["icon"] else ""
+        return row[key]
+
+    def changed(self, row):
+        self.dataChanged.emit(self.index(row), self.index(row))
+
+    def reset(self, rows):
+        self.beginResetModel()
+        self.rows = rows
+        self.selected = set()
+        self.current = -1
+        self.endResetModel()
+
+    def insert(self, index, row):
+        self.beginInsertRows(QtCore.QModelIndex(), index, index)
+        self.rows.insert(index, row)
+        self.endInsertRows()
+
+    def remove(self, index):
+        self.beginRemoveRows(QtCore.QModelIndex(), index, index)
+        del self.rows[index]
+        self.endRemoveRows()
+
+    def move(self, index, to):
+        # The destination is the row it goes before, which is one further when moving down
+        self.beginMoveRows(QtCore.QModelIndex(), index, index, QtCore.QModelIndex(), to + 1 if to > index else to)
+        self.rows.insert(to, self.rows.pop(index))
+        self.endMoveRows()
+
+    def select_rows(self, rows):
+        self.selected = set(rows)
+        self.current = max(rows, default=-1)
+        self.dataChanged.emit(self.index(0), self.index(len(self.rows) - 1))
+
+    @QtCore.pyqtSlot(int, str)
+    def select(self, row, mode):
+        """ Select only the row, toggle it ("toggle"), or select from the current row to it ("range") """
+        if mode == "toggle":
+            self.select_rows(self.selected ^ {row})
+        elif mode == "range" and self.current >= 0:
+            self.select_rows(range(min(row, self.current), max(row, self.current) + 1))
+        else:
+            self.select_rows({row})
+        self.current = row
+
+    @QtCore.pyqtSlot(int, str, str)
+    def set(self, row, key, text):
+        # Not shown again: it's the field's text already
+        self.rows[row][key] = text
+
+    @QtCore.pyqtSlot(int, str)
+    def set_type(self, row, split_type):
+        """ Shows the counts the split type uses, at their defaults, and "-" for the others """
+        self.rows[row] = RouteEditor.split_row(self.rows[row]["icon"], self.rows[row]["title"], split_type=split_type)
+        self.changed(row)
+
+    @QtCore.pyqtSlot(int)
+    def click_icon(self, row):
+        self.icon_clicked.emit(row)
+
+
+class Editor(QtCore.QObject):
+    """
+    The route's details for RouteEditor.qml, in values: its title, category, initial star, version and timing.
+    Its other signals are the QML's clicks, and failed() shows an error.
+    """
+    changed = QtCore.pyqtSignal()
+    failed = QtCore.pyqtSignal(str, str)
+    new = QtCore.pyqtSignal()
+    open = QtCore.pyqtSignal()
+    save = QtCore.pyqtSignal()
+    save_as = QtCore.pyqtSignal()
+    insert_above = QtCore.pyqtSignal()
+    insert_below = QtCore.pyqtSignal()
+    remove = QtCore.pyqtSignal()
+    move_up = QtCore.pyqtSignal()
+    move_down = QtCore.pyqtSignal()
+    apply = QtCore.pyqtSignal()
+    cancel = QtCore.pyqtSignal()
+
+    def __init__(self):
+        super().__init__()
+        self._values = {"title": "", "category": "", "initialStar": "", "version": "JP", "timing": TIMING_RTA}
+
+    @QtCore.pyqtProperty("QVariantMap", notify=changed)
+    def values(self):
+        return self._values
+
+    def update(self, **values):
+        self._values.update(values)
+        self.changed.emit()
+
+    @QtCore.pyqtSlot(str, str)
+    def set(self, key, text):
+        # Not shown again: it's the field's text already
+        self._values[key] = text
 
 
 class RouteEditor(QtWidgets.QMainWindow):
@@ -39,6 +164,7 @@ class RouteEditor(QtWidgets.QMainWindow):
 
     CATEGORIES = ["0 Star", "1 Star", "16 Star", "70 Star", "120 Star"]
     SPLIT_TYPES = [SPLIT_NORMAL, SPLIT_FADE_ONLY, SPLIT_MIPS, SPLIT_MIPS_X, SPLIT_XCAM, SPLIT_FINAL]
+    TIMINGS = [TIMING_RTA, TIMING_UP_RTA, TIMING_FILE_SELECT]
     # The counts each split type doesn't use, shown as "-"
     UNUSED_COUNTS = {
         SPLIT_NORMAL: {XCAM},
@@ -48,7 +174,7 @@ class RouteEditor(QtWidgets.QMainWindow):
         SPLIT_XCAM: set(),
         SPLIT_FINAL: {FADEOUT, FADEIN, XCAM},
     }
-    # Each count's column and name, and the split types that need it
+    # Each count, its name, and the split types that need it
     COUNTS = [(STAR_COUNT, "Star Count", [t for t in SPLIT_TYPES if t != SPLIT_FADE_ONLY]),
               (FADEOUT, "Fadeout", [SPLIT_NORMAL]),
               (FADEIN, "Fadein", [SPLIT_NORMAL]),
@@ -72,104 +198,28 @@ class RouteEditor(QtWidgets.QMainWindow):
         self._lss_name = None
 
         self.setWindowTitle("Route Editor")
-        self.resize(780, 600)
+        self.resize(900, 640)
         self.setWindowIcon(QIcon(resource_utils.resource_path(ICON_PATH)))
 
-        self.main_layout = QtWidgets.QVBoxLayout()
+        self.splits = Splits({split_type: unused for split_type, unused in self.UNUSED_COUNTS.items()})
+        self.splits.icon_clicked.connect(self.choose_icon)
+        self.editor = Editor()
+        for signal, slot in [(self.editor.new, self.new), (self.editor.open, self.open), (self.editor.save, self.save),
+                             (self.editor.save_as, self.save_as), (self.editor.remove, self.remove_clicked),
+                             (self.editor.insert_above, lambda: self._insert_row(self.splits.current)),
+                             (self.editor.insert_below, lambda: self._insert_row(self.splits.current + 1)),
+                             (self.editor.move_up, lambda: self.moveCurrentRow(self.UP)),
+                             (self.editor.move_down, lambda: self.moveCurrentRow(self.DOWN)),
+                             (self.editor.apply, self.apply_clicked), (self.editor.cancel, self.close)]:
+            signal.connect(slot)
         main_widget = QtWidgets.QWidget()
         self.setCentralWidget(main_widget)
-        main_widget.setLayout(self.main_layout)
-        self.file_buttons()
+        self.view = qml_view(main_widget, "RouteEditor", editor=self.editor, splits=self.splits,
+                             categories=self.CATEGORIES, splitTypes=self.SPLIT_TYPES, timings=self.TIMINGS)
 
-        # The route's details
-        self.title_le = QtWidgets.QLineEdit()
-        self.category_combo = QtWidgets.QComboBox()
-        self.category_combo.addItems(self.CATEGORIES)
-        self.category_combo.setEditable(True)
-        self.category_combo.lineEdit().setText("")
-        self.init_star_le = QtWidgets.QLineEdit()
-        self.init_star_le.setFixedWidth(45)
-        self.init_star_le.setValidator(QIntValidator(self))
-        self.version_combo = QtWidgets.QComboBox()
-        self.version_combo.setMaximumWidth(65)
-        self.version_combo.addItems(["JP", "US"])
-        self.timing_combo = QtWidgets.QComboBox()
-        self.timing_combo.setMaximumWidth(80)
-        self.timing_combo.addItems([TIMING_RTA, TIMING_UP_RTA, TIMING_FILE_SELECT])
-
-        details_layout = QtWidgets.QFormLayout()
-        details_layout.setLabelAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
-        details_layout.setFieldGrowthPolicy(QtWidgets.QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
-        for text, field in [("Title:", self.title_le), ("Category:", self.category_combo),
-                            ("Initial Star:", self.init_star_le), ("Version:", self.version_combo),
-                            ("Timing:", self.timing_combo)]:
-            details_layout.addRow(text, field)
-
-        # The splits
-        self.split_table = TableWidgetDragRows()
-        self.split_table.setIconSize(QtCore.QSize(30, 30))
-        self.split_table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Stretch)
-        self.split_table.setColumnCount(7)
-        self.split_table.setHorizontalHeaderLabels(["Icon", "Split Title", "Star count", "Fadeout", "Fadein", "X-Cam", "Split Type"])
-        self.split_table.cellDoubleClicked.connect(self.double_clicked)
-
-        split_buttons_layout = QtWidgets.QVBoxLayout()
-        split_buttons_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
-        for text, slot in [("Insert Above", lambda: self._insert_row(self.split_table.currentIndex().row())),
-                           ("Insert Below", lambda: self._insert_row(self.split_table.currentIndex().row() + 1)),
-                           ("Remove", self.remove_clicked),
-                           ("Move Up", lambda: self.moveCurrentRow(self.UP)),
-                           ("Move Down", lambda: self.moveCurrentRow(self.DOWN))]:
-            button = QtWidgets.QPushButton(text)
-            button.setMinimumWidth(125)
-            button.clicked.connect(slot)
-            split_buttons_layout.addWidget(button)
-        split_buttons_layout.addStretch()
-
-        splits_layout = QtWidgets.QHBoxLayout()
-        splits_layout.addLayout(split_buttons_layout)
-        splits_layout.addWidget(self.split_table)
-
-        # Apply and Cancel
-        self.apply_btn = QtWidgets.QPushButton("Apply")
-        self.apply_btn.setMaximumWidth(100)
-        self.apply_btn.clicked.connect(self.apply_clicked)
-        cancel_btn = QtWidgets.QPushButton("Cancel")
-        cancel_btn.setMaximumWidth(100)
-        cancel_btn.clicked.connect(self.close)
-        apply_cancel_layout = QtWidgets.QHBoxLayout()
-        apply_cancel_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        apply_cancel_layout.addWidget(self.apply_btn)
-        apply_cancel_layout.addWidget(cancel_btn)
-
-        self.main_layout.addLayout(details_layout)
-        self.main_layout.addWidget(HLine())
-        self.main_layout.addLayout(splits_layout)
-        self.main_layout.addLayout(apply_cancel_layout)
-
-    def file_buttons(self):
-        """ New, Open, Save and Save As buttons above the route """
-        file_layout = QtWidgets.QHBoxLayout()
-
-        for text, tooltip, shortcut, slot in [
-            ("New", "Create new route", QtGui.QKeySequence.StandardKey.New, self.new),
-            ("Open", "Open a route (.as64), or LiveSplit splits (.lss) to convert to a route", QtGui.QKeySequence.StandardKey.Open, self.open),
-            ("Save", "Save route", QtGui.QKeySequence.StandardKey.Save, self.save),
-            ("Save As...", "Save route as", None, self.save_as),
-        ]:
-            button = QtWidgets.QPushButton(text)
-            button.setToolTip(tooltip)
-            button.setAutoDefault(False)
-            if shortcut is not None:
-                button.setShortcut(QtGui.QKeySequence(shortcut))
-            button.clicked.connect(slot)
-            file_layout.addWidget(button)
-        file_layout.addStretch()
-
-        QtGui.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.StandardKey.Close), self, self.close)
-
-        self.main_layout.addLayout(file_layout)
-        self.main_layout.addWidget(HLine())
+        Key = QtGui.QKeySequence.StandardKey
+        for key, slot in [(Key.New, self.new), (Key.Open, self.open), (Key.Save, self.save), (Key.Close, self.close)]:
+            QtGui.QShortcut(QtGui.QKeySequence(key), self, slot)
 
     def show(self):
         # Already open: bring it to the front, keeping unsaved changes
@@ -184,47 +234,31 @@ class RouteEditor(QtWidgets.QMainWindow):
         if direction not in (self.DOWN, self.UP):
             return
 
-        indexes = sorted(set(item.row() for item in self.split_table.selectedItems()), reverse=(direction == self.DOWN))
+        indexes = sorted(self.splits.selected, reverse=(direction == self.DOWN))
         new_indexes = []
-
-        if not indexes:
-            return
 
         for idx in indexes:
             new_idx = idx + direction
 
-            if new_idx >= self.split_table.rowCount() or new_idx < 0:
+            if new_idx >= len(self.splits.rows) or new_idx < 0:
                 break
 
             new_indexes.append(new_idx)
+            self.splits.move(idx, new_idx)
 
-            try:
-                icon_path = self.split_table.item(idx, ICON).toolTip()
-            except AttributeError:
-                icon_path = None
-            row_data = [self.split_table.item(idx, column).text() for column in range(TITLE, SPLIT_TYPE)]
-            split_type = self.split_table.cellWidget(idx, SPLIT_TYPE).currentText()
-
-            self.split_table.removeRow(idx)
-            self._insert_row(new_idx, icon_path, *row_data, split_type)
-
-        self.split_table.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.MultiSelection)
-
-        for idx in new_indexes:
-            for col in range(self.split_table.columnCount()):
-                try:
-                    self.split_table.item(idx, col).setSelected(True)
-                except AttributeError:
-                    pass
-
-        self.split_table.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.ExtendedSelection)
+        if new_indexes:
+            self.splits.select_rows(new_indexes)
 
     def remove_clicked(self):
-        indexes = sorted(set(item.row() for item in self.split_table.selectedItems()), reverse=True)
+        indexes = sorted(self.splits.selected, reverse=True)
 
         for index in indexes:
-            self.split_table.removeRow(index)
-            self.split_table.selectRow(index)
+            self.splits.remove(index)
+        # The row after the removed ones, now where they were
+        if indexes and self.splits.rows:
+            self.splits.select_rows({min(indexes[-1], len(self.splits.rows) - 1)})
+        else:
+            self.splits.select_rows(set())
 
     def apply_clicked(self):
         err_code = self.save()
@@ -234,24 +268,15 @@ class RouteEditor(QtWidgets.QMainWindow):
 
         self.close()
 
-    def double_clicked(self, x, y):
-        if y != ICON:
-            return
-
+    def choose_icon(self, row):
         file_name, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Choose Icon", resource_utils.base_path("resources/icons"))
 
         if not file_name:
             return
 
         # Convert to relative path, if possible
-        self._set_icon(x, resource_utils.abs_to_rel(file_name))
-
-    def _set_icon(self, row, icon_path):
-        item = QtWidgets.QTableWidgetItem()
-        item.setIcon(QIcon(icon_path))
-        item.setToolTip(icon_path)
-        item.setFlags(NOT_EDITABLE)
-        self.split_table.setItem(row, ICON, item)
+        self.splits.rows[row]["icon"] = resource_utils.abs_to_rel(file_name)
+        self.splits.changed(row)
 
     def load_route(self, route_path=None):
         """
@@ -298,40 +323,23 @@ class RouteEditor(QtWidgets.QMainWindow):
         if not self.route:
             return
 
-        self.title_le.setText(self.route.title)
-        self.init_star_le.setText(str(self.route.initial_star))
-        self.category_combo.lineEdit().setText(self.route.category)
-        self.version_combo.setCurrentIndex(1 if self.route.version == "US" else 0)
-        self.timing_combo.setCurrentText(self.route.timing)
-
-        self.split_table.setRowCount(len(self.route.splits))
-        for row, split in enumerate(self.route.splits):
-            self._set_row(row, split.icon_path, split.title, split.star_count, split.on_fadeout, split.on_fadein,
-                          split.on_xcam, split.split_type)
+        self.editor.update(title=self.route.title, initialStar=str(self.route.initial_star), category=self.route.category,
+                           version="US" if self.route.version == "US" else "JP", timing=self.route.timing)
+        self.splits.reset([self.split_row(split.icon_path, split.title, split.star_count, split.on_fadeout,
+                                          split.on_fadein, split.on_xcam, split.split_type)
+                           for split in self.route.splits])
 
     def display_error_message(self, message, title):
-        """
-        Display a warning dialog with given title and message
-        :param title: Window title
-        :param message: Warning/error message
-        :return:
-        """
-        msg = QtWidgets.QMessageBox(self)
-        msg.setIcon(QtWidgets.QMessageBox.Icon.Warning)
-        msg.setWindowTitle(title)
-        msg.setText(message)
-        msg.show()
+        """ Show a warning over the window with given title and message """
+        self.editor.failed.emit(title, message)
 
     def new(self):
         self.route = None
         self.route_path = None
         self._lss_name = None
 
-        self.split_table.setRowCount(0)
-
-        self.title_le.setText("")
-        self.init_star_le.setText("")
-        self.version_combo.setCurrentIndex(0)
+        self.splits.reset([])
+        self.editor.update(title="", initialStar="", version="JP")
 
     def open(self):
         """ Show native file dialog to select a route, or LiveSplit splits to convert to one. """
@@ -356,49 +364,43 @@ class RouteEditor(QtWidgets.QMainWindow):
         self.save()
 
     def save(self):
-        self.apply_btn.setFocus()
-
         splits = []
 
-        if self.split_table.rowCount() < 1:
+        if not self.splits.rows:
             self.display_error_message("No Splits", "Route Error")
             return -1
 
-        for row in range(self.split_table.rowCount()):
-            title = self.split_table.item(row, TITLE).text()
+        for row, split in enumerate(self.splits.rows):
+            title = split["title"]
             if len(title) <= 0:
                 self.display_error_message("Invalid Title - Row: " + str(row + 1), "Route Error")
-                self.split_table.setCurrentCell(row, TITLE)
+                self.splits.select_rows({row})
                 return -1
 
-            split_type = self.split_table.cellWidget(row, SPLIT_TYPE).currentText()
+            split_type = split["split_type"]
             # -1 for a count the split type doesn't need
             counts = []
-            for column, name, needed_by in self.COUNTS:
+            for key, name, needed_by in self.COUNTS:
                 try:
-                    counts.append(int(self.split_table.item(row, column).text()))
-                except (ValueError, AttributeError):
+                    counts.append(int(split[key]))
+                except ValueError:
                     if split_type in needed_by:
                         self.display_error_message(f"Invalid {name} - Row: {row + 1}", "Route Error")
-                        self.split_table.setCurrentCell(row, column)
+                        self.splits.select_rows({row})
                         return -1
                     counts.append(-1)
 
-            try:
-                icon_path = self.split_table.item(row, ICON).toolTip()
-            except (ValueError, AttributeError):
-                icon_path = ""
+            splits.append(Split(title, *counts, split_type, split["icon"]))
 
-            splits.append(Split(title, *counts, split_type, icon_path))
-
-        title = self.title_le.text()
+        details = self.editor.values
+        title = details["title"]
         if len(title) <= 0:
             self.display_error_message("Invalid Route Title", "Route Error")
             return -1
 
         try:
-            initial_star = int(self.init_star_le.text())
-        except (ValueError, AttributeError):
+            initial_star = int(details["initialStar"])
+        except ValueError:
             self.display_error_message("Invalid Initial Star", "Route Error")
             return -1
 
@@ -406,9 +408,9 @@ class RouteEditor(QtWidgets.QMainWindow):
                       title,
                       splits,
                       initial_star,
-                      self.version_combo.currentText(),
-                      self.category_combo.lineEdit().text(),
-                      self.timing_combo.currentText())
+                      details["version"],
+                      details["category"],
+                      details["timing"])
 
         route_error = route_loader.validate_route(route)
 
@@ -441,7 +443,7 @@ class RouteEditor(QtWidgets.QMainWindow):
         segments = root.find('Segments')
 
         # Default initial star to 0
-        self.init_star_le.setText("0")
+        self.editor.update(initialStar="0")
 
         # STAGE NAMES: a word of the split's name, or a part of it
         DW_NAMES_IN = ['key1', 'key 1', 'bowser', 'dw', 'dark world', 'darkworld', 'bitdw', 'dworld']
@@ -511,7 +513,7 @@ class RouteEditor(QtWidgets.QMainWindow):
 
             if star_count == "" and i != len(segments) - 1:
                 try:
-                    star_count = self.split_table.item(self.split_table.rowCount() - 1, STAR_COUNT).text()
+                    star_count = self.splits.rows[-1][STAR_COUNT]
                 except:
                     star_count = "0"
 
@@ -522,12 +524,12 @@ class RouteEditor(QtWidgets.QMainWindow):
 
         # Set final star (as often not in split title)
         try:
-            final_star = int(self.split_table.item(self.split_table.rowCount() - 1, STAR_COUNT).text())
+            final_star = int(self.splits.rows[-1][STAR_COUNT])
         except IndexError:
             final_star = None
         except ValueError:
             try:
-                prev_star_count = int(self.split_table.item(self.split_table.rowCount() - 2, STAR_COUNT).text())
+                prev_star_count = int(self.splits.rows[-2][STAR_COUNT])
                 if prev_star_count == 16:
                     final_star = "16"
                 elif prev_star_count == 69:
@@ -537,59 +539,33 @@ class RouteEditor(QtWidgets.QMainWindow):
                 elif prev_star_count >= 0:
                     final_star = str(prev_star_count)
 
-                self.split_table.setItem(self.split_table.rowCount() - 1, STAR_COUNT, QtWidgets.QTableWidgetItem(final_star))
+                self.splits.rows[-1][STAR_COUNT] = final_star
+                self.splits.changed(len(self.splits.rows) - 1)
             except (ValueError, IndexError, UnboundLocalError):
                 final_star = None
 
         # Set Category
         if final_star == "16":
-            self.category_combo.lineEdit().setText("16 Star")
+            self.editor.update(category="16 Star")
         elif final_star == "70":
-            self.category_combo.lineEdit().setText("70 Star")
-            self.version_combo.setCurrentIndex(1)
+            self.editor.update(category="70 Star", version="US")
         elif final_star == "120":
-            self.category_combo.lineEdit().setText("120 Star")
+            self.editor.update(category="120 Star")
 
-    def split_type_changed(self, combo):
-        for row in range(self.split_table.rowCount()):
-            if combo == self.split_table.cellWidget(row, SPLIT_TYPE):
-                self._set_disable_columns(row, combo.currentText())
-                return
-
-    def _set_disable_columns(self, row, row_type, fadeouts="1", fadeins="0", xcam="1", star_count="0"):
-        """ Shows the counts the split type uses, and "-" for the others """
-        unused = self.UNUSED_COUNTS.get(row_type)
-        if unused is None:
-            return
-        for column, value in [(FADEOUT, fadeouts), (FADEIN, fadeins), (XCAM, xcam), (STAR_COUNT, star_count)]:
-            item = self.split_table.item(row, column)
-            item.setText("-" if column in unused else str(value))
-            item.setFlags(NOT_EDITABLE if column in unused else EDITABLE)
-
-    def _set_row(self, row, icon_path, title, star_count, fadeouts, fadeins, xcam, row_type):
-        if icon_path is not None:
-            self._set_icon(row, icon_path)
-        self.split_table.setItem(row, TITLE, QtWidgets.QTableWidgetItem(title))
-        for column in (STAR_COUNT, FADEOUT, FADEIN, XCAM):
-            self.split_table.setItem(row, column, QtWidgets.QTableWidgetItem(""))
-        self._add_split_combo(row, row_type)
-        self._set_disable_columns(row, row_type, fadeouts, fadeins, xcam, star_count)
+    @classmethod
+    def split_row(cls, icon_path, title, star_count="0", fadeouts="1", fadeins="0", xcam="1", split_type=SPLIT_NORMAL):
+        """ A split as shown: the counts the split type uses, and "-" for the others """
+        unused = cls.UNUSED_COUNTS.get(split_type, set())
+        row = {"icon": icon_path or "", "title": title, "split_type": split_type}
+        for key, value in [(FADEOUT, fadeouts), (FADEIN, fadeins), (XCAM, xcam), (STAR_COUNT, star_count)]:
+            row[key] = "-" if key in unused else str(value)
+        return row
 
     def _insert_row(self, index=None, icon_path=None, title="", star_count="", fadeouts="1", fadeins="0", xcam="-1", row_type=SPLIT_NORMAL):
         if index is None:
-            index = self.split_table.rowCount()
+            index = len(self.splits.rows)
 
         index = max(index, 0)
 
-        self.split_table.insertRow(index)
-        self._set_row(index, icon_path or None, title, star_count, fadeouts, fadeins, xcam, row_type)
-        self.split_table.selectRow(index)
-
-    def _add_split_combo(self, row, default=SPLIT_NORMAL):
-        combo = QtWidgets.QComboBox()
-        combo.addItems(self.SPLIT_TYPES)
-        self.split_table.setCellWidget(row, SPLIT_TYPE, combo)
-        if default in self.SPLIT_TYPES:
-            combo.setCurrentIndex(self.SPLIT_TYPES.index(default))
-
-        combo.currentIndexChanged.connect(partial(self.split_type_changed, combo))
+        self.splits.insert(index, self.split_row(icon_path, title, star_count, fadeouts, fadeins, xcam, row_type))
+        self.splits.select_rows({index})
