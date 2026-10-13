@@ -15,7 +15,7 @@ from autosplit64.core import config, logs
 from autosplit64.core.model import PredictionInfo
 from autosplit64.gui.dialogs import debug_dialog
 from autosplit64.gui.dialogs.debug_dialog import DebugDialog, describe
-from tests.qt import qml
+from tests.qt import qml, wait_until
 
 _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
@@ -305,13 +305,19 @@ class RecentEventsTest(unittest.TestCase):
         events = qml(self.dialog.view, "events")
         self.dialog.show()
         self.addCleanup(self.dialog.close)
-        QtWidgets.QApplication.processEvents()
+        # Laid out and following the latest, as when it's read: one processEvents() isn't always enough, e.g. on Windows
+        wait_until(lambda: 0 < events.height() < events.property("contentHeight") and events.property("atYEnd"))
         QtCore.QMetaObject.invokeMethod(events, "positionViewAtBeginning")
         self.log()
-        self.assertTrue(events.property("atYBeginning"))
+        self.assertTrue(events.property("atYBeginning"), self.scrolled(events))
         QtCore.QMetaObject.invokeMethod(events, "positionViewAtEnd")
         self.log()
-        self.assertTrue(events.property("atYEnd"))
+        self.assertTrue(events.property("atYEnd"), self.scrolled(events))
+
+    @staticmethod
+    def scrolled(events):
+        """ Where the list is scrolled, for a failure """
+        return {name: events.property(name) for name in ("contentY", "originY", "contentHeight", "height", "count", "following")}
 
 
 if __name__ == "__main__":
