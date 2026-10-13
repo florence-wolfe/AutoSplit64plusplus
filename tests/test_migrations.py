@@ -11,7 +11,7 @@ from PyQt6 import QtWidgets
 
 from autosplit64.core import config, migrations
 from autosplit64.gui.dialogs.settings_changes_dialog import SettingsChangesDialog
-from tests.qt import close_window
+from tests.qt import close_window, qml, qml_items
 
 _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
@@ -151,13 +151,13 @@ class SettingsChangesDialogTest(unittest.TestCase):
         return dialog
 
     def test_shows_each_change_and_why(self):
-        texts = [label.text() for label in self.dialog().findChildren((QtWidgets.QLabel, QtWidgets.QCheckBox))]
+        texts = [item.property("text") for item in qml_items(self.dialog().view)]
         self.assertIn("Reset Threshold: 0.1 → 0.3", texts)
         self.assertIn("Catches more resets.", texts)
 
     def test_apply_the_checked_ones(self):
         dialog = self.dialog()
-        dialog.checkboxes[1].setChecked(False)
+        qml(dialog.view, "change1").setProperty("checked", False)
         dialog.accept()
         self.assertEqual(dialog.accepted_steps(), [THRESHOLD])
 

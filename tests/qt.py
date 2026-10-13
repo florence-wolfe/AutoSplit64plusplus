@@ -10,3 +10,16 @@ def close_window(window):
     if not sip.isdeleted(window):
         window.close()
     QtWidgets.QApplication.sendPostedEvents(None, QtCore.QEvent.Type.DeferredDelete)
+
+
+def qml_items(view):
+    """ The items in a qml_view(), by the items they're in: a Repeater's aren't its QObject children """
+    items = [view.rootObject()]
+    for item in items:
+        items.extend(item.childItems())
+    return items
+
+
+def qml(view, name):
+    """ The QML item with that objectName in a qml_view() """
+    return next((item for item in qml_items(view) if item.objectName() == name), None)

@@ -7,13 +7,13 @@ from PyQt6 import QtCore, QtWidgets
 from autosplit64.core import config
 from autosplit64.gui import theme
 from autosplit64.gui.dialogs.settings_dialog import SettingsDialog
+from tests import qt
 
 _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
 
 def qml(dialog, name):
-    """ The dialog's QML item with that objectName """
-    return dialog.view.rootObject().findChild(QtCore.QObject, name)
+    return qt.qml(dialog.view, name)
 
 
 def choose(combo, index):

@@ -5,6 +5,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtTest import QTest
 
 from autosplit64.gui.dialogs.about_dialog import AboutDialog
+from tests.qt import qml
 
 _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
@@ -21,7 +22,7 @@ class AboutTest(unittest.TestCase):
         self.assertTrue(self.about.isVisible())
 
     def qml(self, name):
-        return self.about.view.rootObject().findChild(QtCore.QObject, name)
+        return qml(self.about.view, name)
 
     def test_authors(self):
         self.assertEqual(self.qml("authors").property("text").splitlines()[0], "Flo Wolfe")
