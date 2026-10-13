@@ -98,7 +98,7 @@ class ResetGeneratorDialogTest(unittest.TestCase):
         self.dialog.cancel_clicked()
         self.assertEqual([p.name for p in self.dir.iterdir()], ["generated_reset_one.jpg"])
 
-    def test_an_error_is_shown_and_closing_it_closes_the_window(self):
+    def test_an_error_is_shown_and_closing_it_keeps_the_window_open(self):
         with mock.patch("autosplit64.gui.dialogs.reset_generator_dialog.ResetGenerator"):
             self.dialog.show()
         self.addCleanup(self.dialog.close)
@@ -107,9 +107,10 @@ class ResetGeneratorDialogTest(unittest.TestCase):
         self.assertEqual((error.property("visible"), error.property("text")), (True, "No game capture"))
 
         QtCore.QMetaObject.invokeMethod(error, "close")
-        # Once it has faded out
-        wait_until(lambda: not self.dialog.isVisible())
-        self.assertFalse(self.dialog.isVisible())
+        # Once it has faded out, to generate again after fixing the capture
+        wait_until(lambda: not error.property("visible"))
+        self.assertTrue(self.dialog.isVisible())
+        self.assertEqual((self.qml("generate").property("text"), self.qml("generate").property("enabled")), ("Generate", True))
 
     def test_closing_removes_the_generated_frames(self):
         self.dialog.close()

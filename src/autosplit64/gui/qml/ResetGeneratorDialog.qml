@@ -53,7 +53,6 @@ ThemedPane {
         id: error
         objectName: "error"
         heading: "Error"
-        onClosed: templates.dismiss()
     }
 
     Connections {

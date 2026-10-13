@@ -37,8 +37,6 @@ class Templates(QtCore.QObject):
     apply = QtCore.pyqtSignal()
     cancel = QtCore.pyqtSignal()
     failed = QtCore.pyqtSignal(str)
-    # The error was closed
-    dismiss = QtCore.pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -89,7 +87,6 @@ class ResetGeneratorDialog(QtWidgets.QDialog):
         self.templates.generate.connect(self.generate_clicked)
         self.templates.apply.connect(self.apply_clicked)
         self.templates.cancel.connect(self.cancel_clicked)
-        self.templates.dismiss.connect(self.hide)
         defaults = [image_url(config.get_default("advanced", f"reset_frame_{name}"), 0) for name in ("one", "two")]
         self.view = qml_view(self, "ResetGeneratorDialog", templates=self.templates, defaults=defaults,
                              captureCount=ResetGenerator.CAPTURE_COUNT)
@@ -165,7 +162,7 @@ class ResetGeneratorDialog(QtWidgets.QDialog):
         super().closeEvent(event)
 
     def on_error(self, error):
-        # The window closes once the error is
+        # The window stays open, to generate again once the capture is fixed
         self._wait_timer.stop()
         self.templates.update(status="Generate", busy=False, generated=False)
         self.templates.failed.emit(error)
