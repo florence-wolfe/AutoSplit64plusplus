@@ -87,5 +87,48 @@ class ResetGeneratorDialogTest(unittest.TestCase):
         self.assertEqual(list(self.dir.iterdir()), [])
 
 
+    def test_generate_says_its_waiting_for_the_reset_and_for_how_long(self):
+        # How long is up to the runner, who resets the console
+        with mock.patch("time.monotonic", return_value=100):
+            self.dialog.generate_clicked()
+        self.assertEqual(self.dialog.generate_btn.text(), "Reset your console… 0 s")
+        self.assertTrue(self.dialog._wait_timer.isActive())
+        with mock.patch("time.monotonic", return_value=112.5):
+            self.dialog._wait_timer.timeout.emit()
+        self.assertEqual(self.dialog.generate_btn.text(), "Reset your console… 12 s")
+
+    def test_capturing_once_the_reset_is_seen(self):
+        self.dialog.generate_clicked()
+        self.dialog.on_reset_seen()
+        self.assertEqual(self.dialog.generate_btn.text(), "Capturing…")
+        self.assertFalse(self.dialog._wait_timer.isActive())
+
+    def test_stops_counting_when_generated_or_cancelled(self):
+        for finish in (self.dialog.on_generate, self.dialog.cancel_clicked):
+            self.dialog.generate_clicked()
+            finish()
+            self.assertFalse(self.dialog._wait_timer.isActive())
+            if finish == self.dialog.on_generate:
+                self.assertEqual(self.dialog.generate_btn.text(), "Generate")
+
+
+class ResetGeneratorTest(unittest.TestCase):
+    def test_says_when_it_sees_the_reset(self):
+        black, logo = np.zeros((50, 50, 3), np.uint8), np.full((50, 50, 3), 200, np.uint8)
+        # The game, the black screen of the reset, then the logo
+        frames = iter([logo, black, black] + [logo] * (ResetGenerator.CAPTURE_COUNT + 1))
+        capture = mock.Mock(get_region=mock.Mock(side_effect=lambda region: current[0]))
+        current = [None]
+        capture.capture.side_effect = lambda: current.__setitem__(0, next(frames))
+        with mock.patch("autosplit64.gui.dialogs.reset_generator_dialog.GameCapture", return_value=capture), \
+             mock.patch.object(config, "_config", {"game": {}, "thresholds": {"black_threshold": 0.1}}), \
+             mock.patch("time.sleep"), mock.patch("cv2.imwrite"):
+            generator = ResetGenerator()
+            seen = mock.Mock()
+            generator.reset_seen.connect(seen)
+            generator.run()
+        seen.assert_called_once()
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -60,6 +60,11 @@ class ResetGeneratorDialog(QtWidgets.QDialog):
 
         self._reset_generator = None
         self.help_dialog = ResetGeneratorHelpDialog(self)
+        # Counts the wait for the runner to reset the console, which takes as long as they take
+        self._wait_timer = QtCore.QTimer(self)
+        self._wait_timer.setInterval(1000)
+        self._wait_timer.timeout.connect(self._show_wait)
+        self._wait_start = 0
 
         self.apply_btn = QtWidgets.QPushButton("Apply")
         self.generate_btn = QtWidgets.QPushButton("Generate")
@@ -122,6 +127,7 @@ class ResetGeneratorDialog(QtWidgets.QDialog):
         self._reset_generator = ResetGenerator()
         self._reset_generator.generated.connect(self.on_generate)
         self._reset_generator.error.connect(self.on_error)
+        self._reset_generator.reset_seen.connect(self.on_reset_seen)
 
         # The templates in use until new ones are generated
         self._show_image(self.gen_1_px, config.get("advanced", "reset_frame_one"))
@@ -138,9 +144,18 @@ class ResetGeneratorDialog(QtWidgets.QDialog):
         super().hide()
 
     def generate_clicked(self):
-        self.generate_btn.setText("Waiting..")
+        self._wait_start = time.monotonic()
+        self._show_wait()
+        self._wait_timer.start()
         self.generate_btn.setEnabled(False)
         self._reset_generator.start()
+
+    def _show_wait(self):
+        self.generate_btn.setText(f"Reset your console… {int(time.monotonic() - self._wait_start)} s")
+
+    def on_reset_seen(self):
+        self._wait_timer.stop()
+        self.generate_btn.setText("Capturing…")
 
     def apply_clicked(self):
         for name, spin_box in (("one", self.gen_1_sb), ("two", self.gen_2_sb)):
@@ -158,11 +173,13 @@ class ResetGeneratorDialog(QtWidgets.QDialog):
         self.applied.emit()
 
     def cancel_clicked(self):
+        self._wait_timer.stop()
         self._remove_temp_files()
         self._reset_generator.stop()
         self.hide()
 
     def on_generate(self):
+        self._wait_timer.stop()
         self._show_frame(self.gen_1_px, 2)
         self._show_frame(self.gen_2_px, 3)
         self.gen_1_sb.setValue(2)
@@ -174,11 +191,13 @@ class ResetGeneratorDialog(QtWidgets.QDialog):
         self.gen_2_sb.setEnabled(True)
 
     def closeEvent(self, event):
+        self._wait_timer.stop()
         self._remove_temp_files()
         self._reset_generator.stop()
         super().closeEvent(event)
 
     def on_error(self, error):
+        self._wait_timer.stop()
         self.generate_btn.setText("Generate")
         self.generate_btn.setEnabled(True)
         self.apply_btn.setEnabled(False)
@@ -195,6 +214,8 @@ class ResetGenerator(QtCore.QThread):
     CAPTURE_COUNT = 5
 
     generated = QtCore.pyqtSignal()
+    # The black screen of the reset, after which the logo's frames are captured
+    reset_seen = QtCore.pyqtSignal()
     error = QtCore.pyqtSignal(str)
 
     def __init__(self):
@@ -228,8 +249,9 @@ class ResetGenerator(QtCore.QThread):
             reset_region = self._game_capture.get_region(RESET_REGION)
             fadeout_region = self._game_capture.get_region(FADEOUT_REGION)
 
-            if is_black(fadeout_region, 0.1, 0.97):
+            if is_black(fadeout_region, 0.1, 0.97) and not reset_occurred:
                 reset_occurred = True
+                self.reset_seen.emit()
 
             if reset_occurred:
                 if not is_black(fadeout_region, config.get("thresholds", "black_threshold"), 0.99):
