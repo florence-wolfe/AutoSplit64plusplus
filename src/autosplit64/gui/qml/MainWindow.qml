@@ -1,0 +1,296 @@
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls.Material
+
+// The main window's content: the route's splits beside the star, star count and start button, which keep
+// their art. `main` is the Python Main object (app.py): its values are what's shown, and its slots the
+// clicks, drags and menu. `art` has the pictures' URLs.
+ThemedPane {
+    id: root
+
+    SystemPalette { id: system; colorGroup: SystemPalette.Active }
+
+    // Anywhere else, dragging moves the window and the right button opens the menu
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        function global(mouse) { return mapToGlobal(mouse.x, mouse.y) }
+        onPressed: mouse => {
+            if (mouse.button === Qt.RightButton)
+                root.openMenu(mouse.x, mouse.y)
+            else {
+                const point = global(mouse)
+                main.press(point.x, point.y)
+            }
+        }
+        onPositionChanged: mouse => {
+            const point = global(mouse)
+            main.drag(point.x, point.y)
+        }
+        onReleased: main.release()
+    }
+
+    Rectangle { anchors.fill: parent; color: system.base; z: -1 }
+
+    RowLayout {
+        anchors.fill: parent
+        spacing: 0
+
+        // The splits, as many rows as fit, the current one highlighted
+        ListView {
+            id: splitList
+            objectName: "splitList"
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.minimumWidth: 183
+            // Dragging moves the window instead
+            interactive: false
+            clip: true
+            model: main.values.splits
+            currentIndex: main.values.current
+            readonly property real rowHeight: height / Math.max(1, Math.floor(height / 37))
+            onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
+            onHeightChanged: positionViewAtIndex(currentIndex, ListView.Contain)
+
+            delegate: Rectangle {
+                required property var modelData
+                required property int index
+                width: ListView.view.width
+                height: splitList.rowHeight
+                // Alternating shades of the background, and the theme's highlight for the current split,
+                // also while another window has focus, as during a run
+                color: index === splitList.currentIndex ? system.highlight
+                     : Qt.darker(system.base, index % 2 ? 1.08 : 1.03)
+
+                Image {
+                    x: (parent.height - width) / 2
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.height * 0.8
+                    height: width
+                    source: modelData.icon
+                    sourceSize.width: width
+                    sourceSize.height: height
+                }
+                Label {
+                    x: parent.height
+                    width: parent.width - x
+                    height: parent.height
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                    text: modelData.title
+                    color: system.text
+                    font.family: "Tw Cen MT"
+                    font.pointSize: 14
+                }
+            }
+
+            // A row at a time, like the window did before
+            WheelHandler {
+                property real steps: 0
+                onWheel: event => {
+                    steps += event.angleDelta.y
+                    if (Math.abs(steps) < 120)
+                        return
+                    const first = splitList.indexAt(0, splitList.contentY + 1) + (steps > 0 ? -1 : 1)
+                    steps = 0
+                    splitList.positionViewAtIndex(Math.max(0, Math.min(first, splitList.count - 1)), ListView.Beginning)
+                }
+            }
+        }
+
+        // The star, star count and start button, at their places in the art's panel
+        Item {
+            objectName: "rightPanel"
+            Layout.preferredWidth: 182
+            Layout.preferredHeight: 259
+            Layout.alignment: Qt.AlignVCenter
+
+            ArtButton {
+                objectName: "star"
+                x: 59
+                y: 35
+                normal: art.star
+                hover: art.starHover
+                tip: "Restart split detection, which picks up from your timer's current split. The timer itself isn't affected."
+                onClicked: main.restart()
+            }
+
+            Label {
+                objectName: "starCount"
+                x: 14
+                y: 115
+                width: 150
+                horizontalAlignment: Text.AlignHCenter
+                text: main.values.starCount + "  /  " + main.values.splitStar
+                color: system.text
+                font.family: "Tw Cen MT"
+                font.pointSize: 20
+            }
+
+            ArtButton {
+                objectName: "start"
+                x: 23
+                y: 180
+                normal: art[main.values.start]
+                hover: art[main.values.start]
+                tip: ({
+                    "start": "Start split detection",
+                    "stop": "Stop split detection. Your timer isn't affected.",
+                    "init": "Starting split detection... Click to cancel."
+                })[main.values.start]
+                // 10% larger while hovered, around its center
+                scale: hovered ? 1.1 : 1
+                onClicked: main.start_clicked()
+            }
+        }
+    }
+
+    // The connection to LiveSplit, in the top right corner. Clicking it copies the address.
+    Rectangle {
+        objectName: "status"
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.margins: 6
+        width: 12
+        height: 12
+        radius: 6
+        color: main.values.statusColor
+        border.color: system.dark
+        HoverHandler { id: statusHover; cursorShape: Qt.PointingHandCursor }
+        ToolTip.visible: statusHover.hovered && !copied.visible
+        ToolTip.text: main.values.statusTip
+        TapHandler { onTapped: copied.show("Copied " + main.copy_status(), 2500) }
+        ToolTip { id: copied }
+    }
+
+    // The installed version, with a dot when there's an update, at the bottom left of the right panel
+    Label {
+        objectName: "version"
+        anchors.right: parent.right
+        anchors.rightMargin: 182 - 8 - width
+        anchors.verticalCenter: menuButton.verticalCenter
+        textFormat: Text.StyledText
+        font.pixelSize: 11
+        text: "<font color='" + main.values.muted + "'>" + main.values.version + "</font>"
+            + (main.values.update ? " <font color='" + main.values.green + "'>●</font>" : "")
+        HoverHandler { id: versionHover; cursorShape: Qt.PointingHandCursor }
+        ToolTip.visible: versionHover.hovered
+        ToolTip.text: main.values.versionTip
+        TapHandler { onTapped: main.version_clicked() }
+    }
+
+    // The menu, opening upwards from the bottom right corner
+    AbstractButton {
+        id: menuButton
+        objectName: "menuButton"
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: 8
+        width: 18
+        height: 14
+        // Also where the platform has no hover effects: it's the button's only look besides its lines
+        hoverEnabled: true
+        HoverHandler { cursorShape: Qt.PointingHandCursor }
+        ToolTip.visible: hovered
+        ToolTip.text: "Menu"
+        onClicked: {
+            const menu = root.makeMenu()
+            // Above the button once its height is known, when it's open, but not above the screen: Qt doesn't
+            // keep a popup that's a window on it
+            menu.openedChanged.connect(() => {
+                if (menu.opened)
+                    menu.y = Math.max(menuButton.y - menu.height, main.screen_top() - root.mapToGlobal(0, 0).y)
+            })
+            menu.popup(menuButton.x + menuButton.width - menu.width, menuButton.y)
+        }
+        contentItem: Column {
+            topPadding: 1
+            spacing: 3
+            Repeater {
+                model: 3
+                Rectangle {
+                    x: 2
+                    width: 14
+                    height: 2
+                    radius: 1
+                    color: menuButton.hovered ? system.text : main.values.muted
+                }
+            }
+        }
+        background: null
+    }
+
+    // The menu's entries come from main.menu(), each time it opens, so routes and checks are current
+    function makeMenu() {
+        const menu = menuComponent.createObject(root)
+        fill(menu, main.menu())
+        menu.closed.connect(() => menu.destroy())
+        return menu
+    }
+
+    function openMenu(x, y) {
+        makeMenu().popup(x, y)
+    }
+
+    function fill(menu, items) {
+        for (const item of items) {
+            if (item.separator)
+                menu.addItem(separatorComponent.createObject(menu.contentItem))
+            else if (item.items) {
+                const submenu = menuComponent.createObject(menu, { title: item.text })
+                fill(submenu, item.items)
+                menu.addMenu(submenu)
+            } else
+                menu.addItem(itemComponent.createObject(menu.contentItem, {
+                    text: item.text, key: item.key, tip: item.tooltip, checkable: !!item.checkable, checked: !!item.checked
+                }))
+        }
+    }
+
+    // A window of its own, as it's taller than the main window. Which doesn't take the theme's colors.
+    Component {
+        id: menuComponent
+        Menu {
+            popupType: Popup.Window
+            Material.theme: root.Material.theme
+            Material.accent: root.Material.accent
+            Material.background: root.Material.background
+            Material.foreground: root.Material.foreground
+        }
+    }
+
+    Component {
+        id: itemComponent
+        MenuItem {
+            property string key
+            property string tip
+            onTriggered: main.trigger(key)
+            ToolTip.visible: hovered && tip !== ""
+            ToolTip.text: tip
+            ToolTip.delay: 600
+        }
+    }
+
+    Component {
+        id: separatorComponent
+        MenuSeparator {}
+    }
+
+    // A picture, another while hovered
+    component ArtButton: AbstractButton {
+        id: button
+        property url normal
+        property url hover
+        property string tip
+        implicitWidth: picture.implicitWidth
+        implicitHeight: picture.implicitHeight
+        // Also where the platform has no hover effects: the art changes and grows
+        hoverEnabled: true
+        HoverHandler { cursorShape: Qt.PointingHandCursor }
+        ToolTip.visible: hovered && tip !== ""
+        ToolTip.text: tip
+        ToolTip.delay: 600
+        contentItem: Image { id: picture; source: button.hovered || button.pressed ? button.hover : button.normal }
+        background: null
+    }
+}

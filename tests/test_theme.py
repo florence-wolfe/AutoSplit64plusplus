@@ -70,48 +70,37 @@ class ThemedWidgetsTest(unittest.TestCase):
         with mock.patch("autosplit64.gui.updates.Updates.check"):
             self.window = App()
         self.addCleanup(close_window, self.window)
-        self.window.split_list.clear()
-        for title in ("A", "B", "C"):
-            self.window.split_list.add_split(title, None)
-        self.window.split_list.set_selected_index(0)
-        # Switched after the window was made. Widgets get the palette once events are processed.
+        self.window.main.update(splits=[{"title": title, "icon": ""} for title in ("A", "B", "C")], current=0)
+        # Switched after the window was made
         theme.apply("github_light")
         _app.processEvents()
         self.palette = _app.palette()
 
-    def pixel(self, widget, x, y):
-        """ The color at x, y in the window, or in widget if it has no window """
-        window = widget.window() if widget.parent() else widget
-        point = widget.mapTo(window, QtCore.QPoint(x, y))
-        image = window.grab().toImage()
+    def pixel(self, x, y):
+        """ The color at x, y in the main window's QML """
+        image = self.window.view.grabWindow()
         ratio = image.devicePixelRatio()
-        return image.pixelColor(int(point.x() * ratio), int(point.y() * ratio)).getRgb()[:3]
+        return image.pixelColor(int(x * ratio), int(y * ratio)).getRgb()[:3]
+
+    def item(self, name):
+        from tests.qt import qml
+        item = qml(self.window.view, name)
+        return item.mapToScene(QtCore.QPointF(0, 0))
 
     def color(self, role):
         return self.palette.color(role).getRgb()[:3]
 
     def test_main_window_background(self):
-        self.assertEqual(self.pixel(self.window.right_panel, 2, 2), self.color(Role.Base))
-
-    def split_list_pixel(self, group, x, y):
-        """ A pixel of the split list, painted as when its window has focus or not: the Active or Inactive group """
-        from unittest import mock
-        rows = self.window.split_list
-        palette = QtGui.QPalette(rows.palette())
-        palette.setCurrentColorGroup(group)
-        with mock.patch.object(rows, "palette", return_value=palette):
-            return self.pixel(rows, x, y)
+        panel = self.item("rightPanel")
+        self.assertEqual(self.pixel(panel.x() + 2, panel.y() + 2), self.color(Role.Base))
 
     def test_current_split_is_the_themes_highlight_with_or_without_focus(self):
-        # During a run, the game or LiveSplit has focus, not AutoSplit64++
+        # During a run, the game or LiveSplit has focus, not AutoSplit64++: always the Active group's
         highlight = self.palette.color(QtGui.QPalette.ColorGroup.Active, Role.Highlight).getRgb()[:3]
-        for group in (QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorGroup.Inactive):
-            with self.subTest(group):
-                self.assertEqual(self.split_list_pixel(group, 2, 2), highlight)
+        self.assertEqual(self.pixel(2, 2), highlight)
 
     def test_split_list(self):
-        rows = self.window.split_list
-        second, third = self.pixel(rows, 2, 37 + 2), self.pixel(rows, 2, 2 * 37 + 2)
+        second, third = self.pixel(2, 37 + 2), self.pixel(2, 2 * 37 + 2)
         self.assertNotEqual(second, third)
         # Both rows are shades of the theme's background
         for row in (second, third):
@@ -121,18 +110,22 @@ class ThemedWidgetsTest(unittest.TestCase):
         from autosplit64.gui.widgets import HLine
         line = HLine()
         line.resize(50, 3)
-        self.assertEqual(self.pixel(line, 25, 1), self.palette.color(Role.Window).darker(140).getRgb()[:3])
+        image = line.grab().toImage()
+        self.assertEqual(image.pixelColor(25, 1).getRgb()[:3], self.palette.color(Role.Window).darker(140).getRgb()[:3])
 
     def test_menu_button_and_version_follow_the_text_color(self):
         muted = theme.muted(self.palette).getRgb()[:3]
-        self.assertEqual(self.pixel(self.window.menu_button, 9, 7), muted)
-        self.assertIn(theme.muted(self.palette).name(), self.window.update_badge.text())
+        button = self.item("menuButton")
+        # The middle of its middle line
+        self.assertEqual(self.pixel(button.x() + 9, button.y() + 7), muted)
+        self.assertEqual(self.window.main.values["muted"], theme.muted(self.palette).name())
 
     def test_update_dot_is_the_themes_green(self):
         self.window.update_badge.show_update("9.9.9")
         theme.apply("dracula")
         _app.processEvents()
-        self.assertIn(theme.status_color("green").name(), self.window.update_badge.text())
+        self.assertEqual(self.window.main.values["green"], theme.status_color("green").name())
+        self.assertTrue(self.window.main.values["update"])
 
 
 if __name__ == "__main__":

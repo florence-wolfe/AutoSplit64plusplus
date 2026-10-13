@@ -8,14 +8,100 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 from autosplit64.core import app_location, debug_info, route_loader, config, livesplit, livesplit_one
 from autosplit64.core.resource_utils import base_path, absolute_path, rel_to_abs
 from . import constants
-from .widgets import PictureButton, StateButton, StarCountDisplay, SplitListWidget, ServerStatusIndicator, MenuButton, UpdateBadge
+from . import theme
 from .dialogs import AboutDialog, CaptureEditor, SettingsDialog, RouteEditor, ResetGeneratorDialog, DebugDialog
-from .updates import Updates
+from .qml_view import qml_window
+from .server_status import ServerStatus
+from .updates import Updates, UpdateBadge
 
 
 def _window_flags(on_top):
     flags = QtCore.Qt.WindowType.Window
     return flags | QtCore.Qt.WindowType.WindowStaysOnTopHint if on_top else flags
+
+
+def _url(path):
+    return QtCore.QUrl.fromLocalFile(base_path(path)).toString()
+
+
+class Main(QtCore.QObject):
+    """
+    What MainWindow.qml shows, in values: the route's splits, the current one, the star counts, the start
+    button's state, the connection's status, the version and the theme's colors for them. Its other signals
+    are the window's clicks and drags, and menu() and trigger() are its menu.
+    """
+    changed = QtCore.pyqtSignal()
+    start_clicked = QtCore.pyqtSignal()
+    restart = QtCore.pyqtSignal()
+    version_clicked = QtCore.pyqtSignal()
+    # Global positions of a press on the window, and of the mouse while it's held
+    press = QtCore.pyqtSignal(int, int)
+    drag = QtCore.pyqtSignal(int, int)
+    release = QtCore.pyqtSignal()
+
+    def __init__(self, menu_items, set_general, copy_status, screen_top):
+        """
+        menu_items() are the menu's entries, see App._menu_items(), set_general(key, checked) sets a checkbox's
+        setting, copy_status() copies the address, and screen_top() is where the window's screen's free space starts
+        """
+        super().__init__()
+        self._menu_items = menu_items
+        self._set_general = set_general
+        self._copy_status = copy_status
+        self._screen_top = screen_top
+        self._actions = {}
+        self._values = {"splits": [], "current": 0, "starCount": "-", "splitStar": "-", "start": "start",
+                        "statusColor": "gray", "statusTip": "", "version": "", "update": False, "versionTip": "",
+                        "muted": "gray", "green": "green"}
+
+    @QtCore.pyqtProperty("QVariantMap", notify=changed)
+    def values(self):
+        return self._values
+
+    def update(self, **values):
+        self._values.update(values)
+        self.changed.emit()
+
+    @QtCore.pyqtSlot(result=str)
+    def copy_status(self):
+        return self._copy_status()
+
+    @QtCore.pyqtSlot(result=int)
+    def screen_top(self):
+        return self._screen_top()
+
+    @QtCore.pyqtSlot(result="QVariantList")
+    def menu(self):
+        """ The menu's entries for the QML, by key, which trigger() is given """
+        self._actions = {}
+
+        def entries(items, prefix):
+            result = []
+            for i, item in enumerate(items):
+                if item is None:
+                    result.append({"separator": True})
+                    continue
+                text, tooltip, action = item
+                key = f"{prefix}{i}"
+                if isinstance(action, list):
+                    result.append({"text": text, "tooltip": tooltip, "items": entries(action, key + ".")})
+                elif isinstance(action, str):
+                    result.append({"text": text, "tooltip": tooltip, "key": key, "checkable": True,
+                                   "checked": bool(config.get("general", action))})
+                    self._actions[key] = action
+                else:
+                    result.append({"text": text, "tooltip": tooltip, "key": key})
+                    self._actions[key] = action
+            return result
+        return entries(self._menu_items(), "")
+
+    @QtCore.pyqtSlot(str)
+    def trigger(self, key):
+        action = self._actions[key]
+        if isinstance(action, str):
+            self._set_general(action, not config.get("general", action))
+        else:
+            action()
 
 
 class App(QtWidgets.QMainWindow):
@@ -37,34 +123,19 @@ class App(QtWidgets.QMainWindow):
         self._drag = False
         self._drag_position = None
 
-        # Pixmaps
-        self.start_pixmap = QtGui.QPixmap(base_path(constants.START_PATH))
-        self.stop_pixmap = QtGui.QPixmap(base_path(constants.STOP_PATH))
-        self.init_pixmap = QtGui.QPixmap(base_path(constants.INIT_PATH))
-
-        # Widgets
+        # What the window shows
+        self.main = Main(self._menu_items, self._set_general, lambda: self.server_status.copy(),
+                         lambda: self.screen().availableGeometry().top())
+        self.server_status = ServerStatus(self)
+        self.update_badge = UpdateBadge(constants.VERSION, self)
+        self.server_status.changed.connect(self._show_status)
+        self.update_badge.changed.connect(self._show_version)
         self.central_widget = QtWidgets.QWidget(self)
-        self.central_layout = QtWidgets.QHBoxLayout(self.central_widget)
-        # Fixed size panel for the star, star count and start button, which keep their positions in it
-        self.right_panel = QtWidgets.QWidget(self.central_widget)
-        self.star_count = StarCountDisplay(parent=self.right_panel)
-        self.star_btn = PictureButton(QtGui.QPixmap(base_path(constants.STAR_PATH)),
-                                      pixmap_pressed=QtGui.QPixmap(base_path(constants.STAR_HOVER_PATH)),
-                                      pixmap_hover=QtGui.QPixmap(base_path(constants.STAR_HOVER_PATH)),
-                                      parent=self.right_panel)
-        self.start_btn_initial_x = 23
-        self.start_btn_initial_y = 180
-        self.start_btn = StateButton(self.start_pixmap, self.start_pixmap, parent=self.right_panel)
-        self.split_list = SplitListWidget(self.central_widget)
-        self.server_status = ServerStatusIndicator(self.central_widget)
-        self.menu_button = MenuButton(self.central_widget)
-        self.update_badge = UpdateBadge(constants.VERSION, self.central_widget)
+        art = {"start": _url(constants.START_PATH), "stop": _url(constants.STOP_PATH), "init": _url(constants.INIT_PATH),
+               "star": _url(constants.STAR_PATH), "starHover": _url(constants.STAR_HOVER_PATH)}
+        self.view = qml_window(self.central_widget, "MainWindow", main=self.main, art=art)
         # Split detection is running unless the start button offers to start it
-        self.updates = Updates(self, self.update_badge, lambda: self.start_btn.get_state() != "start")
-
-        # Font
-        self.button_font = QtGui.QFont("Tw Cen MT", 14)
-        self.start_count_font = QtGui.QFont("Tw Cen MT", 20)
+        self.updates = Updates(self, self.update_badge, lambda: self.start_state != "start")
 
         # Route
         self.route = None
@@ -144,60 +215,62 @@ class App(QtWidgets.QMainWindow):
         self.setWindowFlags(_window_flags(config.get("general", "on_top")))
         self.setMinimumSize(constants.WIDTH, constants.HEIGHT)
         self.resize(constants.WIDTH, constants.HEIGHT)
-
-        # Configure Central Widget
-        self.central_widget.setBackgroundRole(QtGui.QPalette.ColorRole.Base)
-        self.central_widget.setAutoFillBackground(True)
         self.setCentralWidget(self.central_widget)
-
-        # The split list takes up all extra space, the right panel stays centered
-        self.central_layout.setContentsMargins(0, 0, 0, 0)
-        self.central_layout.setSpacing(0)
-        self.central_layout.addWidget(self.split_list, 1)
-        self.central_layout.addWidget(self.right_panel, 0, QtCore.Qt.AlignmentFlag.AlignVCenter)
-        self.right_panel.setFixedSize(182, constants.HEIGHT)
-
-        # Configure Other Widgets
-        self.star_btn.move(59, 35)
-
-        self.star_count.setFixedWidth(150)
-        self.star_count.move(14, 115)
-        self.star_count.setFont(self.start_count_font)
-        self.star_count.star_count = "-"
-        self.star_count.split_star = "-"
-
-        self.start_btn.move(self.start_btn_initial_x, self.start_btn_initial_y)
-        self.start_btn.add_state("start", self.start_pixmap, "", "Start split detection")
-        self.start_btn.add_state("stop", self.stop_pixmap, "", "Stop split detection. Your timer isn't affected.")
-        self.start_btn.add_state("init", self.init_pixmap, "", "Starting split detection... Click to cancel.")
-        self.start_btn.set_state("start")
-
-        # Add hover effects
-        self.start_btn.enterEvent = lambda e: self._on_start_btn_hover(True)
-        self.start_btn.leaveEvent = lambda e: self._on_start_btn_hover(False)
-
-        self.split_list.setFont(self.button_font)
-        self.split_list.setMinimumSize(183, constants.HEIGHT)
+        self._show_colors()
 
         self.open_route()
 
         # Connections
-        self.start_btn.clicked.connect(self.start_clicked)
-        self.star_btn.clicked.connect(self._reset)
-        self.star_btn.setToolTip("Restart split detection, which picks up from your timer's current split. "
-                                 "The timer itself isn't affected.")
+        self.main.start_clicked.connect(self.start_clicked)
+        self.main.restart.connect(self._reset)
+        self.main.version_clicked.connect(self.update_badge.clicked)
+        self.main.press.connect(self._press)
+        self.main.drag.connect(self._drag_to)
+        self.main.release.connect(self._release)
         self.dialogs["route_editor"].route_updated.connect(self._on_route_update)
         self.dialogs["settings_dialog"].applied.connect(self.settings_updated)
         self.dialogs["debug_dialog"].save_debug_info.connect(self.save_debug_info)
         self.dialogs["capture_editor"].applied.connect(self._reset)
         self.dialogs["reset_dialog"].applied.connect(self._reset)
-        self.menu_button.clicked.connect(self._show_button_menu)
 
-        # On macOS, the right-click menu is also in the menu bar
+        # On macOS, the menu is also in the menu bar
         if self.menuBar().isNativeMenuBar():
             self.menu_bar_menu = self.menuBar().addMenu("Options")
             self.menu_bar_menu.aboutToShow.connect(self._rebuild_menu_bar_menu)
             self._populate_menu(self.menu_bar_menu)
+
+    @property
+    def start_state(self):
+        """ What the start button offers: "start", "stop", or "init" while starting """
+        return self.main.values["start"]
+
+    def _set_start_state(self, state):
+        self.main.update(start=state)
+
+    def _show_star_count(self, star_count, split_star):
+        self.main.update(starCount=str(star_count), splitStar="-" if split_star == -1 else str(split_star))
+
+    def changeEvent(self, event):
+        # e.g. another theme
+        if event.type() == QtCore.QEvent.Type.PaletteChange:
+            self._show_colors()
+        super().changeEvent(event)
+
+    def _show_colors(self):
+        """ The theme's colors for the status, version and menu button """
+        palette = QtWidgets.QApplication.palette()
+        self.main.update(muted=theme.muted(palette).name(), green=theme.status_color("green").name())
+        self._show_status()
+        self._show_version()
+
+    def _show_status(self):
+        color = self.server_status.color()
+        self.main.update(statusColor=theme.status_color(color).name() if color else self.main.values["muted"],
+                         statusTip=self.server_status.tooltip)
+
+    def _show_version(self):
+        badge = self.update_badge
+        self.main.update(version=badge.version, update=badge.update is not None, versionTip=badge.tooltip)
 
     def settings_updated(self):
         self.set_always_on_top(config.get("general", "on_top"))
@@ -209,35 +282,14 @@ class App(QtWidgets.QMainWindow):
         self.server_status.refresh()
         self._reset()
 
-    def resizeEvent(self, event):
-        # Keep the server status in the top right corner, the menu button in the bottom right and the
-        # version at the bottom left of the right panel, level with the menu button, above the other widgets
-        size = self.central_widget.size()
-        self.server_status.move(size.width() - self.server_status.size().width() - 6, 6)
-        self.server_status.raise_()
-        self.menu_button.move(size.width() - self.menu_button.size().width() - 8, size.height() - self.menu_button.size().height() - 8)
-        self.menu_button.raise_()
-        self.update_badge.move(size.width() - self.right_panel.size().width() + 8,
-                               self.menu_button.y() + (self.menu_button.size().height() - self.update_badge.size().height()) // 2)
-        self.update_badge.raise_()
-        super().resizeEvent(event)
-
-    def _show_button_menu(self):
-        """ The right-click menu, opened from the menu button """
-        menu = QtWidgets.QMenu(self)
-        self._populate_menu(menu)
-        # Open upwards from the button, which is in the bottom corner
-        menu.exec(self.menu_button.mapToGlobal(QtCore.QPoint(self.menu_button.size().width() - menu.sizeHint().width(), -menu.sizeHint().height())))
-
     def update_display(self, split_index, current_star, split_star):
-        self.split_list.set_selected_index(min(split_index, len(self.split_list.splits) - 1))
-        self.star_count.star_count = current_star
-        self.star_count.split_star = split_star
+        self.main.update(current=max(0, min(split_index, len(self.main.values["splits"]) - 1)))
+        self._show_star_count(current_star, split_star)
 
     def autostart(self):
-        if config.get("general", "auto_start") and self.start_btn.get_state() == "start":
+        if config.get("general", "auto_start") and self.start_state == "start":
             self.autostarter_active = True
-            self.start_btn.set_state("init")
+            self._set_start_state("init")
 
             # While autostarter is active, try every 2000ms to start the timer
             def try_start():
@@ -249,34 +301,31 @@ class App(QtWidgets.QMainWindow):
             def quit_autostarter():
                 if self.autostarter_active:
                     self.autostarter_active = False
-                    self.start_btn.set_state("start")
+                    self._set_start_state("start")
                     self.stop.emit()
                     self.display_error_message("Failed to auto start timer.", "AutoStart Error")
             QtCore.QTimer.singleShot(300000, quit_autostarter)
 
     def start_clicked(self):
-        if self.start_btn.get_state() in ("stop", "init"):
+        if self.start_state in ("stop", "init"):
             self.autostarter_active = False
-            self.start_btn.set_state("start")
-            self.split_list.set_selected_index(0)
+            self._set_start_state("start")
+            self.main.update(current=0)
             # No route is loaded when e.g. autostart is retrying without one
             if self.route:
-                self.star_count.star_count = self.route.initial_star
-                self.star_count.split_star = self.route.splits[0].star_count
+                self._show_star_count(self.route.initial_star, self.route.splits[0].star_count)
             self.stop.emit()
-        elif self.start_btn.get_state() == "start":
-            self.start_btn.set_state("init")
+        elif self.start_state == "start":
+            self._set_start_state("init")
             self.start.emit()
 
     def set_started(self, started):
         if started:
-            self.start_btn.set_state("stop")
+            self._set_start_state("stop")
             self.autostarter_active = False
         # The autostarter keeps showing that it's starting
         elif not self.autostarter_active:
-            self.start_btn.set_state("start")
-
-        self.start_btn.repaint()
+            self._set_start_state("start")
 
     def open_route(self):
         self._reset()
@@ -301,15 +350,11 @@ class App(QtWidgets.QMainWindow):
 
         self.route = route
 
-        self.split_list.clear()
-        self.star_count.star_count = route.initial_star
-        self.star_count.split_star = route.splits[0].star_count
-
-        for split in route.splits:
-            icon = QtGui.QPixmap(rel_to_abs(split.icon_path)) if split.icon_path else None
-            self.split_list.add_split(split.title, icon)
-
-        self.split_list.repaint()
+        self._show_star_count(route.initial_star, route.splits[0].star_count)
+        self.main.update(current=0, splits=[
+            {"title": split.title,
+             "icon": QtCore.QUrl.fromLocalFile(rel_to_abs(split.icon_path)).toString() if split.icon_path else ""}
+            for split in route.splits])
 
         return True
 
@@ -327,11 +372,6 @@ class App(QtWidgets.QMainWindow):
         else:
             self._save_open_route(file_path)
 
-    def contextMenuEvent(self, event):
-        context_menu = QtWidgets.QMenu(self)
-        self._populate_menu(context_menu)
-        context_menu.exec(self.mapToGlobal(event.pos()))
-
     def _rebuild_menu_bar_menu(self):
         # Rebuilt on every open, like the right-click menu, so routes and checkboxes are current
         for submenu in self.menu_bar_menu.findChildren(QtWidgets.QMenu):
@@ -339,34 +379,24 @@ class App(QtWidgets.QMainWindow):
         self.menu_bar_menu.clear()
         self._populate_menu(self.menu_bar_menu)
 
-    def _populate_menu(self, menu):
-        """ Fill menu with the app's actions. Used by the right-click menu and the menu bar. """
-        route_menu = QtWidgets.QMenu("Open Route", menu)
-        # Qt menus only show tooltips when asked to
-        menu.setToolTipsVisible(True)
-        route_menu.setToolTipsVisible(True)
-
+    def _menu_items(self):
+        """
+        The menu's entries, for the window's menu and the menu bar: (text, tooltip, action) with action a
+        callable, a list of entries for a submenu, or a general setting's key for a checkbox. None is a separator.
+        """
+        routes = []
         for category in sorted(self._routes, key=lambda text:[int(c) if c.isdigit() else c for c in re.split(r'(\d+)', text)]):
-            if len(self._routes[category]) == 1 or category == "":
-                for route in self._routes[category]:
-                    route_menu.addAction(route[0]).triggered.connect(partial(self._save_open_route, route[1]))
+            entries = [(title, "", partial(self._save_open_route, path)) for title, path in self._routes[category]]
+            if len(entries) == 1 or category == "":
+                routes += entries
             else:
-                category_menu = QtWidgets.QMenu(str(category), route_menu)
-                route_menu.addMenu(category_menu)
+                routes.append((str(category), "", entries))
+        routes += [None, ("From File", "Open a route (.as64) from anywhere, or LiveSplit splits (.lss) to convert to a route",
+                          self.open_route_browser)]
 
-                for route in self._routes[category]:
-                    category_menu.addAction(route[0]).triggered.connect(partial(self._save_open_route, route[1]))
-
-        route_menu.addSeparator()
-        from_file_action = route_menu.addAction("From File")
-        from_file_action.setToolTip("Open a route (.as64) from anywhere, or LiveSplit splits (.lss) to convert to a route")
-        from_file_action.triggered.connect(self.open_route_browser)
-
-        # (text, tooltip, slot) actions; None is a separator, and a (text, tooltip, setting) slot
-        # is a checkbox for a general setting
-        for item in [
+        return [
             ("Edit Route", "Edit the splits of the current route, or create or open another route", self.dialogs["route_editor"].show),
-            ("Open Route", "Switch to another route", route_menu),
+            ("Open Route", "Switch to another route", routes),
             None,
             ("Edit Coordinates", "Choose what to capture and where the game is in it", self._edit_coordinates),
             None,
@@ -382,13 +412,21 @@ class App(QtWidgets.QMainWindow):
             ("About", "Version and credits", self.dialogs["about_dialog"].show),
             None,
             ("Exit", "Quit AutoSplit64++", self.close),
-        ]:
+        ]
+
+    def _populate_menu(self, menu, items=None):
+        """ Fill a QMenu with the menu's entries, see _menu_items(). The menu bar's. """
+        # Qt menus only show tooltips when asked to
+        menu.setToolTipsVisible(True)
+        for item in self._menu_items() if items is None else items:
             if item is None:
                 menu.addSeparator()
                 continue
             text, tooltip, slot = item
-            if isinstance(slot, QtWidgets.QMenu):
-                action = menu.addMenu(slot)
+            if isinstance(slot, list):
+                submenu = QtWidgets.QMenu(text, menu)
+                self._populate_menu(submenu, slot)
+                action = menu.addMenu(submenu)
             elif isinstance(slot, str):
                 action = QtGui.QAction(text, menu, checkable=True)
                 menu.addAction(action)
@@ -398,9 +436,7 @@ class App(QtWidgets.QMainWindow):
                 action = menu.addAction(text)
                 action.triggered.connect(slot)
             action.setToolTip(tooltip)
-
-        # Keep About, Settings and Exit in this menu instead of macOS moving them to the application menu
-        for action in menu.actions() + route_menu.actions():
+            # Keep About, Settings and Exit in this menu instead of macOS moving them to the application menu
             action.setMenuRole(QtGui.QAction.MenuRole.NoRole)
 
     def save_debug_info(self):
@@ -425,27 +461,20 @@ class App(QtWidgets.QMainWindow):
         self.dialogs["capture_editor"].show()
         self.dialogs["debug_dialog"].close()
 
-    def mousePressEvent(self, event):
-        if event.buttons() == QtCore.Qt.MouseButton.LeftButton:
-            # Let the window manager move the window: smoother, and the only way on Wayland
-            if self.windowHandle().startSystemMove():
-                event.accept()
-                return
-            self._drag = True
-            self._drag_position = event.globalPosition().toPoint() - self.pos()
-            event.accept()
+    def _press(self, x, y):
+        # Let the window manager move the window: smoother, and the only way on Wayland
+        if self.windowHandle().startSystemMove():
+            return
+        self._drag = True
+        self._drag_position = QtCore.QPoint(x, y) - self.pos()
 
-    def mouseReleaseEvent(self, event):
-        # buttons() no longer has the released button
-        if event.button() == QtCore.Qt.MouseButton.LeftButton:
-            self._drag = False
-            event.accept()
+    def _release(self):
+        self._drag = False
 
-    def mouseMoveEvent(self, event):
+    def _drag_to(self, x, y):
         # Only drags that started on the window move it
-        if event.buttons() == QtCore.Qt.MouseButton.LeftButton and self._drag:
-            self.move(event.globalPosition().toPoint() - self._drag_position)
-            event.accept()
+        if self._drag:
+            self.move(QtCore.QPoint(x, y) - self._drag_position)
 
     def display_error_message(self, message, title="Error"):
         """
@@ -489,9 +518,9 @@ class App(QtWidgets.QMainWindow):
             self.open_route()
 
     def _reset(self):
-        if self.start_btn.get_state() == "stop":
+        if self.start_state == "stop":
             self._stop()
-            self.start_btn.set_state("init")
+            self._set_start_state("init")
             self.start.emit()
         else:
             self._stop()
@@ -505,12 +534,3 @@ class App(QtWidgets.QMainWindow):
         self.stop.emit()
         self.updates.on_quit()
         event.accept()
-
-    def _on_start_btn_hover(self, hovering):
-        """ Grow the start button by 10% around its center while hovered """
-        scale = 1.1 if hovering else 1.0
-        width = int(self.start_pixmap.width() * scale)
-        height = int(self.start_pixmap.height() * scale)
-        self.start_btn.setFixedSize(width, height)
-        self.start_btn.move(self.start_btn_initial_x - (width - self.start_pixmap.width()) // 2,
-                            self.start_btn_initial_y - (height - self.start_pixmap.height()) // 2)

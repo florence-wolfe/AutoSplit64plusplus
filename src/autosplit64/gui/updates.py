@@ -13,6 +13,30 @@ from autosplit64.core import updater
 from . import constants
 
 
+class UpdateBadge(QtCore.QObject):
+    """
+    The installed version, which the main window shows with a dot when an update is available, and its
+    tooltip. Clicking it checks for or installs an update.
+    """
+    changed = QtCore.pyqtSignal()
+    clicked = QtCore.pyqtSignal()
+
+    def __init__(self, version, parent=None):
+        super().__init__(parent)
+        self.update = None
+        self.show_version(version)
+
+    def show_version(self, version):
+        self.version = f"v{version}" if version[0].isdigit() else version
+        self.tooltip = "Click to check for updates"
+        self.changed.emit()
+
+    def show_update(self, version):
+        self.update = version
+        self.tooltip = f"Update available: v{version}\nClick to update"
+        self.changed.emit()
+
+
 class Updates(QtCore.QObject):
     _checked = QtCore.pyqtSignal(object, bool)  # newer release or None, whether the user asked
     _check_failed = QtCore.pyqtSignal(str, bool)

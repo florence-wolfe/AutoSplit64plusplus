@@ -9,7 +9,7 @@ from PyQt6.QtTest import QTest
 from autosplit64.core import updater
 from autosplit64.gui import app as app_module, updates
 from autosplit64.gui.app import App
-from tests.qt import close_window
+from tests.qt import close_window, qml
 
 _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
@@ -70,9 +70,10 @@ class LaunchCheckTest(UpdatesTestCase):
             self.assertTrue(self.wait_for(lambda: prompts))
 
         self.assertEqual(prompts, [("AutoSplit64++ v0.5.0 is available. You have v0.4.0.", threading.main_thread())])
-        self.assertIn("v0.4.0", app.update_badge.text())
-        self.assertIn("&#9679;", app.update_badge.text())
-        self.assertEqual(app.update_badge.toolTip(), "Update available: v0.5.0\nClick to update")
+        version = qml(app.view, "version").property("text")
+        self.assertIn("v0.4.0", version)
+        self.assertIn("●", version)
+        self.assertEqual(app.main.values["versionTip"], "Update available: v0.5.0\nClick to update")
 
     def test_no_check_when_turned_off(self):
         with mock.patch.object(updater, "newer_release") as newer_release:
@@ -80,8 +81,9 @@ class LaunchCheckTest(UpdatesTestCase):
             QTest.qWait(100)
         newer_release.assert_not_called()
         # The version, without the update dot
-        self.assertIn(">v0.4.0<", app.update_badge.text())
-        self.assertNotIn("&#9679;", app.update_badge.text())
+        version = qml(app.view, "version").property("text")
+        self.assertIn(">v0.4.0<", version)
+        self.assertNotIn("●", version)
 
 
 class BadgeTest(UpdatesTestCase):
@@ -118,7 +120,7 @@ class InstallTest(UpdatesTestCase):
 
         def download(release, directory, progress):
             if started_during_download:
-                app.start_btn.set_state("stop")
+                app._set_start_state("stop")
             return "/tmp/update.zip"
 
         with mock.patch.object(updater, "can_install", return_value=True), \
@@ -166,7 +168,7 @@ class InstallTest(UpdatesTestCase):
         # In case of an active run, split detection has to be stopped first
         app = self.open_app()
         app.updates._release = RELEASE
-        app.start_btn.set_state("stop")
+        app._set_start_state("stop")
         with mock.patch.object(updater, "can_install", return_value=True), \
              mock.patch.object(updater, "download") as download:
             app.update_badge.clicked.emit()

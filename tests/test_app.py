@@ -2,9 +2,10 @@ import unittest
 from unittest import mock
 
 from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6.QtTest import QTest
 
 from autosplit64.gui.app import App
-from tests.qt import close_window, qml
+from tests.qt import close_window, qml, wait_until
 
 _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
@@ -22,11 +23,11 @@ class StartButtonTest(unittest.TestCase):
     def test_cancel_starting_without_route(self):
         # e.g. autostart retrying while no route is set
         self.app.route = None
-        self.app.start_btn.set_state("init")
+        self.app._set_start_state("init")
 
         self.app.start_clicked()
 
-        self.assertEqual(self.app.start_btn.get_state(), "start")
+        self.assertEqual(self.app.start_state, "start")
         self.stopped.assert_called_once()
 
 
@@ -162,26 +163,33 @@ class MainWindowTest(unittest.TestCase):
 
     def test_size(self):
         self.assertEqual((self.app.minimumWidth(), self.app.minimumHeight()), (365, 259))
-        self.assertEqual(self.app.right_panel.size(), QtCore.QSize(182, 259))
+        panel = qml(self.app.view, "rightPanel")
+        self.assertEqual((panel.width(), panel.height()), (182, 259))
 
     def test_start_button_grows_while_hovered(self):
-        button = self.app.start_btn
-        normal = (button.geometry().getRect())
-        self.app._on_start_btn_hover(True)
-        width, height = self.app.start_pixmap.width(), self.app.start_pixmap.height()
-        self.assertEqual(button.size(), QtCore.QSize(int(width * 1.1), int(height * 1.1)))
-        self.assertEqual(button.pos(), QtCore.QPoint(23 - (int(width * 1.1) - width) // 2, 180 - (int(height * 1.1) - height) // 2))
-        self.app._on_start_btn_hover(False)
-        self.assertEqual(button.geometry().getRect(), normal)
+        button = qml(self.app.view, "start")
+        center = button.mapToScene(QtCore.QPointF(button.width() / 2, button.height() / 2)).toPoint()
+        # Rendered first: before, the mouse over it isn't hovering. Hovering is then updated with the next frame.
+        frames = []
+        self.app.view.frameSwapped.connect(lambda: frames.append(True))
+        self.app.view.update()
+        wait_until(lambda: frames)
+        QTest.mouseMove(self.app.view, center)
+        wait_until(lambda: button.scale() != 1)
+        self.assertAlmostEqual(button.scale(), 1.1)
+        QTest.mouseMove(self.app.view, QtCore.QPoint(10, 10))
+        wait_until(lambda: button.scale() == 1)
+        self.assertAlmostEqual(button.scale(), 1)
 
     def test_split_index_past_the_end_shows_the_last_split(self):
-        self.app.split_list.clear()
-        for title in ("A", "B"):
-            self.app.split_list.add_split(title, None)
-        with mock.patch.object(self.app.split_list, "set_selected_index") as set_selected_index:
-            self.app.update_display(5, 3, 4)
-        set_selected_index.assert_called_once_with(1)
-        self.assertEqual((self.app.star_count.star_count, self.app.star_count.split_star), (3, 4))
+        self.app.main.update(splits=[{"title": title, "icon": ""} for title in ("A", "B")])
+        self.app.update_display(5, 3, 4)
+        self.assertEqual(qml(self.app.view, "splitList").property("currentIndex"), 1)
+        self.assertEqual(qml(self.app.view, "starCount").property("text"), "3  /  4")
+
+    def test_split_star_of_none_is_a_dash(self):
+        self.app.update_display(0, 3, -1)
+        self.assertEqual(qml(self.app.view, "starCount").property("text"), "3  /  -")
 
     def test_quitting_stops_detection_and_installs_a_downloaded_update(self):
         stopped = mock.Mock()
@@ -206,20 +214,19 @@ class DragTest(unittest.TestCase):
         QtWidgets.QApplication.processEvents()
         self.start = self.app.pos()
 
-    def mouse(self, kind, x, y, held=True):
-        button = QtCore.Qt.MouseButton.LeftButton
-        point = QtCore.QPointF(self.start.x() + x, self.start.y() + y)
-        buttons = button if held else QtCore.Qt.MouseButton.NoButton
-        event = QtGui.QMouseEvent(kind, point, point, button if kind != QtCore.QEvent.Type.MouseMove else QtCore.Qt.MouseButton.NoButton,
-                                  buttons, QtCore.Qt.KeyboardModifier.NoModifier)
-        {QtCore.QEvent.Type.MouseButtonPress: self.app.mousePressEvent,
-         QtCore.QEvent.Type.MouseMove: self.app.mouseMoveEvent,
-         QtCore.QEvent.Type.MouseButtonRelease: self.app.mouseReleaseEvent}[kind](event)
+    def mouse(self, action, x, y):
+        """ A mouse press, move or release on the split list, which is no button """
+        point = QtCore.QPoint(x, y)
+        if action == "move":
+            QTest.mouseMove(self.app.view, point)
+        else:
+            getattr(QTest, f"mouse{action.title()}")(self.app.view, QtCore.Qt.MouseButton.LeftButton,
+                                                       QtCore.Qt.KeyboardModifier.NoModifier, point)
 
     def drag(self, system_move):
         with mock.patch.object(QtGui.QWindow, "startSystemMove", return_value=system_move) as start_system_move:
-            self.mouse(QtCore.QEvent.Type.MouseButtonPress, 10, 10)
-            self.mouse(QtCore.QEvent.Type.MouseMove, 60, 40)
+            self.mouse("press", 10, 10)
+            self.mouse("move", 60, 40)
         return start_system_move
 
     def test_window_manager_moves_the_window(self):
@@ -232,14 +239,14 @@ class DragTest(unittest.TestCase):
         self.assertEqual(self.app.pos(), self.start + QtCore.QPoint(50, 30))
 
     def test_no_jump_without_a_press_on_the_window(self):
-        self.mouse(QtCore.QEvent.Type.MouseMove, 60, 40)
+        self.mouse("move", 60, 40)
         self.assertEqual(self.app.pos(), self.start)
 
     def test_no_drag_after_release(self):
         self.drag(system_move=False)
-        self.mouse(QtCore.QEvent.Type.MouseButtonRelease, 60, 40, held=False)
+        self.mouse("release", 60, 40)
         moved = self.app.pos()
-        self.mouse(QtCore.QEvent.Type.MouseMove, 90, 90)
+        self.mouse("move", 90, 90)
         self.assertEqual(self.app.pos(), moved)
 
 if __name__ == "__main__":
