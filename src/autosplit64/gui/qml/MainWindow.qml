@@ -147,6 +147,7 @@ ThemedPane {
 
     // The connection to LiveSplit, in the top right corner. Clicking it copies the address.
     Rectangle {
+        id: status
         objectName: "status"
         anchors.top: parent.top
         anchors.right: parent.right
@@ -156,12 +157,18 @@ ThemedPane {
         radius: 6
         color: main.values.statusColor
         border.color: system.dark
+        // "Copied" and the address for a moment once clicked, instead of the status
+        property string copied
         HoverHandler { id: statusHover; cursorShape: Qt.PointingHandCursor }
-        ToolTip.visible: statusHover.hovered && !copied.visible
-        ToolTip.text: main.values.statusTip
-        TapHandler { onTapped: copied.show("Copied " + main.copy_status(), 2500) }
-        // Where the hover tooltip is, see ToolTips.qml
-        ToolTip { id: copied; x: -width - 8; y: (parent.height - height) / 2 }
+        WindowTip { id: statusTip; text: status.copied || main.values.statusTip; shown: statusHover.hovered || status.copied !== "" }
+        TapHandler {
+            onTapped: {
+                status.copied = "Copied " + main.copy_status()
+                statusTip.open()
+                copiedTimer.restart()
+            }
+        }
+        Timer { id: copiedTimer; interval: 2500; onTriggered: status.copied = "" }
     }
 
     // The installed version, with a dot when there's an update, at the bottom left of the right panel
@@ -175,8 +182,7 @@ ThemedPane {
         text: "<font color='" + main.values.muted + "'>" + main.values.version + "</font>"
             + (main.values.update ? " <font color='" + main.values.green + "'>●</font>" : "")
         HoverHandler { id: versionHover; cursorShape: Qt.PointingHandCursor }
-        ToolTip.visible: versionHover.hovered
-        ToolTip.text: main.values.versionTip
+        WindowTip { text: main.values.versionTip; shown: versionHover.hovered }
         TapHandler { onTapped: main.version_clicked() }
     }
 
@@ -192,8 +198,7 @@ ThemedPane {
         // Also where the platform has no hover effects
         hoverEnabled: true
         HoverHandler { cursorShape: Qt.PointingHandCursor }
-        ToolTip.visible: hovered
-        ToolTip.text: "Menu"
+        WindowTip { text: "Menu"; shown: menuButton.hovered }
         onClicked: {
             const menu = root.makeMenu()
             // Above the button once its height is known, when it's open, but not above the screen: Qt doesn't
@@ -271,9 +276,8 @@ ThemedPane {
             property string key
             property string tip
             onTriggered: main.trigger(key)
-            ToolTip.visible: hovered && tip !== ""
-            ToolTip.text: tip
-            ToolTip.delay: 600
+            // Beside the menu: it's a window, which a ToolTip can't leave
+            WindowTip { text: parent.tip; shown: parent.hovered }
         }
     }
 
@@ -293,10 +297,36 @@ ThemedPane {
         // Also where the platform has no hover effects: the art changes and grows
         hoverEnabled: true
         HoverHandler { cursorShape: Qt.PointingHandCursor }
-        ToolTip.visible: hovered && tip !== ""
-        ToolTip.text: tip
-        ToolTip.delay: 600
+        WindowTip { text: button.tip; shown: button.hovered }
         contentItem: Image { id: picture; source: button.hovered || button.pressed ? button.hover : button.normal }
         background: null
+    }
+
+    // A tooltip about the item it's in, after the mouse rests on it a moment. It's in `tips`, a window of its own
+    // (tip_window.py): to the left also of what's at the window's left edge, or in the menu, which is a window too.
+    component WindowTip: Item {
+        id: tip
+        property string text
+        property bool shown
+        anchors.fill: parent
+
+        function open() {
+            const corner = parent.mapToGlobal(0, 0)
+            tips.show(text, corner.x, corner.y, parent.width, parent.height)
+        }
+
+        Timer { id: delay; interval: 600; onTriggered: tip.open() }
+        onShownChanged: {
+            if (shown && text)
+                delay.restart()
+            else {
+                delay.stop()
+                tips.hide()
+            }
+        }
+        // e.g. the status changing while it's shown
+        onTextChanged: if (shown && text && !delay.running) open()
+        // e.g. the menu closing under the mouse
+        Component.onDestruction: if (shown) tips.hide()
     }
 }

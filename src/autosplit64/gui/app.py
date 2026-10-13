@@ -12,6 +12,7 @@ from . import theme
 from .dialogs import AboutDialog, CaptureEditor, SettingsDialog, RouteEditor, ResetGeneratorDialog, DebugDialog
 from .qml_view import qml_window
 from .server_status import ServerStatus
+from .tip_window import TipWindow
 from .updates import Updates, UpdateBadge
 
 
@@ -133,7 +134,7 @@ class App(QtWidgets.QMainWindow):
         self.central_widget = QtWidgets.QWidget(self)
         art = {"start": _url(constants.START_PATH), "stop": _url(constants.STOP_PATH), "init": _url(constants.INIT_PATH),
                "star": _url(constants.STAR_PATH), "starHover": _url(constants.STAR_HOVER_PATH)}
-        self.view = qml_window(self.central_widget, "MainWindow", main=self.main, art=art)
+        self.view = qml_window(self.central_widget, "MainWindow", main=self.main, art=art, tips=TipWindow())
         # Split detection is running unless the start button offers to start it
         self.updates = Updates(self, self.update_badge, lambda: self.start_state != "start")
 
