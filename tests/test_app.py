@@ -40,7 +40,7 @@ class MenuTest(unittest.TestCase):
         menu = QtWidgets.QMenu(app)
         app._populate_menu(menu)
         items = [a.text() if not a.isSeparator() else "---" for a in menu.actions()]
-        self.assertEqual(items, ["Edit Route", "Open Route", "---", "Edit Coordinates", "---", "Settings", "---",
+        self.assertEqual(items, ["Edit Route", "Open Route", "---", "Configure Capture", "---", "Settings", "---",
                                  "Generate Reset Templates", "---", "Debug", "---", "Autostart", "SRL Mode",
                                  "---", "About", "---", "Exit"])
 
@@ -62,7 +62,7 @@ class MenuActionsTest(unittest.TestCase):
         self.assertEqual(items, [
             ("Edit Route", "Edit the splits of the current route, or create or open another route", False, no_role),
             ("Open Route", "Switch to another route", False, no_role),
-            ("Edit Coordinates", "Choose what to capture and where the game is in it", False, no_role),
+            ("Configure Capture", "Choose what to capture and where the game is in it", False, no_role),
             ("Settings", "Connection to LiveSplit, detection thresholds and other settings", False, no_role),
             ("Generate Reset Templates", "Record what a console reset looks like in your capture, so resets are detected", False, no_role),
             ("Debug", "Show what split detection sees and does, and its logs", False, no_role),
@@ -72,7 +72,7 @@ class MenuActionsTest(unittest.TestCase):
             ("Exit", "Quit AutoSplit64++", False, no_role)])
 
     def test_actions_open_their_dialog(self):
-        for text, dialog in [("Edit Route", "route_editor"), ("Edit Coordinates", "capture_editor"),
+        for text, dialog in [("Edit Route", "route_editor"), ("Configure Capture", "capture_editor"),
                              ("Settings", "settings_dialog"), ("Generate Reset Templates", "reset_dialog"),
                              ("Debug", "debug_dialog"), ("About", "about_dialog")]:
             with self.subTest(text), mock.patch.object(self.app.dialogs[dialog], "show") as show:

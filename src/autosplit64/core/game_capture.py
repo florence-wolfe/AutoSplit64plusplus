@@ -52,7 +52,7 @@ class GameCapture(object):
         elif self._device:
             pass
         elif sys.platform == "darwin" and not capture_window.has_permission_quietly():
-            # Listing windows would show macOS's Screen Recording prompt; Edit Coordinates asks for it instead
+            # Listing windows would show macOS's Screen Recording prompt; Configure Capture asks for it instead
             self._hwnd = None
         else:
             self._hwnd: int = capture_window.get_hwnd_from_list(process_name, capture_window.get_visible_processes())
@@ -102,15 +102,16 @@ class GameCapture(object):
                 raise Exception(str(e))    
         elif self._device:
             if not capture_device.has_permission():
-                raise Exception("AutoSplit64++ needs the Camera permission to capture the video device.\n\nOpen Edit Coordinates to allow it.")
+                raise Exception("AutoSplit64++ needs the Camera permission to capture the video device.\n\nOpen Configure Capture to allow it.")
             if self._device not in [device[0] for device in capture_device.get_devices()]:
                 raise Exception("Could not find the video device\n\nMake sure it is connected!")
         else:
             if not bool(self._hwnd) and sys.platform == "darwin" and not capture_window.has_permission_quietly():
                 raise Exception("AutoSplit64++ needs the Screen Recording permission to capture the game.\n\n"
-                                "Open Edit Coordinates to allow it. If you just allowed it, restart AutoSplit64++.")
+                                "Open Configure Capture to allow it. If you just allowed it, restart AutoSplit64++.")
             if not bool(self._hwnd):
-                raise Exception(f"Could not find {self._process_name}\n\nMake sure the program is running and visible!")
+                raise Exception(f"Could not find {self._process_name}\n\nMake sure it's running and visible, "
+                                "or set up what to capture in Configure Capture.")
 
     def capture(self) -> None:
         if self._use_obs:

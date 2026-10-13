@@ -398,7 +398,7 @@ class App(QtWidgets.QMainWindow):
             ("Edit Route", "Edit the splits of the current route, or create or open another route", self.dialogs["route_editor"].show),
             ("Open Route", "Switch to another route", routes),
             None,
-            ("Edit Coordinates", "Choose what to capture and where the game is in it", self._edit_coordinates),
+            ("Configure Capture", "Choose what to capture and where the game is in it", self._edit_coordinates),
             None,
             ("Settings", "Connection to LiveSplit, detection thresholds and other settings", self.dialogs["settings_dialog"].show),
             None,

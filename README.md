@@ -71,7 +71,7 @@ All windows and options are in the right-click menu, which the menu button (☰)
 ![Interface](docs/images/menu_screen.png)
 
 - **Edit Route** / **Open Route**: edit the current route, or switch to another one
-- **Edit Coordinates**: choose what to capture and where the game is in it
+- **Configure Capture**: choose what to capture and where the game is in it
 - **Settings**: connection to LiveSplit, detection thresholds, theme and other settings
 - **Generate Reset Templates**: record what a console reset looks like in your capture
 - **Debug**: show what split detection is doing: the split it's on, what that split needs and what it counted so far, and what it did recently, like the splits it sent and the stars and fades it counted. Fades, X-Cams and star predictions are under `Advanced`. It also opens this session's or the previous session's log
@@ -107,7 +107,7 @@ In LiveSplit One, `Splits -> Edit` &rarr; Set `Start Timer at` to **1.36**.
 
 ### Game Capture
 
-What AutoSplit64++ captures is set in the Capture Editor (`Right-Click -> Edit Coordinates`). The options depend on your platform:
+What AutoSplit64++ captures is set in the Capture Editor (`Right-Click -> Configure Capture`). The options depend on your platform:
 
 | | Windows | macOS |
 |---|---|---|
@@ -135,7 +135,7 @@ The AS64+ Frame Grabber OBS plugin sends the gameplay of your capture card sourc
 - Close the Filters.
 
 ##### Set up AutoSplit64++:
-- Open the Capture Editor (`Right-Click -> Edit Coordinates`).
+- Open the Capture Editor (`Right-Click -> Configure Capture`).
 - Check `Use OBS Plugin`.
 - [Set the game region](#setting-the-game-region).
 
@@ -145,7 +145,7 @@ The AS64+ Frame Grabber OBS plugin sends the gameplay of your capture card sourc
 Window Capture streams the selected program's window with Windows.Graphics.Capture (the API used by screen sharing apps and OBS), also while the window is covered by other windows. It needs Windows 10 version 1903 or newer; on older versions it takes a screenshot of the window 30 times/second instead.
 
 - Open your capture software (e.g. AmaRecTV) or emulator. The window can be covered, but not minimized.
-- Open the Capture Editor (`Right-Click -> Edit Coordinates`).
+- Open the Capture Editor (`Right-Click -> Configure Capture`).
 - Uncheck `Use OBS Plugin`.
 - Select the program in the `Process` drop-down.
 - [Set the game region](#setting-the-game-region).
@@ -204,7 +204,7 @@ When reporting a problem, `Save Debug Info` in the Debug window (`Right-Click ->
 
 If it splits at the wrong time, or not at all, also send a recording of the run from a little before to a little after, e.g. your OBS recording or VOD, with the game uncovered by overlays, and your route (`.as64`). The run can then be replayed through split detection to see exactly what went wrong.
 
-- Check the capture and game region are correct (`Right-Click -> Edit Coordinates`)
+- Check the capture and game region are correct (`Right-Click -> Configure Capture`)
 - Check the dot in the top right corner. When using the TCP connection, make sure the LiveSplit Server is running (`Right-Click LiveSplit -> Control -> Start Server`)
 - Check the correct route is loaded, and that it's accurate (e.g. correct star counts, fadeout/fadein counts)
 - Make sure SRL Mode (`Right-Click -> SRL Mode`) is off if you want AutoSplit64++ to detect console resets

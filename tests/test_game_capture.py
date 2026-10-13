@@ -31,7 +31,7 @@ class RegionTest(unittest.TestCase):
 
 @unittest.skipUnless(sys.platform == "darwin", "macOS window capture")
 class StartWithoutScreenRecordingTest(unittest.TestCase):
-    """ Starting split detection never shows macOS's Screen Recording prompt; Edit Coordinates does """
+    """ Starting split detection never shows macOS's Screen Recording prompt; Configure Capture does """
 
     def capture(self, granted):
         window = game_capture.capture_window
@@ -53,7 +53,8 @@ class StartWithoutScreenRecordingTest(unittest.TestCase):
     def test_with_permission(self):
         capture = self.capture(granted=True)
         game_capture.capture_window.get_visible_processes.assert_called_once()
-        with self.assertRaisesRegex(Exception, "Could not find Emulator"):
+        # The window set in Configure Capture, which may not be the one the runner uses, e.g. the default
+        with self.assertRaisesRegex(Exception, "(?s)Could not find Emulator.*Configure Capture"):
             capture.is_valid()
 
 if __name__ == "__main__":
