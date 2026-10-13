@@ -88,6 +88,22 @@ class _FullRunTest(_RecordingTest):
         earliest, latest = self.RECORDING.start_window()
         self.assertTrue(earliest <= time <= latest, f"Started at {time:.3f} s, the runner between {earliest:.3f} and {latest:.3f} s")
 
+    def test_default_templates_start_the_timer_on_the_console_reset(self):
+        # The SM64 logo only matches them for two frames: even seeing every other frame, detection must see one.
+        # Within a frame of the runner's start, as the logo frames show for a frame or two.
+        advanced = json.loads(DEFAULTS.read_text())["advanced"]
+        templates = [DEFAULTS.parent / advanced["reset_frame_one"], DEFAULTS.parent / advanced["reset_frame_two"]]
+        earliest, latest = self.RECORDING.start_window()
+        for fps in (29.97, 15):
+            # Where detection's frames fall between the video's
+            for phase in range(3):
+                with self.subTest(fps=fps, phase=phase):
+                    variant = Variant("default-templates", settings={("advanced", "fadeout_process_frame_rate"): fps})
+                    result = replay(self.RECORDING, phase / 90, latest + 1, templates, variant=variant)
+                    starts = [time for time, command, index in result.commands if command == "split" and index == 0]
+                    self.assertTrue(starts and earliest - 1 / 30 <= starts[-1] <= latest,
+                                    f"Started at {starts}, the runner between {earliest:.3f} and {latest:.3f} s")
+
     def test_splits_when_the_runner_did(self):
         for index, (title, _, _) in enumerate(self.RECORDING.split_windows()):
             if title in self.RECORDING.artifacts:

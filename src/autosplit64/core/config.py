@@ -2,6 +2,8 @@ import json
 import copy
 import sys
 
+from . import migrations
+
 
 _config = {}
 _defaults = None
@@ -97,7 +99,8 @@ def flush_rollback():
     return rb
 
 
-def load_config():
+def load_config(choose=None):
+    """ Loads the settings, brought to this release's: see migrations.migrate for choose """
     global _config
     try:
         with open(_CONFIG_FILE_NAME) as file:
@@ -105,6 +108,9 @@ def load_config():
             _config = data
     except FileNotFoundError:
         generate_config()
+        return
+    if migrations.migrate(_config, choose):
+        save_config()
 
 
 def load_defaults():
@@ -134,4 +140,5 @@ def generate_config():
 
     load_defaults()
     _config = copy.deepcopy(_defaults)
+    migrations.stamp(_config)
     save_config()

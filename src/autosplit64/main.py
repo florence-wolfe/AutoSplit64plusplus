@@ -7,6 +7,7 @@ from threading import Thread
 from PyQt6 import QtCore, QtWidgets, QtGui
 from autosplit64.gui import theme
 from autosplit64.gui.app import App
+from autosplit64.gui.dialogs import settings_changes_dialog
 from autosplit64.gui.constants import FONT_PATH, VERSION
 from autosplit64.core.constants import (
     SPLIT_FADE_ONLY,
@@ -223,6 +224,8 @@ def main():
     qt_app = QtWidgets.QApplication(sys.argv)
 
     qt_app.setStyle("Fusion")
+    # Before anything reads the settings, so an update can ask about changing them
+    config.load_config(settings_changes_dialog.choose)
     theme.apply(config.get("general", "theme"))
 
     # Add font to database

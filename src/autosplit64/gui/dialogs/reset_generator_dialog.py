@@ -92,7 +92,7 @@ class ResetGeneratorDialog(QtWidgets.QDialog):
         spin_box.valueChanged.connect(lambda number: self._show_frame(generated, number))
         default_px = QtWidgets.QLabel()
         default_px.setFixedSize(self.FRAME_WIDTH, self.FRAME_HEIGHT)
-        default_px.setPixmap(QtGui.QPixmap(f"{self.TEMPLATE_DIR}default_reset_{default}.jpg"))
+        self._show_image(default_px, config.get_default("advanced", f"reset_frame_{default}"))
 
         top_layout = QtWidgets.QHBoxLayout()
         top_layout.addWidget(spin_box)
