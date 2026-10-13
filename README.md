@@ -68,12 +68,12 @@ AutoSplit64++ stores its settings, log, routes and reset templates in `~/Library
 
 All windows and options are in the right-click menu, which the menu button (☰) in the bottom right corner also opens. On macOS, the same menu is also available as `Options` in the menu bar:
 
-![Interface](docs/images/menu_screen.png)
+<img alt="Interface" src="docs/images/menu_screen.png" width="365">
 
 - **Edit Route** / **Open Route**: edit the current route, or switch to another one
 - **Configure Capture**: choose what to capture and where the game is in it
-- **Settings**: connection to LiveSplit, detection thresholds, theme and other settings
 - **Generate Reset Templates**: record what a console reset looks like in your capture
+- **Settings**: connection to LiveSplit, detection thresholds, theme and other settings
 - **Debug**: show what split detection is doing: the split it's on, what that split needs and what it counted so far, and what it did recently, like the splits it sent and the stars and fades it counted. Fades, X-Cams and star predictions are under `Advanced`. It also opens this session's or the previous session's log
 - **Autostart**: start split detection when AutoSplit64++ opens
 - **SRL Mode**: don't reset the timer when you reset the console, e.g. in races
@@ -99,7 +99,7 @@ In LiveSplit `Right-Click -> Edit Splits...` &rarr; Set `Start Timer at:` to **1
 
 AutoSplit64++ can also control [LiveSplit One](https://one.livesplit.org) (the web timer):
 
-1. In AutoSplit64++, `Settings -> Connection` &rarr; set `Connection Mode` to **LiveSplit One**. It listens on port `16835` by default. The dot in the top right corner shows the server state (green: connected, amber: waiting for LiveSplit One, red: could not start). Hover it for the URL and click it to copy the URL.
+1. In AutoSplit64++, `Settings -> Connection` &rarr; set `Connection mode` to **LiveSplit One**. It listens on port `16835` by default. The dot in the top right corner shows the server state (green: connected, amber: waiting for LiveSplit One, red: could not start). Hover it for the URL and click it to copy the URL.
 2. In LiveSplit One, `Settings -> Server Connection -> Connect` &rarr; enter `ws://localhost:16835`.
 3. Click `OK` to leave LiveSplit One's settings. LiveSplit One ignores timer commands while its settings are open.
 
@@ -136,21 +136,21 @@ The AS64+ Frame Grabber OBS plugin sends the gameplay of your capture card sourc
 
 ##### Set up AutoSplit64++:
 - Open the Capture Editor (`Right-Click -> Configure Capture`).
-- Check `Use OBS Plugin`.
+- Check `Use OBS plugin`.
 - [Set the game region](#setting-the-game-region).
 
-![OBS Plugin Capture](docs/images/capture_screen_obs.png)
+<img alt="OBS Plugin Capture" src="docs/images/capture_screen_obs.png" width="1100">
 
 #### Window Capture (Windows)
 Window Capture streams the selected program's window with Windows.Graphics.Capture (the API used by screen sharing apps and OBS), also while the window is covered by other windows. It needs Windows 10 version 1903 or newer; on older versions it takes a screenshot of the window 30 times/second instead.
 
 - Open your capture software (e.g. AmaRecTV) or emulator. The window can be covered, but not minimized.
 - Open the Capture Editor (`Right-Click -> Configure Capture`).
-- Uncheck `Use OBS Plugin`.
+- Uncheck `Use OBS plugin`.
 - Select the program in the `Process` drop-down.
 - [Set the game region](#setting-the-game-region).
 
-![Window Capture](docs/images/capture_screen_window.png)
+<img alt="Window Capture" src="docs/images/capture_screen_window.png" width="1100">
 
 Good to know:
 - On Windows 10, Windows draws a yellow border around a window while it's captured. Windows 11 lets AutoSplit64++ turn it off.
@@ -173,8 +173,8 @@ The OBS Plugin is Windows-only.
 
 #### Setting the Game Region
 In the Capture Editor:
-- Press `Capture Screen` to update the shown frame. Make sure it shows a bright scene, like the screenshots above.
-- Press `Auto Detect Region` to position the game region selector around the game. This works best with the OBS Plugin and AmaRecTV.
+- Press `Capture screen` to update the shown frame. Make sure it shows a bright scene, like the screenshots above.
+- Press `Auto detect region` to position the game region selector around the game. This works best with the OBS Plugin and AmaRecTV.
 - If the region isn't right, adjust it by hand as accurately as you can. When in doubt, select 1-2 pixels into the game: even 1 pixel outside the game area causes issues!
 - `VC fix (experimental)` increases the contrast for the Virtual Console, at the cost of some latency.
 - Press `Apply` to save.
@@ -190,7 +190,7 @@ A regular split triggers when the specified number of stars has been collected, 
 `Right-Click -> Open Route` switches between the routes in the `routes` folder, or opens one from a file. Choosing LiveSplit splits (`.lss`) there converts them in the Route Editor, like its `Open` does.
 
 ### Updates
-The installed version is shown at the bottom, next to the menu button. Click it to check for an update. With `Check for Updates` on (in `Settings -> General`), AutoSplit64++ also checks when it opens and offers a new version, and a green dot appears next to the version: click it to update.
+The installed version is shown at the bottom, next to the menu button. Click it to check for an update. With `Check for updates` on (in `Settings -> General`), AutoSplit64++ also checks when it opens and offers a new version, and a green dot appears next to the version: click it to update.
 
 Updating downloads the new version, checks it, and installs it either right away (AutoSplit64++ restarts) or when you quit. Split detection has to be stopped before updating, in case you're in a run. Your settings, routes and reset templates are kept.
 
@@ -200,7 +200,7 @@ On macOS, each new version needs the Screen Recording and Camera permissions aga
 
 If you encounter any issues, please run through all steps below.
 
-When reporting a problem, `Save Debug Info` in the Debug window (`Right-Click -> Debug`) saves everything that helps in one file: the logs, settings, route, reset templates and a captured frame with split detection's regions drawn on it. It includes the log of the session it happened in: `AutoSplit64++.log`, and the session before it, `AutoSplit64++.old.log`. Each start of AutoSplit64++ begins a new log and keeps only the previous one, so a session's log is gone after two more starts. If AutoSplit64++ crashed, it says so the next time it starts, and the crash is in `AutoSplit64++.old.log`. They are next to `AutoSplit64++.exe` on Windows, and in `~/Library/Application Support/AutoSplit64++/` on macOS.
+When reporting a problem, `Save debug info` in the Debug window (`Right-Click -> Debug`) saves everything that helps in one file: the logs, settings, route, reset templates and a captured frame with split detection's regions drawn on it. It includes the log of the session it happened in: `AutoSplit64++.log`, and the session before it, `AutoSplit64++.old.log`. Each start of AutoSplit64++ begins a new log and keeps only the previous one, so a session's log is gone after two more starts. If AutoSplit64++ crashed, it says so the next time it starts, and the crash is in `AutoSplit64++.old.log`. They are next to `AutoSplit64++.exe` on Windows, and in `~/Library/Application Support/AutoSplit64++/` on macOS.
 
 If it splits at the wrong time, or not at all, also send a recording of the run from a little before to a little after, e.g. your OBS recording or VOD, with the game uncovered by overlays, and your route (`.as64`). The run can then be replayed through split detection to see exactly what went wrong.
 
