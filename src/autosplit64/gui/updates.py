@@ -16,7 +16,7 @@ from . import constants
 class UpdateBadge(QtCore.QObject):
     """
     The installed version, which the main window shows with a dot when an update is available, and its
-    tooltip. Clicking it checks for or installs an update.
+    tooltip. Clicking it checks for or installs an update, or opens the changelog once it's the latest.
     """
     changed = QtCore.pyqtSignal()
     clicked = QtCore.pyqtSignal()
@@ -24,11 +24,18 @@ class UpdateBadge(QtCore.QObject):
     def __init__(self, version, parent=None):
         super().__init__(parent)
         self.update = None
+        # Whether a check found that it's the latest version
+        self.latest = False
         self.show_version(version)
 
     def show_version(self, version):
         self.version = f"v{version}" if version[0].isdigit() else version
         self.tooltip = "Click to check for updates"
+        self.changed.emit()
+
+    def show_latest(self):
+        self.latest = True
+        self.tooltip = "You're on the latest version\nClick to open the changelog"
         self.changed.emit()
 
     def show_update(self, version):
@@ -75,6 +82,9 @@ class Updates(QtCore.QObject):
 
     def _on_checked(self, release, asked):
         if release is None:
+            # A development version has no release
+            if updater.parse_version(constants.VERSION) is not None:
+                self._badge.show_latest()
             if asked:
                 if updater.parse_version(constants.VERSION) is None:
                     self._message(f"This is a development version ({constants.VERSION}). Updates are for released versions.")
@@ -95,6 +105,9 @@ class Updates(QtCore.QObject):
     def _on_badge_clicked(self):
         if self._release:
             self.update()
+        elif self._badge.latest:
+            QtGui.QDesktopServices.openUrl(QtCore.QUrl(
+                f"https://github.com/{constants.GITHUB_REPO}/releases/tag/v{constants.VERSION}"))
         else:
             self.check(asked=True)
 

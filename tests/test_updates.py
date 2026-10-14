@@ -85,6 +85,14 @@ class LaunchCheckTest(UpdatesTestCase):
         self.assertIn(">v0.4.0<", version)
         self.assertNotIn("●", version)
 
+    def test_latest_version_is_shown_without_asking(self):
+        self.check_on_launch = True
+        with mock.patch.object(updater, "newer_release", return_value=None):
+            app = self.open_app()
+            self.assertTrue(self.wait_for(lambda: app.update_badge.latest))
+        QtWidgets.QMessageBox.information.assert_not_called()
+        self.assertEqual(app.main.values["versionTip"], "You're on the latest version\nClick to open the changelog")
+
 
 class BadgeTest(UpdatesTestCase):
     def test_up_to_date(self):
@@ -94,6 +102,21 @@ class BadgeTest(UpdatesTestCase):
             self.assertTrue(self.wait_for(lambda: QtWidgets.QMessageBox.information.called))
         self.assertIn("v0.4.0 is the latest version", QtWidgets.QMessageBox.information.call_args.args[2])
 
+    def test_latest_version_opens_its_changelog(self):
+        app = self.open_app()
+        with mock.patch.object(updater, "newer_release", return_value=None):
+            app.update_badge.clicked.emit()
+            self.assertTrue(self.wait_for(lambda: QtWidgets.QMessageBox.information.called))
+        self.assertEqual(app.main.values["versionTip"], "You're on the latest version\nClick to open the changelog")
+
+        with mock.patch.object(updater, "newer_release") as newer_release, \
+             mock.patch.object(updates.QtGui.QDesktopServices, "openUrl") as open_url:
+            app.update_badge.clicked.emit()
+            QTest.qWait(50)
+        newer_release.assert_not_called()
+        self.assertEqual(open_url.call_args.args[0].toString(),
+                         "https://github.com/florence-wolfe/AutoSplit64plusplus/releases/tag/v0.4.0")
+
     def test_development_version(self):
         app = self.open_app()
         with mock.patch.object(app_module.constants, "VERSION", "dev"), \
@@ -102,6 +125,8 @@ class BadgeTest(UpdatesTestCase):
             self.assertTrue(self.wait_for(lambda: QtWidgets.QMessageBox.information.called))
         latest_release.assert_not_called()
         self.assertIn("development version (dev)", QtWidgets.QMessageBox.information.call_args.args[2])
+        # It has no release with a changelog
+        self.assertEqual(app.main.values["versionTip"], "Click to check for updates")
 
     def test_running_from_source_opens_the_release_page(self):
         app = self.open_app()
