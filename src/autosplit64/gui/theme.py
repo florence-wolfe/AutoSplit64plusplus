@@ -49,8 +49,11 @@ _current = None
 
 
 def styles():
-    """ The Qt Quick Controls styles there are on this platform, the default first """
-    return ["Material", "Fusion", "Basic", "Universal"] + _PLATFORM_STYLES.get(sys.platform, [])
+    """
+    The Qt Quick Controls styles there are on this platform, the default first. Not Basic, which draws with palette
+    colors that most of the themes' dark palettes have the wrong way round, e.g. its switches' handles in `light`.
+    """
+    return ["Material", "Fusion", "Universal"] + _PLATFORM_STYLES.get(sys.platform, [])
 
 
 def use_style(name):

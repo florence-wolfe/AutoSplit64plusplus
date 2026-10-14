@@ -65,7 +65,7 @@ class StyleTest(unittest.TestCase):
     def test_styles_of_each_platform(self):
         for platform, own in [("darwin", ["macOS"]), ("win32", ["Windows", "FluentWinUI3"]), ("linux", [])]:
             with self.subTest(platform), mock.patch.object(theme.sys, "platform", platform):
-                self.assertEqual(theme.styles(), ["Material", "Fusion", "Basic", "Universal"] + own)
+                self.assertEqual(theme.styles(), ["Material", "Fusion", "Universal"] + own)
 
 
 class StatusColorTest(unittest.TestCase):

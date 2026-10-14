@@ -234,9 +234,9 @@ ThemedPane {
         return menu
     }
 
-    // Before it opens, when its height isn't known: the entries' and the padding
+    // Before it opens, when its height isn't known: the entries', the space between them and the padding
     function menuHeight(menu) {
-        let height = menu.topPadding + menu.bottomPadding
+        let height = menu.topPadding + menu.bottomPadding + (menu.contentItem.spacing || 0) * Math.max(menu.count - 1, 0)
         for (let i = 0; i < menu.count; i++)
             height += menu.itemAt(i).implicitHeight
         return height
@@ -266,6 +266,9 @@ ThemedPane {
         id: menuComponent
         Menu {
             popupType: Popup.Window
+            // A window that's a popup is made shorter by insets outside it, e.g. the macOS style's for its shadow,
+            // and its entries then scroll
+            topInset: 0; bottomInset: 0; leftInset: 0; rightInset: 0
             // As tall as the other entries, see itemComponent: the menu makes those that open submenus
             delegate: MenuItem { implicitHeight: 32 }
             M.Material.theme: root.M.Material.theme

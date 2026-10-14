@@ -95,7 +95,9 @@ ThemedPane {
                         objectName: "styleAbout"
                         text: style.currentIndex >= 0 ? style.model[style.currentIndex].about : ""
                         visible: text !== ""
+                        wrapMode: Text.Wrap
                         opacity: 0.7
+                        Layout.preferredWidth: 360
                     }
                 }
 
