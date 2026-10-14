@@ -2,8 +2,9 @@
 Replays recorded runs through split detection, for tests.
 
 A recording is a video of a run, with a .json in tests/recordings of where the game is in it and when
-each split should happen. The videos aren't in the repository: `uv run python -m tests.replay` downloads
-them into tests/recordings/cache, and tests that need one are skipped without it.
+each split should happen. Most videos aren't in the repository: `uv run python -m tests.replay` downloads
+them into tests/recordings/cache, and tests that need one are skipped without it. A recording without a url
+is a short video in tests/recordings itself.
 
 Split detection runs as in the app, with the app's default settings, except:
 - Frames come from the video, at the time of a clock that replaces time.time() and time.sleep(). Sleeping
@@ -67,7 +68,7 @@ class Recording:
 
     @property
     def video(self):
-        return CACHE / f"{self.name}.mp4"
+        return (CACHE if self.url else RECORDINGS) / f"{self.name}.mp4"
 
     @property
     def route_path(self):
