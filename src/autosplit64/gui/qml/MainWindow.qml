@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import QtQuick.Controls.Material as M
+import QtQuick.Controls.Universal as U
 
 // The main window's content: the route's splits beside the star, star count and start button, which keep
 // their art. `main` is the Python Main object (app.py): its values are what's shown, and its slots the
@@ -271,6 +272,10 @@ ThemedPane {
             M.Material.accent: root.M.Material.accent
             M.Material.background: root.M.Material.background
             M.Material.foreground: root.M.Material.foreground
+            U.Universal.theme: root.U.Universal.theme
+            U.Universal.accent: root.U.Universal.accent
+            U.Universal.background: root.U.Universal.background
+            U.Universal.foreground: root.U.Universal.foreground
             palette: root.palette
         }
     }

@@ -1,9 +1,10 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material as M
+import QtQuick.Controls.Universal as U
 
-// A window's content, in the colors of the app's palette, so the theme setting applies to it: Material's, and the
-// palette that the other styles draw with, which is otherwise the style's own
+// A window's content, in the colors of the app's palette, so the theme setting applies to it: Material's and
+// Universal's, and the palette that the other styles draw with, which is otherwise the style's own
 Pane {
     padding: 0
 
@@ -12,6 +13,10 @@ Pane {
     M.Material.accent: system.highlight
     M.Material.background: system.window
     M.Material.foreground: system.windowText
+    U.Universal.theme: system.window.hslLightness < 0.5 ? U.Universal.Dark : U.Universal.Light
+    U.Universal.accent: system.highlight
+    U.Universal.background: system.window
+    U.Universal.foreground: system.windowText
 
     // Each group's colors, as a color for all of them would replace the disabled ones whenever it's bound again
     function showPalette() {

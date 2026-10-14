@@ -37,7 +37,9 @@ class Settings(QtCore.QObject):
 
     @QtCore.pyqtProperty("QVariantList", constant=True)
     def styles(self):
-        return [{"text": name, "value": name} for name in theme.STYLES]
+        return [{"text": "Fluent" if name == "FluentWinUI3" else name, "value": name,
+                 "about": "Its controls take the system's accent color, not the theme's." if name in theme.SYSTEM_STYLES else ""}
+                for name in theme.styles()]
 
     @QtCore.pyqtProperty(str, constant=True)
     def warningColor(self):

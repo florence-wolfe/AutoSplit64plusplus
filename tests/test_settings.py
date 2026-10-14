@@ -201,6 +201,16 @@ class StyleSettingTest(unittest.TestCase):
         self.assertTrue(note.property("visible"))
         self.assertIn("Requires restart", note.property("text"))
 
+    def test_says_which_styles_take_the_systems_colors(self):
+        combo, about = qml(self.dialog, "style"), qml(self.dialog, "styleAbout")
+        self.assertFalse(about.property("visible"))
+        # The platform's own style is last, where it has one
+        own = theme.styles()[-1]
+        if own in theme.SYSTEM_STYLES:
+            choose(combo, len(theme.styles()) - 1)
+            self.assertTrue(about.property("visible"))
+            self.assertIn("system's accent color", about.property("text"))
+
 
 class DetectionModelSettingTest(unittest.TestCase):
     """ Saved as model.detection, and model.legacy for releases before it: see core/detection_model.py """

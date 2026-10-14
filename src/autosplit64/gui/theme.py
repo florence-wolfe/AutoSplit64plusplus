@@ -7,6 +7,7 @@ The windows in QML use a Qt Quick Controls style too, which Qt takes when the fi
 needs a restart.
 """
 import os
+import sys
 
 from PyQt6 import QtGui, QtWidgets
 
@@ -15,8 +16,9 @@ os.environ.setdefault("QT_API", "pyqt6")
 import qt_themes  # noqa: E402
 
 DEFAULT = "default"
-# The Qt Quick Controls styles, the default first. Others don't take their colors from the theme.
-STYLES = ["Material", "Fusion"]
+# The platforms' own Qt Quick Controls styles, whose controls take the system's accent color instead of the theme's
+_PLATFORM_STYLES = {"darwin": ["macOS"], "win32": ["Windows", "FluentWinUI3"]}
+SYSTEM_STYLES = {style for styles in _PLATFORM_STYLES.values() for style in styles}
 
 Role = QtGui.QPalette.ColorRole
 # AutoSplit64++'s own dark palette
@@ -46,9 +48,14 @@ _name = None
 _current = None
 
 
+def styles():
+    """ The Qt Quick Controls styles there are on this platform, the default first """
+    return ["Material", "Fusion", "Basic", "Universal"] + _PLATFORM_STYLES.get(sys.platform, [])
+
+
 def use_style(name):
     """ The QML windows' style, before the first opens """
-    os.environ["QT_QUICK_CONTROLS_STYLE"] = name if name in STYLES else STYLES[0]
+    os.environ["QT_QUICK_CONTROLS_STYLE"] = name if name in styles() else styles()[0]
 
 
 def default_palette():

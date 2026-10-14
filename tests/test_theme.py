@@ -56,6 +56,17 @@ class StyleTest(unittest.TestCase):
             theme.use_style("Removed")
             self.assertEqual(os.environ["QT_QUICK_CONTROLS_STYLE"], "Material")
 
+    def test_other_platforms_style_is_the_default(self):
+        # e.g. settings copied from a Mac to Windows
+        with mock.patch.dict(os.environ), mock.patch.object(theme.sys, "platform", "win32"):
+            theme.use_style("macOS")
+            self.assertEqual(os.environ["QT_QUICK_CONTROLS_STYLE"], "Material")
+
+    def test_styles_of_each_platform(self):
+        for platform, own in [("darwin", ["macOS"]), ("win32", ["Windows", "FluentWinUI3"]), ("linux", [])]:
+            with self.subTest(platform), mock.patch.object(theme.sys, "platform", platform):
+                self.assertEqual(theme.styles(), ["Material", "Fusion", "Basic", "Universal"] + own)
+
 
 class StatusColorTest(unittest.TestCase):
     def setUp(self):

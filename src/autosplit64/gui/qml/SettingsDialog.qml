@@ -76,6 +76,7 @@ ThemedPane {
                     }
                     Label { text: "Style" }
                     ValueCombo {
+                        id: style
                         objectName: "style"
                         section: "general"; key: "style"; fallback: "Material"
                         model: settings.styles
@@ -86,6 +87,14 @@ ThemedPane {
                         objectName: "styleRestart"
                         text: "<font color='" + settings.warningColor + "'>⚠</font> Requires restart"
                         textFormat: Text.StyledText
+                        opacity: 0.7
+                    }
+                    Item { visible: styleAbout.visible }
+                    Label {
+                        id: styleAbout
+                        objectName: "styleAbout"
+                        text: style.currentIndex >= 0 ? style.model[style.currentIndex].about : ""
+                        visible: text !== ""
                         opacity: 0.7
                     }
                 }

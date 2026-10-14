@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material as M
+import QtQuick.Controls.Universal as U
 
 // A message over the window it's in, with an OK button. The heading is in its content: Dialog's own title
 // is in a header whose height loops back through the dialog's once its text wraps.
@@ -17,6 +18,10 @@ Dialog {
     M.Material.accent: parent.M.Material.accent
     M.Material.background: parent.M.Material.background
     M.Material.foreground: parent.M.Material.foreground
+    U.Universal.theme: parent.U.Universal.theme
+    U.Universal.accent: parent.U.Universal.accent
+    U.Universal.background: parent.U.Universal.background
+    U.Universal.foreground: parent.U.Universal.foreground
     palette: parent.palette
     // Material's dims the window light for its light theme, and the window's theme doesn't reach it either
     Overlay.modal: Rectangle { color: Qt.rgba(0, 0, 0, 0.5) }
