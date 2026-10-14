@@ -42,6 +42,33 @@ jobs:
           cmake --preset windows-x64 -G "Visual Studio 18 2026"
           cmake --build --preset windows-x64
 
+      # macOS keeps the app's Screen Recording and Camera permissions across updates while each release is signed
+      # with the same certificate. It's self-signed, made once with:
+      #   openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 9125 -subj "/CN=AutoSplit64plusplus" \
+      #     -addext "keyUsage=critical,digitalSignature" -addext "extendedKeyUsage=critical,codeSigning"
+      #   openssl pkcs12 -export -legacy -inkey key.pem -in cert.pem -out cert.p12
+      # and kept base64 encoded in the MACOS_SIGNING_CERTIFICATE secret, with its password in MACOS_SIGNING_PASSWORD.
+      # A new certificate costs everyone the permissions once more.
+      - name: Import the signing certificate
+        if: runner.os == 'macOS'
+        env:
+          CERTIFICATE: ${{ secrets.MACOS_SIGNING_CERTIFICATE }}
+          PASSWORD: ${{ secrets.MACOS_SIGNING_PASSWORD }}
+        run: |
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          echo "$CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security create-keychain -p "" "$keychain"
+          security set-keychain-settings "$keychain"
+          security unlock-keychain -p "" "$keychain"
+          security import "$RUNNER_TEMP/cert.p12" -k "$keychain" -P "$PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -k "" "$keychain" > /dev/null
+          # codesign only finds identities in the keychains it searches
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          # It's untrusted, being self-signed, which codesign doesn't mind
+          identity=$(security find-identity -p codesigning "$keychain" | awk '$1 == "1)" { print $2; exit }')
+          [ -n "$identity" ] || { echo "No signing identity in the certificate"; exit 1; }
+          echo "AS64_SIGN_IDENTITY=$identity" >> "$GITHUB_ENV"
+
       - name: Build
         run: uv run build.py
         env:

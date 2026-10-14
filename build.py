@@ -5,6 +5,10 @@ Builds AutoSplit64++ with PyInstaller: `uv run build.py`
 - macOS: dist/AutoSplit64++.app, which includes its resources and can be installed anywhere
 
 The version comes from the release's git tag (AS64_VERSION, set in CI), or git describe.
+
+On macOS the app is signed with AS64_SIGN_IDENTITY, set in CI, or ad hoc without it. macOS keeps the Screen
+Recording and Camera permissions of an app signed with the same certificate across updates, but an ad hoc
+signature is different for every build.
 """
 import contextlib
 import os
@@ -114,7 +118,8 @@ def build_macos():
     info["NSCameraUsageDescription"] = "AutoSplit64++ captures the game from your capture card or virtual camera."
     info_plist.write_bytes(plistlib.dumps(info))
     # Changing Info.plist invalidates the signature
-    subprocess.run(["codesign", "--force", "--deep", "--sign", "-", str(built)], check=True)
+    identity = os.environ.get("AS64_SIGN_IDENTITY") or "-"
+    subprocess.run(["codesign", "--force", "--deep", "--sign", identity, str(built)], check=True)
 
     app = Path("dist") / f"{NAME}.app"
     shutil.rmtree(app, ignore_errors=True)
