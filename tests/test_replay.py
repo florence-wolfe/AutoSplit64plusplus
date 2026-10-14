@@ -10,7 +10,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from autosplit64.core import route_loader
+from autosplit64.core import detection_model, route_loader
 from autosplit64.core.constants import SPLIT_NORMAL
 from tests.replay import DEFAULT, DEFAULTS, ROUNDING, Recording, Variant, first_black_centre, generate_reset_templates, replay
 
@@ -195,6 +195,65 @@ class MidRunStartTest(_RecordingTest):
         self.assertEqual(self.result.errors, [])
         self.assertEqual([command for _, command, _ in self.result.commands], ["split"])
         self.assert_split_in_window(self.result, self.CCM)
+
+
+# The detection model that waits for Bowser's last speech before it looks for the Grand Star
+AS64PP = Variant("as64pp", settings={("model", "detection"): detection_model.AS64PP})
+
+
+class _As64ppBitsTest(_RecordingTest):
+    """ AS64++'s final split over the recording, from the split before """
+    BITS = 11
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        start = cls.RECORDING.split_windows()[cls.BITS - 1][2]
+        cls.result = replay(cls.RECORDING, start, cls.RECORDING.length(), cls.templates, split_index=cls.BITS, variant=AS64PP)
+
+    def test_splits_when_the_runner_did(self):
+        self.assertEqual(self.result.errors, [])
+        self.assertEqual([command for _, command, _ in self.result.commands], ["split"])
+        self.assert_split_in_window(self.result, self.BITS)
+
+    def test_after_bowsers_last_speech(self):
+        self.assertEqual(len([line for line in self.result.trace if "Bowser's last speech" in line]), 1)
+
+
+class GreensuigiAs64ppBitsTest(_As64ppBitsTest):
+    RECORDING = GreensuigiTest.RECORDING
+
+
+class NoraSM64As64ppBitsTest(_As64ppBitsTest):
+    RECORDING = NoraSM64Test.RECORDING
+
+
+class FlosBitsTest(unittest.TestCase):
+    """ AS64++'s final split over Flo's Bowser in the Sky, which 0.6.0 split while Bowser was alive """
+
+    RECORDING = Recording.load("flo_bits_ares")
+    BITS = 11
+    # The first frame without the Grand Star, once Mario grabbed it, at 361.867 s
+    GRAB = 10856 / 30
+
+    @classmethod
+    def setUpClass(cls):
+        if not cls.RECORDING.available():
+            raise unittest.SkipTest(f"No {cls.RECORDING.video}")
+        # It has no console reset to make reset templates from
+        advanced = json.loads(DEFAULTS.read_text())["advanced"]
+        templates = [DEFAULTS.parent / advanced["reset_frame_one"], DEFAULTS.parent / advanced["reset_frame_two"]]
+        cls.result = replay(cls.RECORDING, 0, cls.RECORDING.length(), templates, split_index=cls.BITS, variant=AS64PP)
+
+    def test_no_errors(self):
+        self.assertEqual(self.result.errors, [])
+
+    def test_splits_when_mario_grabs_the_grand_star(self):
+        look = 1 / json.loads(DEFAULTS.read_text())["advanced"]["fadeout_process_frame_rate"]
+        self.assertEqual([command for _, command, _ in self.result.commands], ["split"])
+        time = self.result.commands[0][0]
+        self.assertTrue(self.GRAB - ROUNDING <= time <= self.GRAB + look + ROUNDING,
+                        f"Split at {time:.3f} s, Mario grabs the Grand Star at {self.GRAB:.3f} s")
 
 
 if __name__ == "__main__":

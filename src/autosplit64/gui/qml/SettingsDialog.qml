@@ -200,9 +200,31 @@ ThemedPane {
                     Heading { text: "Model" }
                     Label { text: "Detection model" }
                     ValueCombo {
-                        section: "model"; key: "legacy"; fallback: false
+                        id: detectionModel
+                        objectName: "detectionModel"
+                        section: "model"; key: "detection"; fallback: "star_predictor"
                         Layout.preferredWidth: 240
-                        model: [{ text: "AS64+ Star Predictor", value: false }, { text: "AS64 Legacy Model", value: true }]
+                        model: [
+                            { text: "AS64++ Detection", value: "as64pp",
+                              about: "The AS64+ Star Predictor, with a new final split. It only looks for the Grand Star "
+                                     + "once Bowser gave his last speech, so yellow in the fight, from Bowser or the "
+                                     + "power meter, can't split it before he's beaten, which some captures and "
+                                     + "emulators did with the others. It splits on the first frame after Mario grabs it." },
+                            { text: "AS64+ Star Predictor", value: "star_predictor",
+                              about: "AutoSplit64+'s star predictor. The final split looks for the Grand Star's yellow "
+                                     + "from 20 s into the fight, and can split early when Bowser or the power meter "
+                                     + "shows it for long enough." },
+                            { text: "AS64 Legacy Model", value: "legacy",
+                              about: "AutoSplit64's original star predictor, with the final split of the AS64+ Star Predictor." }
+                        ]
+                    }
+                    Item {}
+                    Label {
+                        objectName: "detectionModelAbout"
+                        text: detectionModel.currentIndex >= 0 ? detectionModel.model[detectionModel.currentIndex].about : ""
+                        wrapMode: Text.Wrap
+                        opacity: 0.7
+                        Layout.preferredWidth: 360
                     }
                 }
             }

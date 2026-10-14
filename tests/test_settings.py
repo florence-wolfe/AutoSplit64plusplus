@@ -179,5 +179,46 @@ class ThemeSettingTest(unittest.TestCase):
         self.assertEqual(self.combo.property("currentText"), "Default")
 
 
+class DetectionModelSettingTest(unittest.TestCase):
+    """ Saved as model.detection, and model.legacy for releases before it: see core/detection_model.py """
+    MODELS = ["as64pp", "star_predictor", "legacy"]
+
+    def dialog(self, model):
+        self.settings = copy.deepcopy(SettingsDialogTest.SETTINGS)
+        self.settings["model"] = model
+        for patcher in [mock.patch.object(config, "_config", self.settings), mock.patch.object(config, "save_config")]:
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        dialog = SettingsDialog()
+        self.addCleanup(dialog.deleteLater)
+        dialog.show()
+        return dialog
+
+    def shown(self, dialog):
+        return self.MODELS[qml(dialog, "detectionModel").property("currentIndex")]
+
+    def test_shows_the_model_of_settings_from_before_it(self):
+        self.assertEqual(self.shown(self.dialog({"legacy": True})), "legacy")
+        self.assertEqual(self.shown(self.dialog({"legacy": False})), "star_predictor")
+
+    def test_shows_the_chosen_model(self):
+        self.assertEqual(self.shown(self.dialog({"legacy": False, "detection": "as64pp"})), "as64pp")
+
+    def test_choosing_saves_legacy_too(self):
+        for model, legacy in [("as64pp", False), ("legacy", True), ("star_predictor", False)]:
+            with self.subTest(model):
+                dialog = self.dialog({"legacy": not legacy})
+                choose(qml(dialog, "detectionModel"), self.MODELS.index(model))
+                dialog.apply_clicked()
+                self.assertEqual(self.settings["model"], {"legacy": legacy, "detection": model})
+
+    def test_says_what_the_chosen_model_does(self):
+        dialog = self.dialog({"legacy": False})
+        about = qml(dialog, "detectionModelAbout")
+        self.assertIn("20 s into the fight", about.property("text"))
+        choose(qml(dialog, "detectionModel"), self.MODELS.index("as64pp"))
+        self.assertIn("Bowser gave his last speech", about.property("text"))
+
+
 if __name__ == "__main__":
     unittest.main()

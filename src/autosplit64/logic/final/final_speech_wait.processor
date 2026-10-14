@@ -1,0 +1,14 @@
+{
+  "name": "final_speech_wait",
+  "initial_process": "FIND_BOWSER_SPEECH",
+  "inherit": null,
+  "sub_processors": {},
+  "transitions": {
+    "FADEOUT": {
+      "FADEOUT.RESET": "RESET"
+    },
+    "FIND_BOWSER_SPEECH": {
+      "FIND_BOWSER_SPEECH.FADEOUT": "FADEOUT"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "final_speech_grab",
+  "initial_process": "GRAND_STAR_SPLIT",
+  "inherit": null,
+  "sub_processors": {},
+  "transitions": {
+    "FADEOUT": {
+      "FADEOUT.RESET": "RESET"
+    },
+    "GRAND_STAR_SPLIT": {
+      "GRAND_STAR_SPLIT.FADEOUT": "FADEOUT"
+    }
+  }
+}

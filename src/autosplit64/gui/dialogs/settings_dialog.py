@@ -1,7 +1,7 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 from autosplit64.core import resource_utils
-from autosplit64.core import config
+from autosplit64.core import config, detection_model
 from autosplit64.gui import theme
 from autosplit64.gui.qml_view import qml_view
 from autosplit64.gui.constants import (
@@ -42,11 +42,16 @@ class Settings(QtCore.QObject):
 
     @QtCore.pyqtSlot(str, str, result="QVariant")
     def get(self, section, key):
+        if (section, key) == ("model", "detection") and (section, key) not in self._changes:
+            return detection_model.get()
         return self._changes.get((section, key), config.get(section, key))
 
     @QtCore.pyqtSlot(str, str, "QVariant")
     def set(self, section, key, value):
         self._changes[section, key] = like(config.get(section, key), value)
+        # Releases before it read the model from model.legacy
+        if (section, key) == ("model", "detection"):
+            self._changes["model", "legacy"] = detection_model.legacy(value)
 
     @QtCore.pyqtSlot(str, str, str)
     def set_path(self, section, key, path):

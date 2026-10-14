@@ -1,0 +1,14 @@
+{
+  "name": "final_speech_spawn",
+  "initial_process": "FIND_GRAND_STAR",
+  "inherit": null,
+  "sub_processors": {},
+  "transitions": {
+    "FADEOUT": {
+      "FADEOUT.RESET": "RESET"
+    },
+    "FIND_GRAND_STAR": {
+      "FIND_GRAND_STAR.FADEOUT": "FADEOUT"
+    }
+  }
+}

@@ -5,7 +5,7 @@ import logging
 import cv2
 import numpy as np
 
-from . import config, livesplit
+from . import config, detection_model, livesplit
 from .game_capture import GameCapture
 from .model import Model, PredictionInfo
 from .image_utils import is_black, is_white, convert_to_cv2
@@ -650,6 +650,7 @@ class SplitDetection(Thread):
                 f"of {config.get('game', 'capture_size')}, VC fix {config.get('game', 'vc_fix')}, "
                 f"connection mode {CONNECTION_MODES[config.get('connection', 'ls_connection_type')]}, "
                 f"operation mode {OPERATION_MODES[config.get('general', 'operation_mode')]}, "
+                f"detection model {detection_model.get()}, "
                 f"SRL mode {config.get('general', 'srl_mode')}")
 
     def _reset_fade_count(self):

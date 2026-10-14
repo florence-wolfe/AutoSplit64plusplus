@@ -23,7 +23,7 @@ from autosplit64.core.constants import (
 from autosplit64.core.split_detection import SplitDetection
 from autosplit64.core.processing import ProcessorGenerator
 from autosplit64.core.route_loader import load_or_none
-from autosplit64.core import config, livesplit, logs
+from autosplit64.core import config, detection_model, livesplit, logs
 from autosplit64.core.resource_utils import resource_path
 from autosplit64.processes.standard import (
     ProcessDummy,
@@ -43,6 +43,7 @@ from autosplit64.processes.standard import (
 from autosplit64.processes.xcam import ProcessXCam, ProcessXCamStartUpSegment
 from autosplit64.processes.ddd import ProcessDDDSplit, ProcessDDDSplitX, ProcessFindDDDPortal
 from autosplit64.processes.final import ProcessFindFinalStage, ProcessFinalStarSplit, ProcessFindFinalStar
+from autosplit64.processes.final_speech import ProcessFindBowserSpeech, ProcessFindGrandStar, ProcessGrandStarSplit
 
 def route_timing():
     """ The configured route's timing, or None without a valid route """
@@ -93,6 +94,10 @@ def make_processes(detection):
         "FIND_FINAL_STAGE": ProcessFindFinalStage(detection),
         "FIND_FINAL_STAR": ProcessFindFinalStar(detection),
         "FINAL_STAR_SPLIT": ProcessFinalStarSplit(detection),
+
+        "FIND_BOWSER_SPEECH": ProcessFindBowserSpeech(detection),
+        "FIND_GRAND_STAR": ProcessFindGrandStar(detection),
+        "GRAND_STAR_SPLIT": ProcessGrandStarSplit(detection),
     }
 
 
@@ -108,7 +113,8 @@ def register_split_processors(detection, processes):
         SPLIT_XCAM: "standard/xcam_split.processor",
         SPLIT_MIPS: "ddd/ddd.processor",
         SPLIT_MIPS_X: "ddd/mips_x.processor",
-        SPLIT_FINAL: "final/final.processor",
+        # AS64++ finds the Grand Star after Bowser's last speech
+        SPLIT_FINAL: "final/final_speech.processor" if detection_model.get() == detection_model.AS64PP else "final/final.processor",
     }
     for split_type, path in processor_paths.items():
         processor = ProcessorGenerator.generate(path, processes)
