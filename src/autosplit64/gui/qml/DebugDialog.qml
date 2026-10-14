@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls.Material
+import QtQuick.Controls
+import QtQuick.Controls.Material as M
 
 // The Debug window's content. `debug` is the Python Debug object (debug_dialog.py): its values are what's
 // shown, its line signal each new event, and its other signals the QML's changes and clicks.
@@ -199,7 +200,7 @@ ThemedPane {
 
     component Divider: Rectangle {
         implicitHeight: 1
-        color: root.Material.dividerColor
+        color: root.M.Material.dividerColor
         Layout.columnSpan: 2
         Layout.fillWidth: true
     }

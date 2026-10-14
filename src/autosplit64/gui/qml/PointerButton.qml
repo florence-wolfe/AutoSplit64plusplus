@@ -1,7 +1,7 @@
 import QtQuick
-import QtQuick.Controls.Material as Controls
+import QtQuick.Controls as Controls
 
-// Material's Button, with the pointer over it like the pictures' buttons have, see MainWindow
+// The style's Button, with the pointer over it like the pictures' buttons have, see MainWindow
 Controls.Button {
     HoverHandler { cursorShape: Qt.PointingHandCursor }
 }

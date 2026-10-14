@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls.Material
+import QtQuick.Controls
+import QtQuick.Controls.Material as M
 
 // The settings window's content. `settings` is the Python Settings object (settings_dialog.py), which
 // holds the values: fields show settings.get() whenever it emits loaded(), and settings.set() their edits.
@@ -31,7 +32,7 @@ ThemedPane {
                 }
             }
 
-            Rectangle { Layout.fillHeight: true; implicitWidth: 1; color: root.Material.dividerColor }
+            Rectangle { Layout.fillHeight: true; implicitWidth: 1; color: root.M.Material.dividerColor }
 
             StackLayout {
                 currentIndex: nav.currentIndex
@@ -72,6 +73,20 @@ ThemedPane {
                         Layout.preferredWidth: 200
                         // Shown right away, but only kept when the settings are applied
                         onActivated: settings.show_theme(currentValue)
+                    }
+                    Label { text: "Style" }
+                    ValueCombo {
+                        objectName: "style"
+                        section: "general"; key: "style"; fallback: "Material"
+                        model: settings.styles
+                        Layout.preferredWidth: 200
+                    }
+                    Item {}
+                    Label {
+                        objectName: "styleRestart"
+                        text: "<font color='" + settings.warningColor + "'>⚠</font> Requires restart"
+                        textFormat: Text.StyledText
+                        opacity: 0.7
                     }
                 }
 
@@ -230,7 +245,7 @@ ThemedPane {
             }
         }
 
-        Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: root.Material.dividerColor }
+        Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: root.M.Material.dividerColor }
 
         RowLayout {
             Layout.margins: 12

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls.Material
+import QtQuick.Controls
+import QtQuick.Controls.Material as M
 
 // The route editor's content. `editor` is the Python Editor object (route_editor_dialog.py), with the route's
 // details and the buttons' clicks, and `splits` the Splits model, which the table shows and edits.
@@ -173,7 +174,7 @@ ThemedPane {
         width: ListView.view.width
         height: 40
         radius: 4
-        color: selected ? Qt.alpha(root.Material.accent, 0.25) : "transparent"
+        color: selected ? Qt.alpha(root.M.Material.accent, 0.25) : "transparent"
 
         RowLayout {
             anchors.fill: parent
@@ -202,7 +203,7 @@ ThemedPane {
                 Layout.preferredHeight: 32
                 onClicked: splits.click_icon(row.index)
                 contentItem: Image { source: row.icon_url; sourceSize.width: 32; sourceSize.height: 32; fillMode: Image.PreserveAspectFit }
-                background: Rectangle { color: parent.hovered ? Qt.alpha(root.Material.foreground, 0.1) : "transparent"; radius: 4 }
+                background: Rectangle { color: parent.hovered ? Qt.alpha(root.M.Material.foreground, 0.1) : "transparent"; radius: 4 }
             }
             CompactField {
                 text: row.title

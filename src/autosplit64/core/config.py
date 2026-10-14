@@ -113,6 +113,15 @@ def load_config(choose=None):
         save_config()
 
 
+def peek(section, key):
+    """ A saved setting, or its default, without loading the settings, which an update may ask about """
+    try:
+        with open(_CONFIG_FILE_NAME) as file:
+            return json.load(file)[section][key]
+    except (OSError, ValueError, KeyError):
+        return get_default(section, key)
+
+
 def load_defaults():
     global _defaults
     with open(_DEFAULTS_FILE_NAME) as file:

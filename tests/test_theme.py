@@ -1,4 +1,6 @@
+import os
 import unittest
+from unittest import mock
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 
@@ -41,6 +43,18 @@ class ThemeTest(unittest.TestCase):
     def test_display_names(self):
         self.assertEqual(theme.display_name("github_dark"), "Github Dark")
         self.assertEqual(theme.display_name(theme.DEFAULT), "Default")
+
+
+class StyleTest(unittest.TestCase):
+    def test_style(self):
+        with mock.patch.dict(os.environ):
+            theme.use_style("Fusion")
+            self.assertEqual(os.environ["QT_QUICK_CONTROLS_STYLE"], "Fusion")
+
+    def test_unknown_style_is_the_default(self):
+        with mock.patch.dict(os.environ):
+            theme.use_style("Removed")
+            self.assertEqual(os.environ["QT_QUICK_CONTROLS_STYLE"], "Material")
 
 
 class StatusColorTest(unittest.TestCase):

@@ -2,6 +2,9 @@
 The app's colors: a theme, which is a palette from qt-themes or AutoSplit64++'s own. Widgets take
 their colors from the palette, or status_color() for green, yellow and red. Like the palettes,
 the app uses the Fusion style.
+
+The windows in QML use a Qt Quick Controls style too, which Qt takes when the first one opens, so a new style
+needs a restart.
 """
 import os
 
@@ -12,6 +15,8 @@ os.environ.setdefault("QT_API", "pyqt6")
 import qt_themes  # noqa: E402
 
 DEFAULT = "default"
+# The Qt Quick Controls styles, the default first. Others don't take their colors from the theme.
+STYLES = ["Material", "Fusion"]
 
 Role = QtGui.QPalette.ColorRole
 # AutoSplit64++'s own dark palette
@@ -39,6 +44,11 @@ _DEFAULT_STATUS_COLORS = {"green": (76, 175, 80), "yellow": (255, 193, 7), "red"
 # The theme in use, by name and as a qt-themes theme (None for the default)
 _name = None
 _current = None
+
+
+def use_style(name):
+    """ The QML windows' style, before the first opens """
+    os.environ["QT_QUICK_CONTROLS_STYLE"] = name if name in STYLES else STYLES[0]
 
 
 def default_palette():

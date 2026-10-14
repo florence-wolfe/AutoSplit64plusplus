@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls.Material
+import QtQuick.Controls
 
 // The reset template generator's content. `templates` is the Python Templates object
 // (reset_generator_dialog.py): its values are what's shown, and its signals are the buttons' clicks.

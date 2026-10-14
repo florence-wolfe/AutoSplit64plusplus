@@ -43,7 +43,7 @@ class SettingsDialogTest(unittest.TestCase):
     # A value for every setting the dialog edits, each different from the defaults and its neighbours
     SETTINGS = {
         "general": {"operation_mode": 1, "mid_run_start_enabled": False, "on_top": False, "update_check": True,
-                    "auto_start": True, "theme": "dracula"},
+                    "auto_start": True, "theme": "dracula", "style": "Fusion"},
         "game": {"override_version": True, "version": "US"},
         "connection": {"ls_host": "host.example", "ls_port": 1234, "ls_pipe_host": "pipe.example", "lso_port": 5678,
                        "ls_connection_type": 2},
@@ -177,6 +177,29 @@ class ThemeSettingTest(unittest.TestCase):
         self.settings["general"]["theme"] = "removed_theme"
         self.dialog.show()
         self.assertEqual(self.combo.property("currentText"), "Default")
+
+
+class StyleSettingTest(unittest.TestCase):
+    def setUp(self):
+        self.settings = copy.deepcopy(SettingsDialogTest.SETTINGS)
+        for patcher in [mock.patch.object(config, "_config", self.settings), mock.patch.object(config, "save_config")]:
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        self.dialog = SettingsDialog()
+        self.addCleanup(self.dialog.deleteLater)
+        self.dialog.show()
+
+    def test_choosing_saves_it(self):
+        combo = qml(self.dialog, "style")
+        self.assertEqual(combo.property("currentText"), "Fusion")
+        choose(combo, 0)
+        self.dialog.apply_clicked()
+        self.assertEqual(self.settings["general"]["style"], "Material")
+
+    def test_says_it_needs_a_restart(self):
+        note = qml(self.dialog, "styleRestart")
+        self.assertTrue(note.property("visible"))
+        self.assertIn("Requires restart", note.property("text"))
 
 
 class DetectionModelSettingTest(unittest.TestCase):

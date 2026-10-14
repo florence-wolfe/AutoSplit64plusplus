@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls.Material
+import QtQuick.Controls
 
 // The game capture editor's content. `capture` is the Python Capture object (capture_editor_dialog.py): its
 // values are what's shown, choose() and set_region() the QML's changes, and its signals the buttons' clicks.

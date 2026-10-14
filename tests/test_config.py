@@ -1,3 +1,6 @@
+import json
+import os
+import tempfile
 import unittest
 from unittest import mock
 
@@ -37,6 +40,28 @@ class DefaultConnectionModeTest(unittest.TestCase):
     def test_elsewhere_uses_livesplit_one(self):
         self.assertEqual(self.default_mode("darwin"), 2)
         self.assertEqual(self.default_mode("linux"), 2)
+
+class PeekTest(unittest.TestCase):
+    """ A saved setting before the settings are loaded, which may ask about them in a window """
+
+    def peek(self, saved):
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "config.ini")
+            if saved is not None:
+                with open(path, "w") as file:
+                    json.dump(saved, file)
+            with mock.patch.object(config, "_CONFIG_FILE_NAME", path), mock.patch.object(config, "_config", {}):
+                value = config.peek("general", "style")
+                self.assertEqual(config._config, {})
+        return value
+
+    def test_saved_value(self):
+        self.assertEqual(self.peek({"general": {"style": "Fusion"}}), "Fusion")
+
+    def test_default_without_it(self):
+        self.assertEqual(self.peek({"general": {}}), config.get_default("general", "style"))
+        self.assertEqual(self.peek(None), config.get_default("general", "style"))
+
 
 if __name__ == "__main__":
     unittest.main()

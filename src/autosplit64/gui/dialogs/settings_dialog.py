@@ -35,6 +35,14 @@ class Settings(QtCore.QObject):
     def themes(self):
         return [{"text": theme.display_name(name), "value": name} for name in theme.themes()]
 
+    @QtCore.pyqtProperty("QVariantList", constant=True)
+    def styles(self):
+        return [{"text": name, "value": name} for name in theme.STYLES]
+
+    @QtCore.pyqtProperty(str, constant=True)
+    def warningColor(self):
+        return theme.status_color("yellow").name()
+
     def load(self):
         """ Forget the changes, and have the fields show the saved values """
         self._changes.clear()

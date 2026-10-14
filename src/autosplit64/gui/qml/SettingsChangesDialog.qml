@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls.Material
+import QtQuick.Controls
 
 // The settings changes of an update, each checked to apply. `changes` is the Python Changes object
 // (settings_changes_dialog.py). As tall as its content, which the dialog sizes itself to.

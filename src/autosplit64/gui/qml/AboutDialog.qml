@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls.Material
+import QtQuick.Controls
 
 // The about window's content. `links` opens links (about_dialog.py), the rest are the app's details.
 ThemedPane {

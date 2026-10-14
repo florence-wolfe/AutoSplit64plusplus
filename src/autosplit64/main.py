@@ -226,6 +226,9 @@ def main():
     handler = logs.start_session(VERSION)
     logs.install_crash_handlers(handler, show_error)
 
+    # Before any window, as the settings may be loaded with one asking about them
+    theme.use_style(config.peek("general", "style"))
+
     # Create QT Application
     qt_app = QtWidgets.QApplication(sys.argv)
 

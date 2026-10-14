@@ -1,5 +1,6 @@
 import QtQuick
-import QtQuick.Controls.Material
+import QtQuick.Controls
+import QtQuick.Controls.Material as M
 
 // A message over the window it's in, with an OK button. The heading is in its content: Dialog's own title
 // is in a header whose height loops back through the dialog's once its text wraps.
@@ -11,11 +12,12 @@ Dialog {
     width: parent.width - 96
     modal: true
     standardButtons: Dialog.Ok
-    // A popup doesn't take the Material colors of the item it's in, see ThemedPane
-    Material.theme: parent.Material.theme
-    Material.accent: parent.Material.accent
-    Material.background: parent.Material.background
-    Material.foreground: parent.Material.foreground
+    // A popup doesn't take the colors of the item it's in, see ThemedPane
+    M.Material.theme: parent.M.Material.theme
+    M.Material.accent: parent.M.Material.accent
+    M.Material.background: parent.M.Material.background
+    M.Material.foreground: parent.M.Material.foreground
+    palette: parent.palette
     // Material's dims the window light for its light theme, and the window's theme doesn't reach it either
     Overlay.modal: Rectangle { color: Qt.rgba(0, 0, 0, 0.5) }
 

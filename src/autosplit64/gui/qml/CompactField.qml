@@ -1,5 +1,5 @@
 import QtQuick
-import QtQuick.Controls.Material
+import QtQuick.Controls
 
 // Material sizes its controls for touch, even in its Dense variant. The Compact controls are 32 pixels tall.
 TextField {

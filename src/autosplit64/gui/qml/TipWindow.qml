@@ -1,5 +1,6 @@
 import QtQuick
-import QtQuick.Controls.Material
+import QtQuick.Controls
+import QtQuick.Controls.Material as M
 
 // A tooltip that's a window of its own, see tip_window.py: like Material's, in the theme's colors
 Rectangle {
@@ -7,13 +8,13 @@ Rectangle {
     property string text
 
     SystemPalette { id: system }
-    Material.theme: system.window.hslLightness < 0.5 ? Material.Dark : Material.Light
+    M.Material.theme: system.window.hslLightness < 0.5 ? M.Material.Dark : M.Material.Light
 
     // As wide as the label once it wraps: its implicit width is on one line
     implicitWidth: label.width + 16
     implicitHeight: label.implicitHeight + 10
     radius: 4
-    color: Material.tooltipColor
+    color: M.Material.tooltipColor
 
     Label {
         id: label
