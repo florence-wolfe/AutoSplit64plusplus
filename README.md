@@ -194,7 +194,7 @@ The installed version is shown at the bottom, next to the menu button. Click it 
 
 Updating downloads the new version, checks it, and installs it either right away (AutoSplit64++ restarts) or when you quit. Split detection has to be stopped before updating, in case you're in a run. Your settings, routes and reset templates are kept.
 
-On macOS, each new version needs the Screen Recording and Camera permissions again, as it isn't signed by an Apple developer account.
+On macOS, updates keep the Screen Recording and Camera permissions, as every release from 0.7.0 on is signed with the same certificate. Updating to 0.7.0 or later from an earlier version asks for them once more.
 
 ## Troubleshooting
 
