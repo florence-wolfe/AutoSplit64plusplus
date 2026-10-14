@@ -26,13 +26,22 @@ class FakeLiveSplitOne:
     def __init__(self, port, state):
         self.state = state
         self.commands = []
+        # Whether the attempt has new best times, which makes LSO ask whether to save them on a reset without
+        # saveAttempt. Until the runner answers, it sends no responses, as it sends them in order.
+        self.new_best_times = False
+        self._asking = False
         self.ws = connect(f"ws://localhost:{port}")
         threading.Thread(target=self._serve, daemon=True).start()
 
     def _serve(self):
         for message in self.ws:
-            command = json.loads(message)["command"]
+            data = json.loads(message)
+            command = data["command"]
             self.commands.append(command)
+            if command == "reset" and "saveAttempt" not in data and self.new_best_times:
+                self._asking = True
+            if self._asking:
+                continue
             if command == "getCurrentState":
                 self.ws.send(json.dumps({"success": self.state}))
             else:
@@ -100,6 +109,14 @@ class LiveSplitOneServerTest(unittest.TestCase):
         self.server.send_classic("startorsplit\r\n")
         self.server.send_classic("skipsplit\r\n")
         self.assertEqual(self.server.split_index(), 7)
+
+    def test_reset_with_new_best_times_does_not_wait_for_the_runner(self):
+        client = self.connect_client({"state": "Running", "index": 4})
+        client.new_best_times = True
+        self.server.send_classic("reset\r\nstarttimer\r\n")
+        # Not 0, as False == 0
+        client.state = {"state": "Running", "index": 1}
+        self.assertEqual(self.server.split_index(), 1)
 
     def test_reconnect_replaces_client(self):
         first = self.connect_client({"state": "Running", "index": 1})

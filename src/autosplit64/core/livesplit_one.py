@@ -16,11 +16,13 @@ from websockets.sync.server import serve
 
 # LiveSplit Server commands used by livesplit.py -> server protocol commands
 _COMMANDS = {
-    "startorsplit": "splitOrStart",
-    "reset": "reset",
-    "starttimer": "start",
-    "skipsplit": "skipSplit",
-    "unsplit": "undoSplit",
+    "startorsplit": {"command": "splitOrStart"},
+    # Without saveAttempt, LiveSplit One asks the runner whether to save new best times, and answers nothing until
+    # they do, as it answers in order. Saving them is what it does without new best times.
+    "reset": {"command": "reset", "saveAttempt": True},
+    "starttimer": {"command": "start"},
+    "skipsplit": {"command": "skipSplit"},
+    "unsplit": {"command": "undoSplit"},
 }
 
 _server = None
@@ -122,7 +124,7 @@ class LiveSplitOneServer:
             raise ConnectionAbortedError("LiveSplit One is not connected")
         self._pending.append(kind)
         try:
-            self._client.send(json.dumps({"command": command}))
+            self._client.send(json.dumps(command))
         except ConnectionClosed:
             raise ConnectionAbortedError("LiveSplit One connection lost")
 
@@ -140,7 +142,7 @@ class LiveSplitOneServer:
             if not self._state_query_pending:
                 self._state_received.clear()
                 try:
-                    self._send("getCurrentState", "state")
+                    self._send({"command": "getCurrentState"}, "state")
                 except ConnectionAbortedError:
                     return False
                 self._state_query_pending = True
