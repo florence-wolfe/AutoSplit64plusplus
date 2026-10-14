@@ -90,6 +90,23 @@ class MainWindowTipsTest(unittest.TestCase):
         # It's no popup, which would close the menu
         self.assertTrue(menu.isVisible())
 
+    def test_menu_never_shows_below_the_button(self):
+        button = next(item for item in qml_items(self.app.view) if item.objectName() == "menuButton")
+        top = int(button.mapToGlobal(QtCore.QPointF(0, 0)).y())
+        seen = []
+
+        def record():
+            menu = self.menu()
+            if menu:
+                seen.append(menu.geometry().bottom() + 1)
+            return False
+
+        QtCore.QMetaObject.invokeMethod(button, "clicked")
+        wait_until(record, timeout=1)
+        self.assertTrue(seen)
+        # Not even for a frame, which is what looks like it opening downwards and then upwards
+        self.assertLessEqual(max(seen), top)
+
     def menu(self):
         return next((window for window in QtGui.QGuiApplication.topLevelWindows()
                      if window.metaObject().className() == "QQuickPopupWindow" and window.isVisible()), None)

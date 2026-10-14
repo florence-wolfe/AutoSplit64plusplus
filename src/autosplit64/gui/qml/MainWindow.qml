@@ -201,13 +201,10 @@ ThemedPane {
         WindowTip { text: "Menu"; shown: menuButton.hovered }
         onClicked: {
             const menu = root.makeMenu()
-            // Above the button once its height is known, when it's open, but not above the screen: Qt doesn't
-            // keep a popup that's a window on it
-            menu.openedChanged.connect(() => {
-                if (menu.opened)
-                    menu.y = Math.max(menuButton.y - menu.height, main.screen_top() - root.mapToGlobal(0, 0).y)
-            })
-            menu.popup(menuButton.x + menuButton.width - menu.width, menuButton.y)
+            // Above the button, but not above the screen: Qt doesn't keep a popup that's a window on it. Where
+            // it opens, not after, which would show it below the button first.
+            menu.popup(menuButton.x + menuButton.width - menu.width,
+                       Math.max(menuButton.y - root.menuHeight(menu), main.screen_top() - root.mapToGlobal(0, 0).y))
         }
         // Three lines, centered
         contentItem: Item {
@@ -233,6 +230,14 @@ ThemedPane {
         fill(menu, main.menu())
         menu.closed.connect(() => menu.destroy())
         return menu
+    }
+
+    // Before it opens, when its height isn't known: the entries' and the padding
+    function menuHeight(menu) {
+        let height = menu.topPadding + menu.bottomPadding
+        for (let i = 0; i < menu.count; i++)
+            height += menu.itemAt(i).implicitHeight
+        return height
     }
 
     function openMenu(x, y) {
@@ -276,6 +281,7 @@ ThemedPane {
             property string key
             property string tip
             onTriggered: main.trigger(key)
+            HoverHandler { cursorShape: Qt.PointingHandCursor }
             // Beside the menu: it's a window, which a ToolTip can't leave
             WindowTip { text: parent.tip; shown: parent.hovered }
         }

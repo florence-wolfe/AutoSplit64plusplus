@@ -91,7 +91,7 @@ ThemedPane {
         }
 
         // Everything else split detection sees, collapsed at first
-        Button {
+        PointerButton {
             objectName: "advancedButton"
             text: (debug.values.advanced ? "▾  " : "▸  ") + "Advanced"
             flat: true
@@ -147,8 +147,8 @@ ThemedPane {
             rowSpacing: 0
             Layout.fillWidth: true
             Layout.topMargin: 8
-            Button { objectName: "openLog"; text: "Open log"; flat: true; Layout.fillWidth: true; onClicked: debug.open_log() }
-            Button {
+            PointerButton { objectName: "openLog"; text: "Open log"; flat: true; Layout.fillWidth: true; onClicked: debug.open_log() }
+            PointerButton {
                 objectName: "openOldLog"
                 text: "Open previous log"
                 flat: true
@@ -156,7 +156,7 @@ ThemedPane {
                 Layout.fillWidth: true
                 onClicked: debug.open_old_log()
             }
-            Button {
+            PointerButton {
                 objectName: "saveInfo"
                 // The logs, settings, route and a captured frame in one file, for a bug report
                 text: "Save debug info"

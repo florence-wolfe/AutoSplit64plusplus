@@ -22,16 +22,16 @@ ThemedPane {
         Item { Layout.fillHeight: true }
 
         RowLayout {
-            Button { text: "Help"; flat: true; onClicked: help.open() }
+            PointerButton { text: "Help"; flat: true; onClicked: help.open() }
             Item { Layout.fillWidth: true }
-            Button { text: "Cancel"; flat: true; onClicked: templates.cancel() }
-            Button {
+            PointerButton { text: "Cancel"; flat: true; onClicked: templates.cancel() }
+            PointerButton {
                 objectName: "generate"
                 text: templates.values.status
                 enabled: !templates.values.busy
                 onClicked: templates.generate()
             }
-            Button {
+            PointerButton {
                 objectName: "apply"
                 text: "Apply"
                 highlighted: true

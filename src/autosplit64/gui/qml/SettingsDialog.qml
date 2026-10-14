@@ -213,8 +213,8 @@ ThemedPane {
         RowLayout {
             Layout.margins: 12
             Item { Layout.fillWidth: true }
-            Button { text: "Cancel"; flat: true; onClicked: settings.cancel() }
-            Button { objectName: "apply"; text: "Apply"; highlighted: true; onClicked: settings.apply() }
+            PointerButton { text: "Cancel"; flat: true; onClicked: settings.cancel() }
+            PointerButton { objectName: "apply"; text: "Apply"; highlighted: true; onClicked: settings.apply() }
         }
     }
 
@@ -240,7 +240,7 @@ ThemedPane {
         }
     }
 
-    component SettingSwitch: Switch {
+    component SettingSwitch: PointerSwitch {
         id: field
         required property string section
         required property string key

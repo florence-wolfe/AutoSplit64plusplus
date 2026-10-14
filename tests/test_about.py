@@ -32,6 +32,11 @@ class AboutTest(unittest.TestCase):
             QtCore.QMetaObject.invokeMethod(self.qml("github"), "clicked")
         self.assertEqual(open_url.call_args.args[0].toString(), "https://github.com/florence-wolfe/AutoSplit64plusplus")
 
+    def test_buttons_show_a_pointer(self):
+        handlers = self.qml("github").findChildren(QtCore.QObject)
+        cursors = [h.property("cursorShape") for h in handlers if h.metaObject().className().startswith("QQuickHoverHandler")]
+        self.assertEqual(cursors, [QtCore.Qt.CursorShape.PointingHandCursor])
+
 
 if __name__ == "__main__":
     unittest.main()

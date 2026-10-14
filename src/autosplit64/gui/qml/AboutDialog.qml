@@ -28,7 +28,7 @@ ThemedPane {
             RowLayout {
                 Layout.topMargin: 16
                 spacing: 8
-                Button { objectName: "github"; text: "GitHub"; highlighted: true; onClicked: links.open(githubUrl) }
+                PointerButton { objectName: "github"; text: "GitHub"; highlighted: true; onClicked: links.open(githubUrl) }
             }
         }
     }

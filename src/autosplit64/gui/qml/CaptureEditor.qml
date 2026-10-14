@@ -48,11 +48,11 @@ ThemedPane {
                     opacity: 0.7
                     Layout.fillWidth: true
                 }
-                Button { text: capture.values.allowText; highlighted: true; Layout.fillWidth: true; onClicked: capture.allow() }
-                Button { text: "Open System Settings"; flat: true; Layout.fillWidth: true; onClicked: capture.open_settings() }
+                PointerButton { text: capture.values.allowText; highlighted: true; Layout.fillWidth: true; onClicked: capture.allow() }
+                PointerButton { text: "Open System Settings"; flat: true; Layout.fillWidth: true; onClicked: capture.open_settings() }
             }
             // The OBS plugin is only on Windows
-            CheckBox {
+            PointerCheckBox {
                 objectName: "useObs"
                 visible: capture.values.obs
                 text: "Use OBS plugin"
@@ -81,9 +81,9 @@ ThemedPane {
                     onActivated: capture.choose("device", currentIndex)
                 }
             }
-            Button { text: "Capture screen"; Layout.fillWidth: true; Layout.topMargin: 8; onClicked: capture.capture_screen() }
-            Button { text: "Auto detect region"; flat: true; Layout.fillWidth: true; onClicked: capture.auto_detect() }
-            CheckBox {
+            PointerButton { text: "Capture screen"; Layout.fillWidth: true; Layout.topMargin: 8; onClicked: capture.capture_screen() }
+            PointerButton { text: "Auto detect region"; flat: true; Layout.fillWidth: true; onClicked: capture.auto_detect() }
+            PointerCheckBox {
                 objectName: "vcFix"
                 text: "VC fix (experimental)"
                 checked: capture.values.vcFix
@@ -207,8 +207,8 @@ ThemedPane {
             Item { Layout.fillHeight: true }
             RowLayout {
                 Item { Layout.fillWidth: true }
-                Button { text: "Cancel"; flat: true; onClicked: capture.cancel() }
-                Button { text: "Apply"; highlighted: true; onClicked: capture.apply() }
+                PointerButton { text: "Cancel"; flat: true; onClicked: capture.cancel() }
+                PointerButton { text: "Apply"; highlighted: true; onClicked: capture.apply() }
             }
         }
     }

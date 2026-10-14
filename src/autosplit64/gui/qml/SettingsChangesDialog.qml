@@ -33,7 +33,7 @@ ThemedPane {
                 Layout.fillWidth: true
                 Layout.bottomMargin: 8
 
-                CheckBox {
+                PointerCheckBox {
                     id: check
                     objectName: "change" + index
                     checked: true
@@ -54,8 +54,8 @@ ThemedPane {
         RowLayout {
             Layout.topMargin: 8
             Item { Layout.fillWidth: true }
-            Button { text: "Keep My Settings"; flat: true; onClicked: changes.keep() }
-            Button { text: "Apply"; highlighted: true; onClicked: changes.apply() }
+            PointerButton { text: "Keep My Settings"; flat: true; onClicked: changes.keep() }
+            PointerButton { text: "Apply"; highlighted: true; onClicked: changes.apply() }
         }
     }
 }

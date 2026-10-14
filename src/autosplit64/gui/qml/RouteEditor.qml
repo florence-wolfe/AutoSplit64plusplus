@@ -16,11 +16,11 @@ ThemedPane {
 
         RowLayout {
             spacing: 4
-            Button { text: "New"; flat: true; onClicked: editor.new() }
+            PointerButton { text: "New"; flat: true; onClicked: editor.new() }
             // Or LiveSplit splits (.lss) to convert to a route
-            Button { text: "Open"; flat: true; onClicked: editor.open() }
-            Button { text: "Save"; flat: true; onClicked: editor.save() }
-            Button { text: "Save as…"; flat: true; onClicked: editor.save_as() }
+            PointerButton { text: "Open"; flat: true; onClicked: editor.open() }
+            PointerButton { text: "Save"; flat: true; onClicked: editor.save() }
+            PointerButton { text: "Save as…"; flat: true; onClicked: editor.save_as() }
         }
 
         // The route's details
@@ -85,11 +85,11 @@ ThemedPane {
                 Layout.alignment: Qt.AlignTop
                 // Its buttons fill it, which would make it fill the row like the table otherwise
                 Layout.fillWidth: false
-                Button { text: "Insert above"; flat: true; Layout.fillWidth: true; onClicked: editor.insert_above() }
-                Button { text: "Insert below"; flat: true; Layout.fillWidth: true; onClicked: editor.insert_below() }
-                Button { text: "Remove"; flat: true; Layout.fillWidth: true; onClicked: editor.remove() }
-                Button { text: "Move up"; flat: true; Layout.fillWidth: true; onClicked: editor.move_up() }
-                Button { text: "Move down"; flat: true; Layout.fillWidth: true; onClicked: editor.move_down() }
+                PointerButton { text: "Insert above"; flat: true; Layout.fillWidth: true; onClicked: editor.insert_above() }
+                PointerButton { text: "Insert below"; flat: true; Layout.fillWidth: true; onClicked: editor.insert_below() }
+                PointerButton { text: "Remove"; flat: true; Layout.fillWidth: true; onClicked: editor.remove() }
+                PointerButton { text: "Move up"; flat: true; Layout.fillWidth: true; onClicked: editor.move_up() }
+                PointerButton { text: "Move down"; flat: true; Layout.fillWidth: true; onClicked: editor.move_down() }
             }
 
             Rectangle {
@@ -134,8 +134,8 @@ ThemedPane {
 
         RowLayout {
             Item { Layout.fillWidth: true }
-            Button { text: "Cancel"; flat: true; onClicked: editor.cancel() }
-            Button { text: "Apply"; highlighted: true; onClicked: editor.apply() }
+            PointerButton { text: "Cancel"; flat: true; onClicked: editor.cancel() }
+            PointerButton { text: "Apply"; highlighted: true; onClicked: editor.apply() }
         }
     }
 
