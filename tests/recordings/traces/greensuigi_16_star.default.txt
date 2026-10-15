@@ -12,6 +12,7 @@
 65.700 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 0
 65.867 Running ProcessFadeout
 67.000 Running ProcessPostFadeout
+70.000 No power meter 2 to 3 s after the fadeout, fadeouts 1
 73.067 Running ProcessStarCount
 78.067 Fade-in 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 1
 78.233 Running ProcessFadein
@@ -148,21 +149,25 @@
 354.767 Split: split 3 of 12, CCM 8 (needs 8 stars, fadeout 1, fade-in 0), star count 8, fadeouts 1, fade-ins 0
 354.800 Timer on split 4: BitDW 9
 355.900 Running ProcessPostFadeout
+361.567 No power meter 2 to 3 s after the fadeout, fadeouts 0
 361.967 Running ProcessStarCount
 380.633 Fadeout 1: split 4 of 12, BitDW 9 (needs 9 stars, fadeout 2, fade-in 0), star count 8, fadeouts 1, fade-ins 0
 380.800 Running ProcessFadeout
 382.133 Running ProcessPostFadeout
+385.133 No power meter 2 to 3 s after the fadeout, fadeouts 1
 388.200 Running ProcessStarCount
 427.533 Star count 8 -> 9, prediction 9 at 0.99
 432.867 Fadeout 1: split 4 of 12, BitDW 9 (needs 9 stars, fadeout 2, fade-in 0), star count 9, fadeouts 1, fade-ins 0
 433.033 Running ProcessFadeout
 434.200 Running ProcessPostFadeout
+438.533 No power meter 2 to 3 s after the fadeout, fadeouts 1
 440.267 Running ProcessStarCount
 463.433 Fadeout 2: split 4 of 12, BitDW 9 (needs 9 stars, fadeout 2, fade-in 0), star count 9, fadeouts 2, fade-ins 0
 463.600 Running ProcessFadeout
 463.900 Split: split 4 of 12, BitDW 9 (needs 9 stars, fadeout 2, fade-in 0), star count 9, fadeouts 2, fade-ins 0
 463.933 Timer on split 5: SSL 11
 465.033 Running ProcessPostFadeout
+468.033 No power meter 2 to 3 s after the fadeout, fadeouts 0
 469.833 Running ProcessFlashCheck
 471.867 Running ProcessStarCount
 472.533 Fadeout 1: split 5 of 12, SSL 11 (needs 11 stars, fadeout 1, fade-in 0), star count 9, fadeouts 1, fade-ins 0
@@ -172,10 +177,12 @@
 475.333 Fadeout 2: split 5 of 12, SSL 11 (needs 11 stars, fadeout 1, fade-in 0), star count 9, fadeouts 2, fade-ins 0
 475.367 Running ProcessFadeout
 477.000 Running ProcessPostFadeout
+480.000 No power meter 2 to 3 s after the fadeout, fadeouts 2
 483.067 Running ProcessStarCount
 488.067 Fadeout 3: split 5 of 12, SSL 11 (needs 11 stars, fadeout 1, fade-in 0), star count 9, fadeouts 3, fade-ins 0
 488.233 Running ProcessFadeout
 488.967 Running ProcessPostFadeout
+491.967 No power meter 2 to 3 s after the fadeout, fadeouts 3
 495.033 Running ProcessStarCount
 504.200 Fade-in 1: split 5 of 12, SSL 11 (needs 11 stars, fadeout 1, fade-in 0), star count 9, fadeouts 3, fade-ins 1
 504.367 Running ProcessFadein
@@ -305,16 +312,19 @@
 733.533 Fadeout 1: split 10 of 12, BitFS (needs 16 stars, fadeout 3, fade-in 0), star count 16, fadeouts 1, fade-ins 0
 733.700 Running ProcessFadeout
 735.067 Running ProcessPostFadeout
+738.067 No power meter 2 to 3 s after the fadeout, fadeouts 1
 741.133 Running ProcessStarCount
 768.967 Fadeout 2: split 10 of 12, BitFS (needs 16 stars, fadeout 3, fade-in 0), star count 16, fadeouts 2, fade-ins 0
 769.133 Running ProcessFadeout
 770.367 Running ProcessPostFadeout
+773.367 No power meter 2 to 3 s after the fadeout, fadeouts 2
 776.433 Running ProcessStarCount
 806.600 Fadeout 3: split 10 of 12, BitFS (needs 16 stars, fadeout 3, fade-in 0), star count 16, fadeouts 3, fade-ins 0
 806.767 Running ProcessFadeout
 807.033 Split: split 10 of 12, BitFS (needs 16 stars, fadeout 3, fade-in 0), star count 16, fadeouts 3, fade-ins 0
 807.067 Timer on split 11: BLJ
 808.067 Running ProcessPostFadeout
+811.067 No power meter 2 to 3 s after the fadeout, fadeouts 0
 812.933 Running ProcessFlashCheck
 814.967 Running ProcessStarCount
 815.967 Fadeout 1: split 11 of 12, BLJ (needs 16 stars, fadeout 4, fade-in 0), star count 16, fadeouts 1, fade-ins 0
@@ -323,10 +333,12 @@
 818.933 Fadeout 2: split 11 of 12, BLJ (needs 16 stars, fadeout 4, fade-in 0), star count 16, fadeouts 2, fade-ins 0
 819.000 Running ProcessFadeout
 820.700 Running ProcessPostFadeout
+823.700 No power meter 2 to 3 s after the fadeout, fadeouts 2
 826.767 Running ProcessStarCount
 827.933 Fadeout 3: split 11 of 12, BLJ (needs 16 stars, fadeout 4, fade-in 0), star count 16, fadeouts 3, fade-ins 0
 828.100 Running ProcessFadeout
 828.800 Running ProcessPostFadeout
+831.800 No power meter 2 to 3 s after the fadeout, fadeouts 3
 834.867 Running ProcessStarCount
 850.700 Fadeout 4: split 11 of 12, BLJ (needs 16 stars, fadeout 4, fade-in 0), star count 16, fadeouts 4, fade-ins 0
 850.867 Running ProcessFadeout

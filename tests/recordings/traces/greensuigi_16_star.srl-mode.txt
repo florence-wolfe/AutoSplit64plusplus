@@ -10,6 +10,7 @@
 65.700 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 0
 65.867 Running ProcessFadeout
 67.000 Running ProcessPostFadeout
+70.000 No power meter 2 to 3 s after the fadeout, fadeouts 1
 73.067 Running ProcessStarCount
 78.067 Fade-in 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 1
 78.233 Running ProcessFadein

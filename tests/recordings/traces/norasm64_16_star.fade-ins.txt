@@ -16,6 +16,7 @@
 72.100 Fadeout 1: split 1 of 14, 0 stars, fade-in (needs 0 stars, fadeout 1, fade-in 1), star count 0, fadeouts 1, fade-ins 0
 72.267 Running ProcessFadeout
 73.467 Running ProcessPostFadeout
+76.467 No power meter 2 to 3 s after the fadeout, fadeouts 1
 79.533 Running ProcessStarCount
 84.867 Fade-in 1: split 1 of 14, 0 stars, fade-in (needs 0 stars, fadeout 1, fade-in 1), star count 0, fadeouts 1, fade-ins 1
 85.033 Running ProcessFadein
@@ -175,24 +176,29 @@
 372.950 Fadeout 1: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 3, fade-in 1), star count 8, fadeouts 1, fade-ins 0
 373.116 Running ProcessFadeout
 374.483 Running ProcessPostFadeout
+380.283 No power meter 2 to 3 s after the fadeout, fadeouts 1
 380.550 Running ProcessStarCount
 400.383 Fadeout 2: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 3, fade-in 1), star count 8, fadeouts 2, fade-ins 0
 400.550 Running ProcessFadeout
 401.916 Running ProcessPostFadeout
+404.916 No power meter 2 to 3 s after the fadeout, fadeouts 2
 407.983 Running ProcessStarCount
 456.483 Star count 8 -> 9, prediction 9 at 0.98
 461.816 Fadeout 1: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 3, fade-in 1), star count 9, fadeouts 1, fade-ins 0
 461.983 Running ProcessFadeout
 463.200 Running ProcessPostFadeout
+467.533 No power meter 2 to 3 s after the fadeout, fadeouts 1
 469.266 Running ProcessStarCount
 497.433 Fadeout 2: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 3, fade-in 1), star count 9, fadeouts 2, fade-ins 0
 497.600 Running ProcessFadeout
 499.000 Running ProcessPostFadeout
+502.000 No power meter 2 to 3 s after the fadeout, fadeouts 2
 503.866 Running ProcessFlashCheck
 505.900 Running ProcessStarCount
 522.400 Fadeout 3: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 3, fade-in 1), star count 9, fadeouts 3, fade-ins 0
 522.566 Running ProcessFadeout
 523.200 Running ProcessPostFadeout
+526.200 No power meter 2 to 3 s after the fadeout, fadeouts 3
 529.266 Running ProcessStarCount
 538.100 Fade-in 1: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 3, fade-in 1), star count 9, fadeouts 3, fade-ins 1
 538.266 Running ProcessFadein
@@ -325,14 +331,17 @@
 799.949 Fadeout 2: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 2, fade-ins 0
 800.116 Running ProcessFadeout
 801.549 Running ProcessPostFadeout
+804.549 No power meter 2 to 3 s after the fadeout, fadeouts 2
 807.616 Running ProcessStarCount
 847.116 Fadeout 3: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 3, fade-ins 0
 847.283 Running ProcessFadeout
 848.449 Running ProcessPostFadeout
+851.449 No power meter 2 to 3 s after the fadeout, fadeouts 3
 854.516 Running ProcessStarCount
 884.849 Fadeout 4: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 4, fade-ins 0
 885.016 Running ProcessFadeout
 886.283 Running ProcessPostFadeout
+889.283 No power meter 2 to 3 s after the fadeout, fadeouts 4
 891.216 Running ProcessFlashCheck
 893.249 Running ProcessStarCount
 894.416 Fadeout 5: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 5, fade-ins 0
@@ -341,18 +350,22 @@
 897.999 Fadeout 6: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 6, fade-ins 0
 898.066 Running ProcessFadeout
 899.733 Running ProcessPostFadeout
+902.733 No power meter 2 to 3 s after the fadeout, fadeouts 6
 905.799 Running ProcessStarCount
 907.966 Fadeout 7: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 7, fade-ins 0
 908.133 Running ProcessFadeout
 909.033 Running ProcessPostFadeout
+912.033 No power meter 2 to 3 s after the fadeout, fadeouts 7
 915.099 Running ProcessStarCount
 950.433 Fadeout 8: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 8, fade-ins 0
 950.599 Running ProcessFadeout
 952.066 Running ProcessPostFadeout
+955.066 No power meter 2 to 3 s after the fadeout, fadeouts 8
 958.133 Running ProcessStarCount
 1002.799 Fadeout 9: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 9, fade-ins 0
 1002.966 Running ProcessFadeout
 1004.199 Running ProcessPostFadeout
+1007.199 No power meter 2 to 3 s after the fadeout, fadeouts 9
 1010.266 Running ProcessStarCount
 1088.099 Fadeout 10: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 10, fade-ins 0
 1088.266 Running ProcessFadeout

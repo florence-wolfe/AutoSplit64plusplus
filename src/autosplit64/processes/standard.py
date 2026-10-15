@@ -267,6 +267,7 @@ class ProcessPostFadeout(Process):
         self.power_lower_bound = [215, 40, 0]
         self.power_upper_bound = [255, 150, 0]
         self._power_found = False
+        self._power_logged = False
 
     def execute(self):
         if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
@@ -296,10 +297,18 @@ class ProcessPostFadeout(Process):
     def _death_check(self):
         if 2 < self.loop_time() < 3:
             self._power_found = self._power_check()
-        elif self.loop_time() >= 3 and self._power_found:
-            self._power_found = self._power_check()
-            if not self._power_found:
-                self.core.fadeout_count = max(self.core.fadeout_count - 2, 0)
+        elif self.loop_time() >= 3:
+            if not self._power_logged:
+                self._power_logged = True
+                log.info("%s 2 to 3 s after the fadeout, fadeouts %d",
+                         "Power meter seen" if self._power_found else "No power meter", self.core.fadeout_count)
+
+            if self._power_found:
+                self._power_found = self._power_check()
+                if not self._power_found:
+                    fadeouts = self.core.fadeout_count
+                    self.core.fadeout_count = max(fadeouts - 2, 0)
+                    log.info("Death, the power meter went away, fadeouts %d -> %d", fadeouts, self.core.fadeout_count)
 
     def _power_check(self):
         power_region = self.core.get_region(POWER_REGION)
@@ -314,6 +323,7 @@ class ProcessPostFadeout(Process):
 
     def on_transition(self):
         self._power_found = False
+        self._power_logged = False
         self.core.enable_predictions(True)
         self.core.enable_xcam_count(True)
         self.core.fps = 15

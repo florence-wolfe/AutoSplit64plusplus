@@ -259,6 +259,28 @@ class PostFadeoutTest(ClockTestCase):
         self.at(3.5)
         self.assertEqual(self.detection.fadeout_count, 3)
 
+    def test_death_is_logged(self):
+        with self.assertLogs("detection") as logs:
+            self.at(2.5, POWER)
+            self.at(3.5)
+        self.assertEqual([r.getMessage() for r in logs.records],
+                         ["Power meter seen 2 to 3 s after the fadeout, fadeouts 3",
+                          "Death, the power meter went away, fadeouts 3 -> 1"])
+
+    def test_no_power_meter_is_logged_once(self):
+        with self.assertLogs("detection") as logs:
+            self.at(2.5)
+            self.at(3.5)
+            self.at(4.5)
+        self.assertEqual([r.getMessage() for r in logs.records],
+                         ["No power meter 2 to 3 s after the fadeout, fadeouts 3"])
+
+    def test_nothing_is_logged_within_11_seconds_of_a_star(self):
+        self.detection.collection_time = self.start - 7
+        with self.assertNoLogs("detection"):
+            self.at(2.5, POWER)
+            self.at(3.5)
+
     def test_flash_after_a_second(self):
         for prediction in (121, 122):
             with self.subTest(prediction):
