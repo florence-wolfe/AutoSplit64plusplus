@@ -256,5 +256,19 @@ class FlosBitsTest(unittest.TestCase):
                         f"Split at {time:.3f} s, Mario grabs the Grand Star at {self.GRAB:.3f} s")
 
 
+class FlosBitsOverThePinkSkyTest(FlosBitsTest):
+    """ The same over his Bowser in the Sky, where his last speech's box is brighter, over the pink sky """
+
+    RECORDING = Recording.load("flo_bits_ares_2")
+    # The first frame without the Grand Star, once Mario grabbed it, at 120.6 s
+    GRAB = 3618 / 30
+
+    def test_only_bowsers_last_speech_counts(self):
+        # Not the speech before the fight, at 12 s
+        speeches = [float(line.split()[0]) for line in self.result.trace if "Bowser's last speech" in line]
+        self.assertEqual(len(speeches), 1)
+        self.assertTrue(108 <= speeches[0] <= 110, f"Bowser's last speech at {speeches[0]:.3f} s, it shows from 108.4 s")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,11 @@
+{
+    "title": "Flo's Bowser in the Sky on the ares emulator (US), where AutoSplit64++ 0.7.1 never saw Bowser's last speech, as the box over the pink sky is brighter than it looked for",
+    "url": null,
+    "height": 460,
+    "game_region": [0, 0, 640, 460],
+    "route": "flo_bits_ares.as64",
+    "labels": "Only the game, cut from 1635 s of a 1080p OBS recording of the whole run, compressed to fit in the repository. Bowser's speech before the fight at 12 s, and his defeat speech at 108.4 s, its box over the pink sky at 46 to 51 of 255 in brightness where it was 30 to 35 over the dark sky of flo_bits_ares. Mario hurts Bowser into the fight's end with the power meter showing at the end.",
+    "timer_offset": 0,
+    "timer_start": 0,
+    "splits": []
+}

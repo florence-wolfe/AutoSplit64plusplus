@@ -21,8 +21,9 @@ log = logging.getLogger("detection")
 SPEECH_BOX = (0.09, 0.15, 0.39, 0.33)
 # How much of it is white text while it shows: 5 to 10%
 SPEECH_TEXT = (0.04, 0.13)
-# How bright the rest of it is at most while it shows, as it dims what's behind it by half
-SPEECH_BACKGROUND = 45
+# How bright the rest of it is at most while it shows, as it dims what's behind it by half: 30 to 51 for the last speech
+# over the dark and the pink sky, 60 and more for Bowser's speech before the fight and what else looks like one
+SPEECH_BACKGROUND = 55
 # Yellow in more of the region than this is the Grand Star, once Bowser spoke
 STAR_THRESHOLD = 0.999
 # Yellow in no more of the region than this is none
