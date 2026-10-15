@@ -66,3 +66,19 @@ class StartWithoutScreenRecordingTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DefaultRegionsTest(unittest.TestCase):
+    def regions(self, version):
+        capture = GameCapture.__new__(GameCapture)
+        capture._game_region = [0, 0, 617, 454]
+        capture._version = version
+        capture._regions = {}
+        capture._add_default_regions()
+        return capture._regions
+
+    def test_life_region_is_a_lives_counter_tall_in_both_versions(self):
+        for version in (game_capture.GAME_US, "JP"):
+            with self.subTest(version):
+                _, _, _, height = self.regions(version)[game_capture.LIFE_REGION]
+                self.assertEqual(height, 42)
