@@ -228,22 +228,27 @@ class NoraSM64As64ppBitsTest(_As64ppBitsTest):
     RECORDING = NoraSM64Test.RECORDING
 
 
-class FlosBitsTest(unittest.TestCase):
-    """ AS64++'s final split over Flo's Bowser in the Sky, which 0.6.0 split while Bowser was alive """
+class _EndingTest(unittest.TestCase):
+    """ AS64++'s final split over a recording of a run's ending, with the timer on BitS, the route's last split """
 
-    RECORDING = Recording.load("flo_bits_ares")
-    BITS = 11
-    # The first frame without the Grand Star, once Mario grabbed it, at 361.867 s
-    GRAB = 10856 / 30
+    RECORDING = None
+    # The first frame without the Grand Star, once Mario grabbed it
+    GRAB = None
+    # From when to when Bowser's last speech shows
+    SPEECH = None
 
     @classmethod
     def setUpClass(cls):
+        if cls.RECORDING is None:
+            raise unittest.SkipTest("Not a recording")
         if not cls.RECORDING.available():
-            raise unittest.SkipTest(f"No {cls.RECORDING.video}")
+            raise unittest.SkipTest(NEEDS_VIDEO if cls.RECORDING.url else f"No {cls.RECORDING.video}")
         # It has no console reset to make reset templates from
         advanced = json.loads(DEFAULTS.read_text())["advanced"]
         templates = [DEFAULTS.parent / advanced["reset_frame_one"], DEFAULTS.parent / advanced["reset_frame_two"]]
-        cls.result = replay(cls.RECORDING, 0, cls.RECORDING.length(), templates, split_index=cls.BITS, variant=AS64PP)
+        start, end = cls.RECORDING.ending or (0, cls.RECORDING.length())
+        bits = len(route_loader.load(cls.RECORDING.route_path).splits) - 1
+        cls.result = replay(cls.RECORDING, start, end, templates, split_index=bits, variant=AS64PP)
 
     def test_no_errors(self):
         self.assertEqual(self.result.errors, [])
@@ -255,19 +260,60 @@ class FlosBitsTest(unittest.TestCase):
         self.assertTrue(self.GRAB - ROUNDING <= time <= self.GRAB + look + ROUNDING,
                         f"Split at {time:.3f} s, Mario grabs the Grand Star at {self.GRAB:.3f} s")
 
-
-class FlosBitsOverThePinkSkyTest(FlosBitsTest):
-    """ The same over his Bowser in the Sky, where his last speech's box is brighter, over the pink sky """
-
-    RECORDING = Recording.load("flo_bits_ares_2")
-    # The first frame without the Grand Star, once Mario grabbed it, at 120.6 s
-    GRAB = 3618 / 30
-
     def test_only_bowsers_last_speech_counts(self):
-        # Not the speech before the fight, at 12 s
+        # Not the speech before the fight, nor what else looks like one
         speeches = [float(line.split()[0]) for line in self.result.trace if "Bowser's last speech" in line]
-        self.assertEqual(len(speeches), 1)
-        self.assertTrue(108 <= speeches[0] <= 110, f"Bowser's last speech at {speeches[0]:.3f} s, it shows from 108.4 s")
+        self.assertEqual(len(speeches), 1, f"Bowser's last speech at {speeches}, it shows from {self.SPEECH[0]} s")
+        self.assertTrue(self.SPEECH[0] <= speeches[0] <= self.SPEECH[1],
+                        f"Bowser's last speech at {speeches[0]:.3f} s, it shows from {self.SPEECH[0]} to {self.SPEECH[1]} s")
+
+
+class FlosBitsTest(_EndingTest):
+    """ Flo's Bowser in the Sky, which 0.6.0 split while Bowser was alive """
+    RECORDING = Recording.load("flo_bits_ares")
+    # At 361.867 s
+    GRAB = 10856 / 30
+    SPEECH = (351.5, 352.3)
+
+
+class FlosBitsOverThePinkSkyTest(_EndingTest):
+    """ The same over his Bowser in the Sky, where his last speech's box is brighter, over the pink sky """
+    RECORDING = Recording.load("flo_bits_ares_2")
+    # At 120.6 s
+    GRAB = 3618 / 30
+    SPEECH = (108.4, 109.2)
+
+
+class JorbiieEndingTest(_EndingTest):
+    """ On console, where the speech's text is grey """
+    RECORDING = Recording.load("jorbiie_70_star")
+    # At 3316.933 s
+    GRAB = 99508 / 30
+    SPEECH = (3307.9, 3308.7)
+
+
+class Ronc3naEndingTest(_EndingTest):
+    """ On console, where the speech's text is grey, at 60 fps """
+    RECORDING = Recording.load("ronc3na_70_star")
+    # At 2967.765 s
+    GRAB = 177888 / (60000 / 1001)
+    SPEECH = (2958.5, 2959.2)
+
+
+class KannoEndingTest(_EndingTest):
+    """ On emulator, with smoke that looks like a speech during the fight """
+    RECORDING = Recording.load("kanno_16_star")
+    # At 921.154 s
+    GRAB = 27607 / (30000 / 1001)
+    SPEECH = (911.7, 912.9)
+
+
+class OhyeahEndingTest(_EndingTest):
+    """ On emulator """
+    RECORDING = Recording.load("ohyeah_16_star")
+    # At 886.963 s, at the video's 29.999 fps
+    GRAB = 886.963
+    SPEECH = (877.7, 878.8)
 
 
 if __name__ == "__main__":

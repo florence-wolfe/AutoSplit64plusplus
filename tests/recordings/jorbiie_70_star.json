@@ -1,0 +1,12 @@
+{
+    "title": "Jorbiie's 70 Star in 55:12, on console (US): the ending",
+    "url": "https://www.youtube.com/watch?v=GANZTNykHsM",
+    "height": 720,
+    "game_region": [288, 0, 992, 720],
+    "route": "bits_70_star_us.as64",
+    "ending": [3186, 3330],
+    "labels": "Only the ending is replayed: from 3186 s, before the fadeout into Bowser in the Sky at 3190.8 s, to 3330 s. Bowser's last speech shows from 3307.97 to 3308.7 s, mashed through, its text grey enough on this capture that only 0.8 to 1.4% of the box is brighter than 180, against the 4% the speech is looked for with. Mario grabs the Grand Star at 3316.933 s, the first frame without it, where the runner's timer stops at 55:12.47.",
+    "timer_offset": 0,
+    "timer_start": 0,
+    "splits": []
+}

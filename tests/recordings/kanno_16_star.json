@@ -1,0 +1,12 @@
+{
+    "title": "KANNO's 16 Star in 15:13, on emulator (JP): the ending",
+    "url": "https://www.youtube.com/watch?v=3cfxW8PRIJ8",
+    "height": 720,
+    "game_region": [324, 24, 956, 676],
+    "route": "greensuigi_16_star.as64",
+    "ending": [833, 935],
+    "labels": "Only the ending is replayed: from 833 s, before the fadeout into Bowser in the Sky at 837.8 s, to 935 s. Bowser's speech before the fight at 888.0 s, its box at 61 to 65 of 255 in brightness, white smoke in the box's corner at 905.9 s that looks like a speech for 6 frames, at 50 to 54, and his last speech from 911.7 to 912.9 s, at 32 to 37. Mario grabs the Grand Star at 921.154 s, the first frame without it.",
+    "timer_offset": 0,
+    "timer_start": 0,
+    "splits": []
+}

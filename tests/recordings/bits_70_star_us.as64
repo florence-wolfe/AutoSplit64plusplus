@@ -1,0 +1,28 @@
+{
+    "__route__": true,
+    "title": "70 Star (BitS only)",
+    "category": "70 Star",
+    "initial_star": 0,
+    "version": "US",
+    "timing": "RTA",
+    "splits": [
+        {
+            "title": "70",
+            "star_count": 70,
+            "fade_out": 1,
+            "fade_in": 0,
+            "xcam": -1,
+            "split_type": "Normal",
+            "icon_path": ""
+        },
+        {
+            "title": "BitS",
+            "star_count": 70,
+            "fade_out": -1,
+            "fade_in": -1,
+            "xcam": -1,
+            "split_type": "Final",
+            "icon_path": ""
+        }
+    ]
+}

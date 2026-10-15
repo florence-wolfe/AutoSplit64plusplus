@@ -59,6 +59,9 @@ class Recording:
     splits: list
     # Splits the video can't be trusted for, by title, and why
     artifacts: dict = field(default_factory=dict)
+    # (start, end) in the video of the only part to replay, of a recording of a run's ending: from just before
+    # Bowser in the Sky to just after the Grand Star, with no splits of the runner's
+    ending: list = None
 
     @classmethod
     def load(cls, name):
