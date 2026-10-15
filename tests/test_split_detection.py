@@ -245,10 +245,10 @@ class DetectionLogTest(unittest.TestCase):
         settings = {("game", "capture_source"): "window", ("game", "use_obs"): False, ("game", "process_name"): "Emulator",
                     ("game", "capture_device"): "", ("game", "game_region"): [1, 2, 3, 4], ("game", "capture_size"): [5, 6],
                     ("game", "vc_fix"): False, ("connection", "ls_connection_type"): 1, ("general", "srl_mode"): False,
-                    ("general", "operation_mode"): 0, ("model", "legacy"): False, ("model", "detection"): "as64pp"}
+                    ("general", "operation_mode"): 0}
         with mock.patch.object(split_detection.config, "get", side_effect=lambda section, key=None: settings[(section, key)]):
             setup = self.base._setup()
-        for part in ("16 Star", "JP", "RTA", "3 splits", "Emulator", "[1, 2, 3, 4]", "[5, 6]", "TCP", "Probability", "as64pp"):
+        for part in ("16 Star", "JP", "RTA", "3 splits", "Emulator", "[1, 2, 3, 4]", "[5, 6]", "TCP", "Probability"):
             self.assertIn(part, setup)
 
     def test_current_split_not_in_the_route(self):

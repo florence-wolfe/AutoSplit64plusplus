@@ -215,6 +215,7 @@ class SplitDetection(Thread):
             if not self.validity_check():
                 return
             log.info("Started: %s", self._setup())
+            log.info("Detection model %s (%s)", detection_model.NAMES[detection_model.get()], detection_model.get())
             self._start_occurred()
 
             self._processor_switch._current_processor = self._current_split.split_type
@@ -650,7 +651,6 @@ class SplitDetection(Thread):
                 f"of {config.get('game', 'capture_size')}, VC fix {config.get('game', 'vc_fix')}, "
                 f"connection mode {CONNECTION_MODES[config.get('connection', 'ls_connection_type')]}, "
                 f"operation mode {OPERATION_MODES[config.get('general', 'operation_mode')]}, "
-                f"detection model {detection_model.get()}, "
                 f"SRL mode {config.get('general', 'srl_mode')}")
 
     def _reset_fade_count(self):

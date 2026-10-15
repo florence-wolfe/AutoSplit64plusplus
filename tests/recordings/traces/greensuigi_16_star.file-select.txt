@@ -1,4 +1,5 @@
-0.000 Started: route greensuigi 16 Star No LBLJ (JP, File Select, 12 splits), capturing the window of AmaRecTV.exe, game region [291, 0, 989, 720] of [1280, 720], VC fix False, connection mode Named Pipe, operation mode Probability, detection model star_predictor, SRL mode False
+0.000 Started: route greensuigi 16 Star No LBLJ (JP, File Select, 12 splits), capturing the window of AmaRecTV.exe, game region [291, 0, 989, 720] of [1280, 720], VC fix False, connection mode Named Pipe, operation mode Probability, SRL mode False
+0.000 Detection model AS64+ Star Predictor (star_predictor)
 0.000 Running ProcessFileSelectSplit
 2.067 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 0
 2.100 Running ProcessFadeoutResetOnly

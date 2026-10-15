@@ -11,6 +11,8 @@ STAR_PREDICTOR = "star_predictor"
 # AutoSplit64+'s star predictor, with the Grand Star found after Bowser's last words
 AS64PP = "as64pp"
 MODELS = [LEGACY, STAR_PREDICTOR, AS64PP]
+# What settings call them, for the log
+NAMES = {LEGACY: "AS64 Legacy Model", STAR_PREDICTOR: "AS64+ Star Predictor", AS64PP: "AS64++ Detection"}
 
 
 def get():
