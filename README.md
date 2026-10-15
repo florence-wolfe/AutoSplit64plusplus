@@ -12,6 +12,7 @@ It is a fork of [AutoSplit64+](https://github.com/DaviBe92/AutoSplit64plus), whi
 - LiveSplit One support
 - Updates from GitHub releases, from inside the app
 - Themes and a resizable window
+- Updated detection model for resets and some splits
 
 ## Key Features
 ### Core Functionality
