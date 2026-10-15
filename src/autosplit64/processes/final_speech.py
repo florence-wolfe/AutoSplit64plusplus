@@ -19,10 +19,14 @@ log = logging.getLogger("detection")
 
 # Where Bowser's speech box always is, as fractions of the game: x, y, width and height
 SPEECH_BOX = (0.09, 0.15, 0.39, 0.33)
-# How much of it is white text while it shows: 5 to 10%
-SPEECH_TEXT = (0.04, 0.13)
-# How bright the rest of it is at most while it shows, as it dims what's behind it by half: 30 to 51 for the last speech
-# over the dark and the pink sky, 60 and more for Bowser's speech before the fight and what else looks like one
+# How much brighter than most of it its text is: white on emulators, grey on some consoles' captures
+SPEECH_CONTRAST = 60
+# How much of it is text while it shows: 7 to 18%
+SPEECH_TEXT = (0.04, 0.2)
+# How much of its columns and rows have text while it shows, as the lines span it, which smoke and explosions don't
+SPEECH_SPREAD = (0.6, 0.4)
+# How bright the rest of it is at most while it shows, as it dims what's behind it by half: 12 to 50 for the last speech
+# over the dark and the pink sky
 SPEECH_BACKGROUND = 55
 # Yellow in more of the region than this is the Grand Star, once Bowser spoke
 STAR_THRESHOLD = 0.999
@@ -31,13 +35,15 @@ NO_YELLOW_THRESHOLD = 0.9999
 
 
 def speech_shown(game):
-    """ Whether game, the game's picture, shows a speech box: white text on a see-through black box """
+    """ Whether game, the game's picture, shows a speech box: lines of light text on a see-through black box """
     height, width = game.shape[:2]
     x, y, box_width, box_height = SPEECH_BOX
     box = cv2.cvtColor(game[int(height * y):int(height * (y + box_height)), int(width * x):int(width * (x + box_width))],
                        cv2.COLOR_BGR2HSV)
-    text = (box[:, :, 2] > 180) & (box[:, :, 1] < 70)
-    return SPEECH_TEXT[0] <= text.mean() <= SPEECH_TEXT[1] and box[:, :, 2][~text].mean() <= SPEECH_BACKGROUND
+    value = box[:, :, 2]
+    text = (value > np.median(value) + SPEECH_CONTRAST) & (box[:, :, 1] < 70)
+    return (SPEECH_TEXT[0] <= text.mean() <= SPEECH_TEXT[1] and value[~text].mean() <= SPEECH_BACKGROUND
+            and text.any(axis=0).mean() >= SPEECH_SPREAD[0] and text.any(axis=1).mean() >= SPEECH_SPREAD[1])
 
 
 def star_visible(core, threshold):
@@ -50,9 +56,12 @@ def star_visible(core, threshold):
 
 
 class ProcessFindBowserSpeech(Process):
-    """ Bowser speaks once, after his last hit, just before the Grand Star appears """
+    """ Bowser speaks after his last hit, just before the Grand Star appears, and before the fight, which doesn't count """
     # How long it shows at least, to tell it from a frame or two that looks like it: over 0.9 s, even when skipped
     SPEECH_SECONDS = 0.2
+    # How long after the arena shows a speech is the last one: the one before the fight shows 4.5 to 6 s after, the last
+    # 29 s and more after
+    ARENA_SECONDS = 15
 
     def __init__(self, core):
         super().__init__(core)
@@ -65,7 +74,7 @@ class ProcessFindBowserSpeech(Process):
         if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
 
-        if not speech_shown(self.core.get_region(GAME_REGION)):
+        if self.loop_time() < self.ARENA_SECONDS or not speech_shown(self.core.get_region(GAME_REGION)):
             self._shown_since = None
         elif self._shown_since is None:
             self._shown_since = time.time()
