@@ -76,6 +76,26 @@ class CaptureWindowMacTest(unittest.TestCase):
 
 
 @unittest.skipUnless(sys.platform == "darwin", "needs macOS")
+class StreamOutputTest(unittest.TestCase):
+    """ The stream sends more frames than split detection reads, which are converted only when read """
+
+    def test_frames_are_converted_when_read(self):
+        output = capture_window_mac._StreamOutput.alloc().init()
+        with mock.patch.object(capture_window_mac, "bgr_frame") as bgr_frame, \
+             mock.patch.object(capture_window_mac, "CMSampleBufferGetImageBuffer", return_value=object()):
+            for _ in range(5):
+                output.stream_didOutputSampleBuffer_ofType_(None, object(), capture_window_mac.SCK.SCStreamOutputTypeScreen)
+            bgr_frame.assert_not_called()
+            self.assertTrue(output.frame_received.is_set())
+
+    def test_frames_without_an_image_are_skipped(self):
+        output = capture_window_mac._StreamOutput.alloc().init()
+        with mock.patch.object(capture_window_mac, "CMSampleBufferGetImageBuffer", return_value=None):
+            output.stream_didOutputSampleBuffer_ofType_(None, object(), capture_window_mac.SCK.SCStreamOutputTypeScreen)
+        self.assertFalse(output.frame_received.is_set())
+
+
+@unittest.skipUnless(sys.platform == "darwin", "needs macOS")
 class TitleBarTest(unittest.TestCase):
     """ The title bar isn't part of the capture, like the client area on Windows """
 
@@ -98,8 +118,10 @@ class TitleBarTest(unittest.TestCase):
 
     def stream(self, window, frame):
         """ Start a stream of window, which has received frame """
-        output = mock.Mock(frame=frame, error=None, frame_received=threading.Event())
+        output = mock.Mock(sample_buffer=frame, error=None, frame_received=threading.Event())
         output.frame_received.set()
+        # The frame stands in for its sample buffer
+        self.enterContext(mock.patch.object(capture_window_mac, "bgr_frame", side_effect=lambda sample_buffer: sample_buffer))
         with mock.patch.object(capture_window_mac.SCK, "SCStream"), \
              mock.patch.object(capture_window_mac.SCK, "SCContentFilter"), \
              mock.patch.object(capture_window_mac, "_StreamOutput") as stream_output, \

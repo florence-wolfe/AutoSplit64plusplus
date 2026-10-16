@@ -12,6 +12,7 @@ import threading
 import AVFoundation as AV
 import objc
 import Quartz
+from CoreMedia import CMSampleBufferGetImageBuffer
 from dispatch import dispatch_queue_create
 from Foundation import NSBundle, NSObject
 
@@ -30,14 +31,14 @@ _active = None
 class _VideoOutput(NSObject, protocols=[objc.protocolNamed("AVCaptureVideoDataOutputSampleBufferDelegate")]):
     def init(self):
         self = objc.super(_VideoOutput, self).init()
-        self.frame = None
+        # The latest frame, converted when read, as the device sends more frames than split detection reads
+        self.sample_buffer = None
         self.frame_received = threading.Event()
         return self
 
     def captureOutput_didOutputSampleBuffer_fromConnection_(self, output, sample_buffer, connection):
-        frame = bgr_frame(sample_buffer)
-        if frame is not None:
-            self.frame = frame
+        if CMSampleBufferGetImageBuffer(sample_buffer) is not None:
+            self.sample_buffer = sample_buffer
             self.frame_received.set()
 
 
@@ -116,7 +117,7 @@ def capture(unique_id):
 
     if not output.frame_received.wait(2):
         raise Exception("No video from the video device\n\nMake sure it is connected and the Camera permission is allowed!")
-    return output.frame
+    return bgr_frame(output.sample_buffer)
 
 
 def get_capture_size(unique_id):

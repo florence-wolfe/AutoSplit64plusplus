@@ -28,7 +28,8 @@ _active = None
 class _StreamOutput(NSObject, protocols=[objc.protocolNamed("SCStreamOutput"), objc.protocolNamed("SCStreamDelegate")]):
     def init(self):
         self = objc.super(_StreamOutput, self).init()
-        self.frame = None
+        # The latest frame, converted when read, as the stream sends more frames than split detection reads
+        self.sample_buffer = None
         self.error = None
         self.frame_received = threading.Event()
         return self
@@ -37,10 +38,9 @@ class _StreamOutput(NSObject, protocols=[objc.protocolNamed("SCStreamOutput"), o
         if output_type != SCK.SCStreamOutputTypeScreen:
             return
         # Frames sent while the window is unchanged carry no image
-        frame = bgr_frame(sample_buffer)
-        if frame is None:
+        if CMSampleBufferGetImageBuffer(sample_buffer) is None:
             return
-        self.frame = frame
+        self.sample_buffer = sample_buffer
         self.frame_received.set()
 
     def stream_didStopWithError_(self, stream, error):
@@ -201,7 +201,7 @@ def capture(window, client_area=True):
 
     if not output.frame_received.wait(1):
         raise Exception(f"Failed to capture \"{window.title()}\"\n\nMake sure the window is not minimized!")
-    return output.frame[_active[3]:]
+    return bgr_frame(output.sample_buffer)[_active[3]:]
 
 
 def _current(window):
