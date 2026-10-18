@@ -196,7 +196,7 @@ class ResetGenerator(QtCore.QThread):
             return
 
         while self._running:
-            c_time = time.time()
+            c_time = time.perf_counter()
             try:
                 self._game_capture.capture()
             except Exception as e:
@@ -221,7 +221,7 @@ class ResetGenerator(QtCore.QThread):
                         self._running = False
 
             try:
-                time.sleep((1 / 29.97) - (time.time() - c_time))
+                time.sleep((1 / 29.97) - (time.perf_counter() - c_time))
             except ValueError:
                 pass
 
