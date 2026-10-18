@@ -7,7 +7,7 @@ them into tests/recordings/cache, and tests that need one are skipped without it
 is a short video in tests/recordings itself.
 
 Split detection runs as in the app, with the app's default settings, except:
-- Frames come from the video, at the time of a clock that replaces time.time() and time.sleep(). Sleeping
+- Frames come from the video, at the time of a clock that replaces time.perf_counter() and time.sleep(). Sleeping
   advances the clock instead of waiting, so a run replays as fast as the computer allows. Detection itself
   takes no time on the clock, unlike in the app, where a slow computer has fewer frames to look at.
 - LiveSplit is a timer that records the commands it gets.
@@ -148,9 +148,10 @@ DEFAULT = Variant("default")
 
 
 class Clock:
-    """ Stands in for time.time() and time.sleep(). `now` is the time in the video. """
+    """ Stands in for time.perf_counter() and time.sleep(). `now` is the time in the video. """
 
-    # time.time() is seconds since 1970. Detection starts e.g. its last split at 0, which must be long ago.
+    # time.perf_counter() counts from an arbitrary point, e.g. the computer's start. Detection starts e.g. its last split
+    # at 0, which must be long ago.
     EPOCH = 1_700_000_000
 
     def __init__(self, now, end):
@@ -159,7 +160,7 @@ class Clock:
         # Called once the clock reaches the end
         self.on_end = None
 
-    def time(self):
+    def perf_counter(self):
         return self.EPOCH + self.now
 
     def sleep(self, seconds):
@@ -323,7 +324,7 @@ def _replaying(recording, clock, settings):
     root = logging.getLogger()
     root.addHandler(recorder)
     try:
-        with mock.patch("time.time", clock.time), mock.patch("time.sleep", clock.sleep), \
+        with mock.patch("time.perf_counter", clock.perf_counter), mock.patch("time.sleep", clock.sleep), \
              mock.patch.object(config, "_config", settings), mock.patch.object(config, "load_config"), \
              contextlib.redirect_stdout(io.StringIO()):
             yield recorder.records

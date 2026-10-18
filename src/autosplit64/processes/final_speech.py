@@ -77,8 +77,8 @@ class ProcessFindBowserSpeech(Process):
         if self.loop_time() < self.ARENA_SECONDS or not speech_shown(self.core.get_region(GAME_REGION)):
             self._shown_since = None
         elif self._shown_since is None:
-            self._shown_since = time.time()
-        elif time.time() - self._shown_since >= self.SPEECH_SECONDS:
+            self._shown_since = time.perf_counter()
+        elif time.perf_counter() - self._shown_since >= self.SPEECH_SECONDS:
             log.info("Bowser's last speech")
             return self.signals["SPOKEN"]
 
@@ -109,12 +109,12 @@ class ProcessFindGrandStar(Process):
         if self._seen_since is None:
             if star_visible(self.core, STAR_THRESHOLD):
                 log.info("Grand Star seen")
-                self._seen_since = time.time()
+                self._seen_since = time.perf_counter()
         # Only a frame without any yellow ends it, so the star moving past the top of the region doesn't
         elif not star_visible(self.core, NO_YELLOW_THRESHOLD):
-            log.info("Grand Star gone after %.2f s", time.time() - self._seen_since)
+            log.info("Grand Star gone after %.2f s", time.perf_counter() - self._seen_since)
             self._seen_since = None
-        elif time.time() - self._seen_since >= self.SPAWN_SECONDS:
+        elif time.perf_counter() - self._seen_since >= self.SPAWN_SECONDS:
             log.info("Grand Star spawned")
             return self.signals["SPAWNED"]
 

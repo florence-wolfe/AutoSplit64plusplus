@@ -279,7 +279,7 @@ class ProcessPostFadeout(Process):
         if self.core.prediction_info.prediction in (121, 122) and self.loop_time() > 1:
             return self.signals["FLASH"]
 
-        if time.time() - self.core.collection_time > 11:
+        if time.perf_counter() - self.core.collection_time > 11:
             self._death_check()
 
         if self.core.incoming_split():
@@ -362,7 +362,7 @@ class ProcessFlashCheck(Process):
 
         if -10 < self._running_total < 10 and self._flash_count >= 4:
             log.info("Star count flashed %d times, running total %d", self._flash_count, self._running_total)
-            if time.time() - self.core.collection_time > 15:
+            if time.perf_counter() - self.core.collection_time > 15:
                 self.core.set_star_count(self.core.star_count + 1)
 
                 if self.core.current_split().star_count == self.core.star_count:

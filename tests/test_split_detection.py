@@ -195,7 +195,7 @@ class DetectionLogTest(unittest.TestCase):
             self.assertIn(part, log)
 
     def test_split_not_sent_and_why(self):
-        self.base.last_split = split_detection.time.time()
+        self.base.last_split = split_detection.time.perf_counter()
         log = self.logged(self.base.split)
         self.livesplit.split.assert_not_called()
         self.assertIn("cooldown", log)

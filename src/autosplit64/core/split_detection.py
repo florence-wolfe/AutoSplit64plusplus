@@ -221,7 +221,7 @@ class SplitDetection(Thread):
             self._processor_switch._current_processor = self._current_split.split_type
             
             while self._running:
-                self.current_time = time.time()
+                self.current_time = time.perf_counter()
                 try:
                     self._game_capture.capture()
 
@@ -247,7 +247,7 @@ class SplitDetection(Thread):
                     self._error_occurred("LiveSplit connection failed")
                 
                 try:
-                    self.execution_time = time.time() - self.current_time
+                    self.execution_time = time.perf_counter() - self.current_time
                     time.sleep(1 / self.fps - self.execution_time)
                 except ValueError:
                     pass
@@ -447,7 +447,7 @@ class SplitDetection(Thread):
 
     def split(self):
         # Cool-down period between splits
-        if time.time() - self.last_split < self._split_cooldown:
+        if time.perf_counter() - self.last_split < self._split_cooldown:
             log.info("Split not sent, within the split cooldown: %s", self._state())
             return
 
@@ -465,7 +465,7 @@ class SplitDetection(Thread):
 
         log.info("Split: %s", self._state())
         livesplit.split(self._ls_socket)
-        self.last_split = time.time()
+        self.last_split = time.perf_counter()
 
     def reset(self):
         log.info("Reset the timer: %s", self._state())
@@ -548,7 +548,7 @@ class SplitDetection(Thread):
         self._reset_fade_count()
         self.xcam_count = 0
         self.star_count = star_count
-        self.collection_time = time.time()
+        self.collection_time = time.perf_counter()
         self._update_occurred()
         self._predictions = [PredictionInfo(0, 0)] * self._prediction_processing_length
 

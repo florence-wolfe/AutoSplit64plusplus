@@ -196,12 +196,12 @@ class FadeoutTest(ProcessTestCase):
 
 
 class ClockTestCase(ProcessTestCase):
-    """ A process transitioned to at self.now, with time.time() stopped there until a test moves it """
+    """ A process transitioned to at self.now, with time.perf_counter() stopped there until a test moves it """
 
     def setUp(self):
         super().setUp()
         self.start = self.now = 1000.0
-        patcher = mock.patch("time.time", side_effect=lambda: self.now)
+        patcher = mock.patch("time.perf_counter", side_effect=lambda: self.now)
         patcher.start()
         self.addCleanup(patcher.stop)
 

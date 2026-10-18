@@ -141,19 +141,19 @@ class Process(object):
         # The split detection the process runs in
         self.core = core
         self.signals = {"LOOP": Signal()}
-        self._transition_time = time.time()
+        self._transition_time = time.perf_counter()
 
     def execute(self):
         return self.signals["LOOP"]
 
     def on_transition(self):
-        self._transition_time = time.time()
+        self._transition_time = time.perf_counter()
 
     def relinquish(self):
         return True
 
     def loop_time(self):
-        return time.time() - self._transition_time
+        return time.perf_counter() - self._transition_time
 
     def register_signal(self, name):
         self.signals[name] = Signal()

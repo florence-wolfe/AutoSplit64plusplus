@@ -12,7 +12,7 @@ Ranked by what matters most to a runner, then by what makes the rest safer to do
 
 ## Heuristics
 
-Ways to make split detection's recognition of deaths, game overs, resets, star and key grabs, fadeouts and fade-ins more accurate, ranked by what pays off most, with the cheap and deterministic ones before the learned ones. Today it polls at 6 to 29.97 fps depending on the process, times events with `time.time()`, and decides from hand-tuned colour and template checks on small regions.
+Ways to make split detection's recognition of deaths, game overs, resets, star and key grabs, fadeouts and fade-ins more accurate, ranked by what pays off most, with the cheap and deterministic ones before the learned ones. Today it polls at 6 to 29.97 fps depending on the process, times events when it looks at a frame, not when the frame was captured, and decides from hand-tuned colour and template checks on small regions.
 
 1. **Score detection against labelled events.** The traces in `tests/recordings/traces` only show that a change leaves detection the same, not that it's right. Label each recording's events frame-accurately (fadeout, fade-in, death, star grab, key grab, reset, Grand Star), and score detection per event type for precision, recall and timing error. This shows which events are weak, and every item below needs it to be shown to help. `tests/replay.py` and the recordings are most of it; the labels are missing.
 
