@@ -1,0 +1,11 @@
+{
+    "reviewed": true,
+    "note": "Only the Grand Star, from the frame test_replay.py has Mario grabbing it on",
+    "mode": "ending",
+    "start": 833,
+    "end": 935,
+    "types": ["grand_star"],
+    "events": [
+        {"event": "grand_star", "time": 921.154}
+    ]
+}
