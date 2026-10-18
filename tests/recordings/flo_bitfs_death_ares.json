@@ -1,0 +1,11 @@
+{
+    "title": "Flo's Bowser in the Fire Sea on the ares emulator (US), where AutoSplit64++ split BitFS early on Mario's death in the fight",
+    "url": null,
+    "height": 460,
+    "game_region": [0, 0, 640, 460],
+    "route": "flo_16_star_ares.as64",
+    "labels": "Only the game, cut from 1988 s of a 1080p OBS recording of the whole run, compressed to fit in the repository, from the castle after DDD to the recording's end. Mario enters BitFS at 6 s, takes the pipe to Bowser at 87 s, and is killed in the fight: the screen closes on him in Bowser's face from 138 to 139.1 s, where 0.7.1 split, as the death was the third of BitFS's three fadeouts. He respawns with a life less by the pipe to Bowser, the power meter refilling until 142.6 s, takes the pipe again at 145.7 s, and fights Bowser until the recording ends, before BitFS does. Its log from 0.7.1 is on the same clock as the video to within a second.",
+    "timer_offset": 0,
+    "timer_start": 0,
+    "splits": []
+}

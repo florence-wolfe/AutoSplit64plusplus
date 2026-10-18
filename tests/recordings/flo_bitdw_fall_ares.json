@@ -1,0 +1,11 @@
+{
+    "title": "Flo's Bowser in the Dark World on the ares emulator (US), where AutoSplit64++ split BitDW early on re-entering it after falling off",
+    "url": null,
+    "height": 460,
+    "game_region": [0, 0, 640, 460],
+    "route": "flo_16_star_ares.as64",
+    "labels": "Only the game, cut from 903 s of a 1080p OBS recording of the whole run, compressed to fit in the repository, from the castle after CCM to just after BitDW. Mario enters BitDW at 32 s, through a star iris, falls off at 53 s, where the screen fades to black with no iris, is thrown out of the BitDW door in the castle with the power meter showing from 55.5 to 59 s, and re-enters at 60.6 s, where 0.7.1 split, as the fall counted as the second of BitDW's three fadeouts and the power meter wasn't seen: its blue is BGR 242, 103, 10 here. Then the pipe to Bowser at 110 s, and the key exit at 148 s, where BitDW should split. Its log from 0.7.1 is on the same clock as the video to within a second.",
+    "timer_offset": 0,
+    "timer_start": 0,
+    "splits": []
+}

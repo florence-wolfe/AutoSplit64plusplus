@@ -5,6 +5,7 @@ within the tenth of a second that the runner's timer shows for it.
 import difflib
 import json
 import os
+import re
 import shutil
 import tempfile
 import unittest
@@ -226,6 +227,75 @@ class GreensuigiAs64ppBitsTest(_As64ppBitsTest):
 
 class NoraSM64As64ppBitsTest(_As64ppBitsTest):
     RECORDING = NoraSM64Test.RECORDING
+
+
+class _BowserStageDeathTest(unittest.TestCase):
+    """ Split detection over a Bowser stage that Mario dies in once, with the timer on its split, from the castle before it """
+
+    RECORDING = None
+    # The Bowser stage's split in the route
+    SPLIT = None
+
+    @classmethod
+    def setUpClass(cls):
+        if cls.RECORDING is None:
+            raise unittest.SkipTest("Not a recording")
+        if not cls.RECORDING.available():
+            raise unittest.SkipTest(f"No {cls.RECORDING.video}")
+        # It has no console reset to make reset templates from
+        advanced = json.loads(DEFAULTS.read_text())["advanced"]
+        templates = [DEFAULTS.parent / advanced["reset_frame_one"], DEFAULTS.parent / advanced["reset_frame_two"]]
+        cls.result = replay(cls.RECORDING, 0, cls.RECORDING.length(), templates, split_index=cls.SPLIT)
+
+    def test_no_errors(self):
+        self.assertEqual(self.result.errors, [])
+        self.assertEqual(self.result.log, [])
+
+    def fadeouts_after(self, time):
+        """ The fadeouts detection logged after `time`, as (count, the split it counted it for) """
+        fadeouts = []
+        for line in self.result.trace:
+            match = re.match(r"(\S+) Fadeout (\d+): split \d+ of \d+, (.+?) \(needs", line)
+            if match and float(match[1]) > time:
+                fadeouts.append((int(match[2]), match[3]))
+        return fadeouts
+
+
+class FlosBitdwFallTest(_BowserStageDeathTest):
+    """ Falling off BitDW, which split on re-entering it """
+    RECORDING = Recording.load("flo_bitdw_fall_ares")
+    SPLIT = 3
+    # Mario re-enters BitDW, and leaves it with the key
+    REENTRY = 60.6
+    KEY_EXIT = (148, 149)
+
+    def test_splits_bitdw_once_on_the_key_exit(self):
+        look = 1 / json.loads(DEFAULTS.read_text())["advanced"]["fadeout_process_frame_rate"]
+        self.assertEqual([command for _, command, _ in self.result.commands], ["split"],
+                         f"Splits at {[time for time, _, _ in self.result.commands]}, the key exit at {self.KEY_EXIT[0]} s")
+        time = self.result.commands[0][0]
+        black = first_black_centre(self.RECORDING, *self.KEY_EXIT)
+        self.assertIsNotNone(black)
+        self.assertTrue(black - ROUNDING <= time <= black + look + ROUNDING,
+                        f"Split at {time:.3f} s, the centre is black for the key exit from {black:.3f} s")
+
+    def test_reentering_bitdw_is_its_first_fadeout(self):
+        self.assertEqual(self.fadeouts_after(self.REENTRY - 1)[:3], [(1, "BitDW"), (2, "BitDW"), (3, "BitDW")])
+
+
+class FlosBitfsDeathTest(_BowserStageDeathTest):
+    """ Dying in the BitFS fight, which split on the death """
+    RECORDING = Recording.load("flo_bitfs_death_ares")
+    SPLIT = 9
+    # Mario respawns by the pipe to Bowser, and takes it again
+    PIPE_AGAIN = 145.7
+
+    def test_no_split_for_the_death(self):
+        # The recording ends before BitFS does
+        self.assertEqual(self.result.commands, [])
+
+    def test_taking_the_pipe_again_is_its_second_fadeout(self):
+        self.assertEqual(self.fadeouts_after(self.PIPE_AGAIN - 1), [(2, "BitFS")])
 
 
 class _EndingTest(unittest.TestCase):
