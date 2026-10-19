@@ -1,0 +1,11 @@
+{
+    "title": "Flo's deaths on the ares emulator (US), with Usamune to go straight to each stage, to tell the iris of a death from the others",
+    "url": null,
+    "height": 460,
+    "game_region": [0, 0, 640, 460],
+    "route": "flo_16_star_ares.as64",
+    "labels": "Only the game, from a 1080p OBS recording, compressed to fit in the repository. Not a run: Mario dies in stage after stage, each way he can. Usamune's timer shows at the bottom left of the game.",
+    "timer_offset": 0,
+    "timer_start": 0,
+    "splits": []
+}
