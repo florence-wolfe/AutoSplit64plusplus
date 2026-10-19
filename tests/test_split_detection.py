@@ -199,6 +199,8 @@ class DetectionLogTest(unittest.TestCase):
         b._current_split = splits[1]
         b._ls_socket = None
         b._split_cooldown = 0.5
+        # The default model's, which waits the split cooldown after a split
+        b._features = set(split_detection.detection_model.FEATURES[split_detection.detection_model.STAR_PREDICTOR])
         b._split_event = None
         b._in_game = True
         b._run_ended = False
@@ -245,6 +247,13 @@ class DetectionLogTest(unittest.TestCase):
         self.base.last_split -= 1
         self.base.split()
         self.assertEqual(self.livesplit.split.call_count, 2)
+
+    def test_no_split_cooldown_in_a_model_without_it(self):
+        # AS64++ sends a split once per event instead
+        self.base._features = set()
+        self.base.last_split = split_detection.time.perf_counter()
+        self.logged(self.base.split)
+        self.livesplit.split.assert_called_once()
 
     def test_no_split_once_the_timer_ended_the_run(self):
         # The timer is past the last split, which split detection stays on

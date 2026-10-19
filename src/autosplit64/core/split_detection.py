@@ -596,7 +596,7 @@ class SplitDetection(Thread):
             return
 
         # Cool-down period between splits
-        if time.perf_counter() - self.last_split < self._split_cooldown:
+        if self.has(detection_model.SPLIT_COOLDOWN) and time.perf_counter() - self.last_split < self._split_cooldown:
             log.info("Split not sent, within the split cooldown: %s", self._state())
             return
 

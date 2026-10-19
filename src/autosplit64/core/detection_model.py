@@ -26,9 +26,12 @@ LOOKS_BETWEEN = "looks_between"
 IRISES_ENDING_LATE = "irises_ending_late"
 # Resetting once each time the SM64 logo shows, instead of on each look that sees it, which it can be for two
 RESET_LOGO_ONCE = "reset_logo_once"
+# Sending no split within general.split_cooldown seconds of the last. AS64++ sends a split once per fade or X-Cam
+# instead, which every model does, and which the cooldown no longer stops any split over the recordings for.
+SPLIT_COOLDOWN = "split_cooldown"
 FEATURES = {
-    LEGACY: {DEATHS},
-    STAR_PREDICTOR: {DEATHS},
+    LEGACY: {DEATHS, SPLIT_COOLDOWN},
+    STAR_PREDICTOR: {DEATHS, SPLIT_COOLDOWN},
     AS64PP: {DEATHS, LOOKS_BETWEEN, IRISES_ENDING_LATE, RESET_LOGO_ONCE},
 }
 

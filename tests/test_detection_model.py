@@ -36,10 +36,13 @@ class DetectionModelTest(unittest.TestCase):
         with mock.patch.object(config, "_config", {"model": {"legacy": False, "detection": detection_model.AS64PP}}):
             self.assertTrue(detection_model.has(detection_model.LOOKS_BETWEEN))
             self.assertTrue(detection_model.has(detection_model.DEATHS))
+            # Which sends a split once per event instead
+            self.assertFalse(detection_model.has(detection_model.SPLIT_COOLDOWN))
         with mock.patch.object(config, "_config", {"model": {"legacy": False, "detection": detection_model.STAR_PREDICTOR}}):
             self.assertFalse(detection_model.has(detection_model.LOOKS_BETWEEN))
             self.assertTrue(detection_model.has(detection_model.DEATHS))
             # As in 0.8.0
+            self.assertTrue(detection_model.has(detection_model.SPLIT_COOLDOWN))
             self.assertFalse(detection_model.has(detection_model.IRISES_ENDING_LATE))
             self.assertFalse(detection_model.has(detection_model.RESET_LOGO_ONCE))
 
