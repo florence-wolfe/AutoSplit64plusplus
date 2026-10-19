@@ -88,6 +88,23 @@ class StreamOutputTest(unittest.TestCase):
             bgr_frame.assert_not_called()
             self.assertTrue(output.frame_received.is_set())
 
+    def test_bgr_frame_drops_alpha_and_row_padding(self):
+        # 401 pixels are 1604 bytes a row, which Core Video pads
+        width, height = 401, 3
+        status, image_buffer = Quartz.CVPixelBufferCreate(None, width, height, Quartz.kCVPixelFormatType_32BGRA, None, None)
+        self.assertEqual(status, 0)
+        bytes_per_row = Quartz.CVPixelBufferGetBytesPerRow(image_buffer)
+        self.assertGreater(bytes_per_row, width * 4)
+        bgra = np.random.default_rng(0).integers(0, 255, (height, width, 4), dtype=np.uint8)
+        Quartz.CVPixelBufferLockBaseAddress(image_buffer, 0)
+        rows = np.frombuffer(Quartz.CVPixelBufferGetBaseAddress(image_buffer).as_buffer(height * bytes_per_row), np.uint8)
+        rows.reshape(height, bytes_per_row)[:, :width * 4] = bgra.reshape(height, width * 4)
+        Quartz.CVPixelBufferUnlockBaseAddress(image_buffer, 0)
+
+        with mock.patch.object(capture_window_mac, "CMSampleBufferGetImageBuffer", return_value=image_buffer):
+            frame = capture_window_mac.bgr_frame(object())
+        np.testing.assert_array_equal(frame, bgra[:, :, :3])
+
     def test_frames_without_an_image_are_skipped(self):
         output = capture_window_mac._StreamOutput.alloc().init()
         with mock.patch.object(capture_window_mac, "CMSampleBufferGetImageBuffer", return_value=None):

@@ -10,6 +10,7 @@ import sys
 import threading
 
 import AppKit
+import cv2
 import numpy as np
 import objc
 import psutil
@@ -59,8 +60,8 @@ def bgr_frame(sample_buffer):
         height = Quartz.CVPixelBufferGetHeight(image_buffer)
         bytes_per_row = Quartz.CVPixelBufferGetBytesPerRow(image_buffer)
         data = Quartz.CVPixelBufferGetBaseAddress(image_buffer).as_buffer(height * bytes_per_row)
-        # Rows may be padded
-        return np.frombuffer(data, dtype=np.uint8).reshape(height, bytes_per_row // 4, 4)[:, :width, :3].copy()
+        # Rows may be padded. OpenCV drops the alpha many times faster than copying the other channels with numpy.
+        return cv2.cvtColor(np.frombuffer(data, dtype=np.uint8).reshape(height, bytes_per_row // 4, 4)[:, :width], cv2.COLOR_BGRA2BGR)
     finally:
         Quartz.CVPixelBufferUnlockBaseAddress(image_buffer, Quartz.kCVPixelBufferLock_ReadOnly)
 
