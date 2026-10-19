@@ -265,6 +265,10 @@ Gerardo Cervantes - [Star Classifier](https://github.com/gerardocervantes8/Star-
 
 [Kitsovereign](https://twitter.com/kitsovereign) - Route icons
 
+## License
+
+AutoSplit64++ is under the [GNU General Public License v3](LICENSE). Super Mario 64 and its assets are © Nintendo: the screen transition textures in `src/autosplit64/data/irises` are Nintendo's and aren't covered by that licence. See [NOTICE](NOTICE).
+
 ## TODO
 
 See [TODO.md](TODO.md).

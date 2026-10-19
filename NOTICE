@@ -1,0 +1,21 @@
+AutoSplit64++ is free software under the GNU General Public License, version 3 (see LICENSE). That licence covers
+AutoSplit64++'s own code and files. It doesn't cover the files below, which belong to others.
+
+Super Mario 64 assets
+---------------------
+
+Super Mario 64, its textures and its characters are © Nintendo. AutoSplit64++ is not affiliated with or endorsed by
+Nintendo. The files below are Nintendo's, included only so split detection can recognise the game's screen
+transitions, and are not covered by the GNU General Public License:
+
+  src/autosplit64/data/irises/star.png     The star iris (pipes, trapdoors and other warps)
+  src/autosplit64/data/irises/circle.png   The circle iris (falls and warp doors)
+  src/autosplit64/data/irises/mario.png    The Mario head iris (star and key exits)
+  src/autosplit64/data/irises/bowser.png   The Bowser head iris (deaths)
+
+They are the game's textures at their original 64x64 resolution, as published on the Super Mario Wiki:
+
+  https://www.mariowiki.com/File:SM64_Asset_Sprite_ST_Power_Star.png
+  https://www.mariowiki.com/File:SM64_Asset_Sprite_ST_Circle.png
+  https://www.mariowiki.com/File:SM64_Asset_Sprite_ST_Mario.png
+  https://www.mariowiki.com/File:SM64_Bowser_iris_out.png
