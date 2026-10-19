@@ -610,19 +610,60 @@ class LivesTest(unittest.TestCase):
 
     def test_a_death_bowsers_iris_counted_isnt_counted_again(self):
         self.base.fadeout_count = 1
-        self.base._lives_since.update(fadeouts=1, death=True)
+        # On the fadeout the life was lost on, the latest
+        self.base._lives_since.update(fadeouts=1, death=1)
         self.base._lives_changed(3)
         self.assertEqual(self.base.fadeout_count, 1)
 
     def test_a_split_on_the_death_is_undone(self):
         # Three fadeouts made the split, the third a fall; the timer moved on to split 5, with no fadeouts yet
-        self.base._lives_since.update(fadeouts=1, split=(3, 3))
+        self.base._lives_since.update(fadeouts=1, split=(3, 3, 1))
         self.base.set_split_index(4)
         with self.assertLogs("detection", "INFO") as logs:
             self.base._lives_changed(3)
         self.livesplit.undo.assert_called_once()
         self.assertEqual((self.base.split_index(), self.base.fadeout_count), (3, 1))
         self.assertIn("Death, a life lost after a split, undid it, fadeouts 3 -> 1", "\n".join(logs.output))
+
+    def split_on_a_fadeout(self):
+        """ A fadeout that split, as split detection counts and splits on one """
+        b = self.base
+        vars(b).update(_split_event=None, _split_cooldown=0.5, _run_ended=False)
+        b._lives_since["fadeouts"] += 1
+        b.fadeout_count += 1
+        with self.assertLogs("detection", "INFO"):
+            b.split()
+
+    def test_a_split_before_the_deaths_fadeout_is_not_undone(self):
+        # Leaving CCM split, then BitDW's entry and a fall off it are two fadeouts more before the life is lost
+        self.split_on_a_fadeout()
+        self.base.set_split_index(4)
+        self.base.fadeout_count = 0
+        for _ in range(2):
+            self.base._lives_since["fadeouts"] += 1
+            self.base.fadeout_count += 1
+        with self.assertLogs("detection", "INFO") as logs:
+            self.base._lives_changed(3)
+        self.livesplit.undo.assert_not_called()
+        self.assertEqual((self.base.split_index(), self.base.fadeout_count), (4, 0))
+        self.assertIn("Death, a life lost, fadeouts 2 -> 0", "\n".join(logs.output))
+
+    def test_a_split_on_the_deaths_fadeout_is_undone(self):
+        self.split_on_a_fadeout()
+        self.base.set_split_index(4)
+        with self.assertLogs("detection", "INFO"):
+            self.base._lives_changed(3)
+        self.livesplit.undo.assert_called_once()
+        self.assertEqual(self.base.split_index(), 3)
+
+    def test_a_death_bowsers_iris_called_on_an_earlier_fadeout_is_another(self):
+        # Bowser's iris called wrongly on a fadeout with no life lost, then a fall the iris can't see, two fadeouts later
+        self.base.fadeout_count = 3
+        self.base._lives_since.update(fadeouts=3, death=1)
+        with self.assertLogs("detection", "INFO") as logs:
+            self.base._lives_changed(3)
+        self.assertEqual(self.base.fadeout_count, 1)
+        self.assertIn("Death, a life lost, fadeouts 3 -> 1", "\n".join(logs.output))
 
     def test_a_life_gained_is_no_death(self):
         self.base.fadeout_count = 2

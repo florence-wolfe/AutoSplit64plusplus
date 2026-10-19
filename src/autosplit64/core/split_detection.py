@@ -502,7 +502,8 @@ class SplitDetection(Thread):
         log.info("Iris %s: %s", verdict.iris, ", ".join(f"{name} {score:.2f}" for name, score in verdict.scores.items()))
         if verdict.iris != "bowser":
             return False
-        self._lives_since["death"] = True
+        # Which fadeout since the lives last changed, as a wrong call mustn't hide a death after it
+        self._lives_since["death"] = self._lives_since["fadeouts"]
         fadeouts = self.fadeout_count
         self.fadeout_count = max(fadeouts - 2, 0)
         log.info("Death, Bowser's iris, fadeouts %d -> %d", fadeouts, self.fadeout_count)
@@ -512,7 +513,7 @@ class SplitDetection(Thread):
         """ Learn the lives afresh, and what happened since """
         self._lives = None
         self._lives_readings = []
-        self._lives_since = {"fadeouts": 0, "death": False, "split": None}
+        self._lives_since = {"fadeouts": 0, "death": None, "split": None}
 
     def analyze_lives(self):
         """ Read the lives, which count once the star count model is sure of the same number LIVES_LOOKS looks in a row """
@@ -534,14 +535,15 @@ class SplitDetection(Thread):
     def _lives_changed(self, lives):
         """
         The lives the HUD shows are now `lives`. One lost after a fadeout is a death, which takes back two fadeouts, as
-        died() does, unless Bowser's iris counted it already: deaths it can't see are falls, which close with a circle,
-        as doors do, often into the dark. If it split on the death, it undoes the split.
+        died() does, unless Bowser's iris counted it already, on the latest fadeout: deaths it can't see are falls, which close with a circle,
+        as doors do, often into the dark. If it split on the death's fadeout, with none since, it undoes the split: a
+        split on an earlier fadeout, e.g. leaving the stage before, was right.
         """
         if not self._lives_trusted:
             return
         before, since = self._lives, self._lives_since
         self._lives = lives
-        self._lives_since = {"fadeouts": 0, "death": False, "split": None}
+        self._lives_since = {"fadeouts": 0, "death": None, "split": None}
         if before is None:
             return
         log.info("Lives %d -> %d", before, lives)
@@ -553,10 +555,11 @@ class SplitDetection(Thread):
             log.info("Not following the lives: %d -> %d%s, so what the HUD shows there aren't lives, as in Usamune",
                      before, lives, " with no fadeout" if lives == before - 1 else "")
             return
-        if since["death"]:
+        # Bowser's iris counted it, on the latest fadeout
+        if since["death"] == since["fadeouts"]:
             return
-        if since["split"]:
-            index, fadeouts = since["split"]
+        if since["split"] and since["split"][2] == since["fadeouts"]:
+            index, fadeouts, _ = since["split"]
             self.undo()
             self.set_split_index(index)
             self.fadeout_count = max(fadeouts - 2, 0)
@@ -607,8 +610,9 @@ class SplitDetection(Thread):
 
         log.info("Split: %s", self._state())
         self._split_event = event
-        # The split, and the fadeouts it split on, to undo it if the lives show it split on a death
-        self._lives_since["split"] = (self.split_index(), self.fadeout_count)
+        # The split, the fadeouts it split on, and the fadeouts since the lives last changed, to undo it if the lives
+        # show it split on a death's fadeout
+        self._lives_since["split"] = (self.split_index(), self.fadeout_count, self._lives_since["fadeouts"])
         livesplit.split(self._ls_socket)
         self.last_split = time.perf_counter()
 
