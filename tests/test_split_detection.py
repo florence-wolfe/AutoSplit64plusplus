@@ -237,10 +237,11 @@ class DetectionLogTest(unittest.TestCase):
 
     def test_fades_counted(self):
         b = self.base
-        b._game_capture, b._count_fades, b._black_threshold = mock.Mock(), True, 0.1
+        b._game_capture, b._count_fades, b._black_threshold, b._white_threshold = mock.Mock(), True, 0.1, 0.8
         b._fade_start_time, b._minimum_fadeout_time = 0, 0.4
         b.current_time = 100.0
-        with mock.patch.object(split_detection, "is_black", return_value=True):
+        black = split_detection.perception.Fade(hud_black=True, hud_white=False, centre_black=True, fadein_white=False)
+        with mock.patch.object(split_detection.perception, "fade", return_value=black):
             log = self.logged(b.analyze_fade_status)
         self.assertIn("Fadeout 2", log)
         self.assertIn("CCM 8", log)

@@ -5,10 +5,10 @@ import logging
 import cv2
 import numpy as np
 
-from . import config, detection_model, irises, livesplit
+from . import config, detection_model, irises, livesplit, perception
 from .game_capture import GameCapture
 from .model import Model, PredictionInfo
-from .image_utils import is_black, is_white, convert_to_cv2
+from .image_utils import convert_to_cv2
 from .route_loader import load_or_none as load_route
 from .processing import ProcessorSwitch
 
@@ -19,10 +19,7 @@ from .constants import (
     FADEIN_PARTIAL,
     FADEIN_COMPLETE,
     STAR_REGION,
-    LIFE_REGION,
     FADEOUT_REGION,
-    RESET_REGION,
-    FADEIN_REGION,
     XCAM_REGION,
     LIVES_REGION,
     SPLIT_INITIAL,
@@ -310,11 +307,10 @@ class SplitDetection(Thread):
             self._split_on_current_xcam = False
 
     def analyze_fade_status(self):
-        star_region = self._game_capture.get_region(STAR_REGION)
-        life_region = self._game_capture.get_region(LIFE_REGION)
+        seen = perception.fade(self._game_capture, self._black_threshold, self._white_threshold)
 
         # Determine the current fade status
-        if is_black(star_region, self._black_threshold) and is_black(life_region, self._black_threshold):
+        if seen.hud_black:
             if self.fade_status == NO_FADE:
                 # Counted or not, a fadeout is where a life can be lost
                 self._lives_since["fadeouts"] += 1
@@ -323,17 +319,17 @@ class SplitDetection(Thread):
                 self.xcam_count = 0
                 log.info("Fadeout %d: %s", self.fadeout_count, self._state())
 
-            if is_black(self._game_capture.get_region(RESET_REGION), self._black_threshold) and self.current_time - self._fade_start_time > self._minimum_fadeout_time:
+            if seen.centre_black and self.current_time - self._fade_start_time > self._minimum_fadeout_time:
                 self.fade_status = FADEOUT_COMPLETE
             else:
                 self.fade_status = FADEOUT_PARTIAL
-        elif is_white(star_region, self._white_threshold) and is_white(life_region, self._white_threshold):
+        elif seen.hud_white:
             if self.fade_status == NO_FADE and self._count_fades:
                 self.fadein_count += 1
                 self.xcam_count = 0
                 log.info("Fade-in %d: %s", self.fadein_count, self._state())
 
-            if not is_white(self._game_capture.get_region(FADEIN_REGION), self._white_threshold):
+            if not seen.fadein_white:
                 self.fade_status = FADEIN_COMPLETE
             else:
                 self.fade_status = FADEIN_PARTIAL
