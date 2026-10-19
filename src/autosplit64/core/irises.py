@@ -18,6 +18,7 @@ pixels that go black frame to frame match its rings, at the starts it could have
 tests/irises.py measures it over recordings, against the irises labelled by eye in tests/recordings/irises.json.
 """
 from dataclasses import dataclass
+from functools import cached_property
 
 import cv2
 import numpy as np
@@ -56,6 +57,11 @@ class Iris:
         """ The radius on game frame `frame` of the iris, as calc_tex_transition_radius rounds it """
         frame = min(max(frame, 0), self.frames - 1)
         return int(FULL_RADIUS + frame * (self.end_radius - FULL_RADIUS) / (self.frames - 1) + 0.5)
+
+    @cached_property
+    def radii(self):
+        """ The radius on each of its frames """
+        return np.array([self.radius(frame) for frame in range(self.frames)])
 
 
 def _window(name, mirror=False):
@@ -138,73 +144,100 @@ EARLY, LATE = 5, 3
 SHORT_EARLY = 3
 
 
-def observe(brightness, before):
-    """
-    (visible, weight) of a frame against the brightness just before the iris. Lit now, or dim now in a scene that was
-    dim: visible. Black now from anything but black: outside the window. Lit before and dim now: at the window's
-    blurred edge, so it doesn't count, nor does black before and now, which could be either.
-    """
-    lit, black = brightness >= LIT, brightness < BLACK_LEVEL
-    lit_before, black_before = before >= LIT, before < BLACK_LEVEL
-    visible = lit | (~lit_before & ~black)
-    outside = black & ~black_before
-    return visible.astype(np.float32), (visible | outside).astype(np.float32) * HUD
+@dataclass
+class Looks:
+    """ The looks at a transition, (time, brightness), stacked once for all the irises fitted to them """
+    times: list
+    time_array: np.ndarray
+    brightness: np.ndarray
+    black: np.ndarray
+    lit: np.ndarray
+
+    @classmethod
+    def of(cls, looks):
+        brightness = np.stack([b for _, b in looks])
+        times = [t for t, _ in looks]
+        return cls(times, np.array(times, np.float64), brightness, brightness < BLACK_LEVEL, brightness >= LIT)
 
 
-def overlap(expected, visible, weight):
-    """ Weighted soft intersection over union of what the window shows and what's visible """
-    union = (np.maximum(expected, visible) * weight).sum()
-    return float((np.minimum(expected, visible) * weight).sum() / union) if union else 0.0
+_rings = {}
+
+
+def _ring(iris, outer, inner):
+    """ Where the window shows at radius `outer` and not at `inner`, besides the HUD, drawn once per pair """
+    key = (iris.name, outer, inner)
+    if key not in _rings:
+        _rings[key] = _windows(iris, outer) & ~_windows(iris, inner) & (HUD > 0)
+    return _rings[key]
+
+
+def _sums(values):
+    """ Each of the stacked arrays' sum, as each one's own sum() would add it up """
+    return values.reshape(len(values), -1).sum(axis=1)
 
 
 def fit(iris, looks, early_frames=EARLY):
     """
-    The iris's best (score, seconds it started before the last look, ring score), from `looks`, (time, brightness)
-    up to the game going black, at whatever times split detection looked. It starts its own length before the last
-    look, give or take `early_frames` or LATE frames. Each look is scored two ways, multiplied:
+    The iris's best (score, seconds it started before the last look, ring score), from `looks`, a Looks, up to the
+    game going black, at whatever times split detection looked. It starts its own length before the last look, give or
+    take `early_frames` or LATE frames. Each look is scored two ways, multiplied:
     - Its ring: each game frame an iris blackens the ring between its last size and its new one, so how well the pixels
       that went black since the look before match the rings since then. The camera can move and the scene can be
       dark, but nothing else blackens those rings.
-    - Its window: how well what's visible matches the window, against the looks just before the start. Alone it
-      barely tells the shapes apart, but always the right way, so it widens the rings' leads.
+    - Its window: how well what's visible matches the window, against the looks just before the start. Lit now, or dim
+      now in a scene that was dim: visible. Black now from anything but black: outside the window. Lit before and dim
+      now: at the window's blurred edge, so it doesn't count, nor does black before and now, which could be either.
+      Alone it barely tells the shapes apart, but always the right way, so it widens the rings' leads.
+    Which looks count is decided look by look; what they show is worked out for all of them at once.
     """
-    def window(radius):
-        return _windows(iris, radius)
-
-    times = [time for time, _ in looks]
+    times = looks.times
+    hud = HUD > 0
     best = (0.0, 0.0, 0.0)
     for early in range(-LATE, early_frames + 1):
         start = times[-1] - (iris.frames - 1 - early) / GAME_FPS
         # What was lit just before the iris: the looks in the tenth of a second before it, or the last one
-        before_looks = [b for t, b in looks if start - 0.1 <= t < start] or [b for t, b in looks if t < start][-1:]
+        before_looks = [i for i, t in enumerate(times) if start - 0.1 <= t < start] or \
+            [i for i, t in enumerate(times) if t < start][-1:]
         if not before_looks:
             continue
-        before = np.max(before_looks, axis=0)
-        rings, windows = [], []
-        previous_look = None
-        for index, (time, brightness) in enumerate(looks):
-            if time < start:
-                continue
-            # Against the latest look a game frame or more before, as a 60 fps video shows each frame twice
-            while previous_look is None or (previous_look + 1 < index and times[previous_look + 1] <= time - 0.9 / GAME_FPS):
-                previous_look = index - 1 if previous_look is None else previous_look + 1
-            frame = round((time - start) * GAME_FPS)
-            previous = round((times[previous_look] - start) * GAME_FPS)
-            if previous < 1 or frame <= previous or frame > iris.frames - 1:
-                continue
-            radius = iris.radius(frame)
-            if not TELLING_RADII[0] <= radius <= TELLING_RADII[1]:
-                continue
-            # The rings the iris blackened since the last look, a game frame either side, as a capture can drop or
-            # repeat a frame and the start can be a frame off
-            ring = window(iris.radius(previous - 1)) & ~window(iris.radius(frame + 1)) & (HUD > 0)
-            went_black = (looks[previous_look][1] >= BLACK_LEVEL) & (brightness < BLACK_LEVEL) & (HUD > 0)
-            union = (ring | went_black).sum()
-            rings.append(float((ring & went_black).sum() / union) if union else 0.0)
-            windows.append(overlap(render(iris, radius), *observe(brightness, before)))
-        if len(rings) >= 3:
-            ring = float(np.mean(rings))
-            best = max(best, (ring * float(np.mean(windows)), times[-1] - start, ring))
+        before = looks.brightness[before_looks].max(axis=0)
+        # Each look from the start counts against the latest look a game frame or more before it, as a 60 fps video
+        # shows each frame twice, but never one before the look just before the start
+        first = int(np.searchsorted(looks.time_array, start, side="left"))
+        indices = np.arange(first, len(times))
+        latest = np.searchsorted(looks.time_array, looks.time_array[first:] - 0.9 / GAME_FPS, side="right") - 1
+        previous_looks = np.maximum(np.minimum(latest, indices - 1), first - 1)
+        # The iris's frames at both, rounded half to even as round() does
+        frames = np.rint((looks.time_array[indices] - start) * GAME_FPS).astype(int)
+        previous_frames = np.rint((looks.time_array[previous_looks] - start) * GAME_FPS).astype(int)
+        radii = iris.radii[np.clip(frames, 0, iris.frames - 1)]
+        keep = ((previous_frames >= 1) & (frames > previous_frames) & (frames <= iris.frames - 1)
+                & (radii >= TELLING_RADII[0]) & (radii <= TELLING_RADII[1]))
+        if keep.sum() < 3:
+            continue
+        indices, previous_looks = indices[keep], previous_looks[keep]
+        counted = list(zip(indices, previous_looks, frames[keep], previous_frames[keep]))
+
+        # The rings the iris blackened since the last look, a game frame either side, as a capture can drop or
+        # repeat a frame and the start can be a frame off
+        ring = np.stack([_ring(iris, iris.radius(previous - 1), iris.radius(frame + 1)) for _, _, frame, previous in counted])
+        went_black = ~looks.black[previous_looks] & looks.black[indices] & hud
+        ring_union = np.count_nonzero(ring | went_black, axis=(1, 2))
+        rings = [float(both / union) if union else 0.0
+                 for both, union in zip(np.count_nonzero(ring & went_black, axis=(1, 2)), ring_union)]
+
+        # How much of what the window shows is visible, weighted by what counts: as visible and the weight are each
+        # 0 or 1, the smaller of the two is the window where both are 1, and the larger is 1 where visible, else the window
+        black, lit = looks.black[indices], looks.lit[indices]
+        visible = lit | (~(before >= LIT) & ~black)
+        weight = (visible | (black & ~(before < BLACK_LEVEL))) & hud
+        expected = np.stack([render(iris, iris.radius(frame)) for _, _, frame, _ in counted])
+        window_union = _sums(np.where(visible, np.float32(1), expected) * weight)
+        windows = [float(shared / union) if union else 0.0
+                   for shared, union in zip(_sums(expected * (visible & weight)), window_union)]
+
+        ring_score = float(np.mean(rings))
+        best = max(best, (ring_score * float(np.mean(windows)), times[-1] - start, ring_score))
     return best
 
 
@@ -228,7 +261,8 @@ def classify(looks, early=EARLY):
     frames after the last: unknown when nothing fits well enough or far enough ahead. Also how much the still-lit pixels
     dimmed, against the first third of a second.
     """
-    fits = {iris.name: fit(iris, looks, early) for iris in IRISES}
+    stacked = Looks.of(looks)
+    fits = {iris.name: fit(iris, stacked, early) for iris in IRISES}
     scores = {name: score for name, (score, _, _) in fits.items()}
     first = [b for t, b in looks if t < looks[0][0] + 1 / 3]
     scores["fade"] = dimming([b for _, b in looks], np.max(first, axis=0))
