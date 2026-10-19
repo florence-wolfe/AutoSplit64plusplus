@@ -1,4 +1,5 @@
 import unittest
+import unittest.mock
 
 import numpy as np
 
@@ -39,8 +40,11 @@ class ClassifyTest(unittest.TestCase):
         self.assertEqual(irises.classify(looks).iris, "unknown")
 
 
-def reference_fit(iris, looks, early_frames=irises.EARLY):
-    """ fit() as it was written look by look, before it worked out every look's pixels at once: what it must equal """
+def reference_fit(iris, looks, early_frames=irises.EARLY, starts=None):
+    """
+    fit() as it was written look by look, before it worked out every look's pixels at once, at each of `starts`, all
+    by default: what scoring a start must equal
+    """
     from autosplit64.core.irises import BLACK_LEVEL, GAME_FPS, HUD, LATE, LIT, TELLING_RADII, _windows, render
 
     def observe(brightness, before):
@@ -56,7 +60,7 @@ def reference_fit(iris, looks, early_frames=irises.EARLY):
 
     times = [time for time, _ in looks]
     best = (0.0, 0.0, 0.0)
-    for early in range(-LATE, early_frames + 1):
+    for early in starts if starts is not None else range(-LATE, early_frames + 1):
         start = times[-1] - (iris.frames - 1 - early) / GAME_FPS
         before_looks = [b for t, b in looks if start - 0.1 <= t < start] or [b for t, b in looks if t < start][-1:]
         if not before_looks:
@@ -88,7 +92,7 @@ def reference_fit(iris, looks, early_frames=irises.EARLY):
 
 
 class FitTest(unittest.TestCase):
-    """ fit() works out every look's pixels at once, for speed, and must score exactly as look by look """
+    """ fit() works out every look's pixels at once, for speed, and must score each start exactly as look by look """
 
     def cases(self):
         rng = np.random.default_rng(2)
@@ -104,13 +108,51 @@ class FitTest(unittest.TestCase):
         scene = rng.uniform(60, 220, (irises.H, irises.W)).astype(np.float32)
         yield "a plain fade", [(n / 30, scene * max(0.0, 1 - max(0, n - 15) / 20)) for n in range(60)]
 
-    def test_scores_exactly_as_look_by_look(self):
+    def test_scores_each_start_exactly_as_look_by_look(self):
         for name, looks in self.cases():
             stacked = irises.Looks.of(looks)
             for iris in irises.IRISES:
-                for early in (irises.SHORT_EARLY, irises.EARLY):
+                for early in range(-irises.LATE, irises.EARLY + 1):
                     with self.subTest(name, iris=iris.name, early=early):
-                        self.assertEqual(irises.fit(iris, stacked, early), reference_fit(iris, looks, early))
+                        self.assertEqual(irises._score_at(iris, stacked, early), reference_fit(iris, looks, starts=[early]))
+
+    def test_the_best_of_the_starts_it_tries(self):
+        looks = closing(irises.IRISES[0])
+        stacked = irises.Looks.of(looks)
+        for iris in irises.IRISES:
+            with self.subTest(iris.name):
+                tried = []
+                with unittest.mock.patch.object(irises, "_score_at",
+                                                side_effect=lambda i, l, e: tried.append(e) or reference_fit(i, looks, starts=[e])):
+                    best = irises.fit(iris, stacked)
+                self.assertEqual(best, max(reference_fit(iris, looks, starts=[e]) for e in tried))
+
+
+class BestStartTest(unittest.TestCase):
+    """ Every other start, then the neighbours of the best: the score peaks around the start that fits """
+
+    STARTS = range(-irises.LATE, irises.EARLY + 1)
+
+    def search(self, peak):
+        tried = []
+
+        def score(early):
+            tried.append(early)
+            return (1.0 - abs(early - peak) / 10, early)
+        return irises._best_start(score, self.STARTS), tried
+
+    def test_finds_the_peak_wherever_it_is(self):
+        for peak in self.STARTS:
+            with self.subTest(peak=peak):
+                (score, early), _ = self.search(peak)
+                self.assertEqual(early, peak)
+
+    def test_tries_at_most_seven_of_the_nine_starts(self):
+        for peak in self.STARTS:
+            with self.subTest(peak=peak):
+                _, tried = self.search(peak)
+                self.assertLessEqual(len(tried), 7)
+                self.assertEqual(len(tried), len(set(tried)))
 
 
 if __name__ == "__main__":
