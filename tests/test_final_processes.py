@@ -52,10 +52,12 @@ class FindFinalStarTest(ClockTestCase):
         self.at(1.1)
         self.assertEqual(self.process.look_at(), self.now + 1)
 
-    def test_a_fadeout_while_it_waits(self):
+    def test_nothing_while_it_waits(self):
+        # Not even a fadeout, as it did asleep, for the AS64+ and legacy models, which this final split is for
         self.at(0)
         self.detection.fade_status = FADEOUT_PARTIAL
-        self.assertEqual(self.at(0.5), "FADEOUT")
+        self.assertEqual(self.at(0.5), "LOOP")
+        self.assertEqual(self.at(1), "FADEOUT")
 
 
 if __name__ == "__main__":

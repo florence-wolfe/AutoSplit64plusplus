@@ -39,6 +39,9 @@ class DetectionModelTest(unittest.TestCase):
         with mock.patch.object(config, "_config", {"model": {"legacy": False, "detection": detection_model.STAR_PREDICTOR}}):
             self.assertFalse(detection_model.has(detection_model.LOOKS_BETWEEN))
             self.assertTrue(detection_model.has(detection_model.DEATHS))
+            # As in 0.8.0
+            self.assertFalse(detection_model.has(detection_model.IRISES_ENDING_LATE))
+            self.assertFalse(detection_model.has(detection_model.RESET_LOGO_ONCE))
 
     def test_every_model_has_features_listed(self):
         self.assertEqual(set(detection_model.FEATURES), set(detection_model.MODELS))

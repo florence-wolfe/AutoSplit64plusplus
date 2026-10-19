@@ -21,10 +21,15 @@ NAMES = {LEGACY: "AS64 Legacy Model", STAR_PREDICTOR: "AS64+ Star Predictor", AS
 DEATHS = "deaths"
 # Looking at a frame between looks that starts a fade or shows the reset logo, which moves splits by a frame either way
 LOOKS_BETWEEN = "looks_between"
+# Fitting irises that end up to 5 frames after the centre goes black, as over a dark stage, instead of 3: tells more
+# deaths, e.g. in the BitFS fight
+IRISES_ENDING_LATE = "irises_ending_late"
+# Resetting once each time the SM64 logo shows, instead of on each look that sees it, which it can be for two
+RESET_LOGO_ONCE = "reset_logo_once"
 FEATURES = {
     LEGACY: {DEATHS},
     STAR_PREDICTOR: {DEATHS},
-    AS64PP: {DEATHS, LOOKS_BETWEEN},
+    AS64PP: {DEATHS, LOOKS_BETWEEN, IRISES_ENDING_LATE, RESET_LOGO_ONCE},
 }
 
 

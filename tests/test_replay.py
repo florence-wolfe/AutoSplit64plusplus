@@ -312,7 +312,8 @@ class FlosDeathsTest(unittest.TestCase):
             raise unittest.SkipTest(f"No {cls.RECORDING.video}")
         advanced = json.loads(DEFAULTS.read_text())["advanced"]
         templates = [DEFAULTS.parent / advanced["reset_frame_one"], DEFAULTS.parent / advanced["reset_frame_two"]]
-        cls.result = replay(cls.RECORDING, 0, cls.RECORDING.length(), templates, split_index=0)
+        # Which fits irises ending later, as a dark stage's do
+        cls.result = replay(cls.RECORDING, 0, cls.RECORDING.length(), templates, split_index=0, variant=AS64PP)
 
     def test_each_death_by_bowsers_iris_is_a_death(self):
         deaths = [float(line.split()[0]) for line in self.result.trace if " Death, Bowser's iris" in line]

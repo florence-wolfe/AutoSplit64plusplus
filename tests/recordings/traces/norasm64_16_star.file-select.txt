@@ -70,7 +70,7 @@
 10.167 Running ProcessFileSelectSplit
 10.233 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 0
 10.267 Running ProcessFadeoutResetOnly
-12.833 Iris unknown: star 0.04, circle 0.06, mario 0.03, bowser 0.02, fade 0.62
+12.833 Iris unknown: star 0.04, circle 0.06, mario 0.03, bowser 0.01, fade 0.62
 15.267 Running ProcessFileSelectSplit
 15.800 Fade-in 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 0, fade-ins 1
 17.033 Fade-in 2: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 0, fade-ins 2
@@ -79,7 +79,7 @@
 20.633 Running ProcessStarCount
 72.133 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 0
 72.300 Running ProcessFadeout
-72.400 Iris circle: star 0.08, circle 0.26, mario 0.09, bowser 0.02, fade 0.59
+72.400 Iris circle: star 0.08, circle 0.20, mario 0.08, bowser 0.00, fade 0.59
 73.467 Running ProcessPostFadeout
 79.533 Running ProcessStarCount
 84.867 Fade-in 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 1

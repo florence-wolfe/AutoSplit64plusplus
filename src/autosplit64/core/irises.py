@@ -133,7 +133,9 @@ MIN_RATIO = {"star": 1.5, "circle": 1.5, "mario": 1.1, "bowser": 1.25}
 # stage is up to 4 frames before the game is (a death in BitFS), and up to LATE after it, as a head's iris holds a small
 # window until the warp. Over the labelled recordings, judged as split detection does, 3 frames got 31 of 34 right and
 # 5 frames 33, the one wrong a fade called Mario's head, which changes nothing; judged at every frame, 34 either way.
+# The detection models other than AS64++ keep 0.8.0's 3, SHORT_EARLY.
 EARLY, LATE = 5, 3
+SHORT_EARLY = 3
 
 
 def observe(brightness, before):
@@ -155,11 +157,11 @@ def overlap(expected, visible, weight):
     return float((np.minimum(expected, visible) * weight).sum() / union) if union else 0.0
 
 
-def fit(iris, looks):
+def fit(iris, looks, early_frames=EARLY):
     """
     The iris's best (score, seconds it started before the last look, ring score), from `looks`, (time, brightness)
     up to the game going black, at whatever times split detection looked. It starts its own length before the last
-    look, give or take EARLY or LATE frames. Each look is scored two ways, multiplied:
+    look, give or take `early_frames` or LATE frames. Each look is scored two ways, multiplied:
     - Its ring: each game frame an iris blackens the ring between its last size and its new one, so how well the pixels
       that went black since the look before match the rings since then. The camera can move and the scene can be
       dark, but nothing else blackens those rings.
@@ -171,7 +173,7 @@ def fit(iris, looks):
 
     times = [time for time, _ in looks]
     best = (0.0, 0.0, 0.0)
-    for early in range(-LATE, EARLY + 1):
+    for early in range(-LATE, early_frames + 1):
         start = times[-1] - (iris.frames - 1 - early) / GAME_FPS
         # What was lit just before the iris: the looks in the tenth of a second before it, or the last one
         before_looks = [b for t, b in looks if start - 0.1 <= t < start] or [b for t, b in looks if t < start][-1:]
@@ -220,12 +222,13 @@ def dimming(brightnesses, before):
     return float(np.median(ratios)) if ratios else 1.0
 
 
-def classify(looks):
+def classify(looks, early=EARLY):
     """
-    The iris of a transition, from (time, brightness) of the looks up to the game going black: unknown when nothing
-    fits well enough or far enough ahead. Also how much the still-lit pixels dimmed, against the first third of a second.
+    The iris of a transition, from (time, brightness) of the looks up to the game going black, which can come `early`
+    frames after the last: unknown when nothing fits well enough or far enough ahead. Also how much the still-lit pixels
+    dimmed, against the first third of a second.
     """
-    fits = {iris.name: fit(iris, looks) for iris in IRISES}
+    fits = {iris.name: fit(iris, looks, early) for iris in IRISES}
     scores = {name: score for name, (score, _, _) in fits.items()}
     first = [b for t, b in looks if t < looks[0][0] + 1 / 3]
     scores["fade"] = dimming([b for _, b in looks], np.max(first, axis=0))

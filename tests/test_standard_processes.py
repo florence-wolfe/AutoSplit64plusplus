@@ -7,7 +7,7 @@ import numpy as np
 
 from autosplit64.core.constants import (FADEIN_COMPLETE, FADEIN_PARTIAL, FADEOUT_COMPLETE, FADEOUT_PARTIAL, NO_FADE,
                                         SPLIT_FADE_ONLY, SPLIT_NORMAL)
-from autosplit64.core import config
+from autosplit64.core import config, detection_model
 from autosplit64.core.model import PredictionInfo
 from autosplit64.processes import standard
 
@@ -46,6 +46,9 @@ class ProcessTestCase(unittest.TestCase):
         functions["forget_lives"] = mock.Mock()
         # The fade and the X-Cam a split is on, which it's sent on once
         functions["fade_event"] = lambda: ("fade", 7)
+        # The AS64++ model's features
+        self.features = set(detection_model.FEATURES[detection_model.AS64PP])
+        functions["has"] = lambda feature: feature in self.features
         functions["xcam_event"] = lambda: ("X-Cam", 3)
         self.detection = SimpleNamespace(
             fade_status=NO_FADE, star_count=5, prediction_info=PredictionInfo(5, 0.9),
@@ -165,6 +168,14 @@ class FadeoutTest(ProcessTestCase):
         self.run_process(standard.ProcessFadeoutResetOnly)
         process, result = self.run_process(standard.ProcessFadeoutResetOnly, "_reset_template")
         self.assertIs(result, process.signals["RESET"])
+
+    def test_the_logo_resets_each_look_it_matches_in_a_model_without_it_once(self):
+        # As in 0.8.0
+        self.features.discard(detection_model.RESET_LOGO_ONCE)
+        for _ in range(2):
+            process, result = self.run_process(standard.ProcessFadeoutResetOnly, "_reset_template")
+            self.assertIs(result, process.signals["RESET"])
+        self.assertEqual(self.names().count("reset"), 2)
 
     def test_no_split_while_the_centre_is_not_black(self):
         self.detection.get_region.return_value = np.full((137, 251, 3), 255, np.uint8)

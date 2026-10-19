@@ -13,8 +13,8 @@ from autosplit64.core.model import PredictionInfo
 def make_base(star_counts=(1, 2, 3, 4, 5, 6), current=3):
     """ A SplitDetection with a route of splits with the given star counts, without capture, model or timer """
     b = SplitDetection.__new__(SplitDetection)
-    # Every model tells deaths
-    b._deaths = True
+    # The AS64++ model's
+    b._features = set(split_detection.detection_model.FEATURES[split_detection.detection_model.AS64PP])
     splits = [SimpleNamespace(title=f"Split {s}", star_count=s, on_fadeout=1, on_fadein=0, split_type="Normal")
               for s in star_counts]
     b._route = SimpleNamespace(title="Route", splits=splits, initial_star=0, version="JP", timing="RTA")
@@ -144,7 +144,7 @@ class LookingBetweenLooksTest(unittest.TestCase):
              mock.patch.object(split_detection, "Model"), \
              mock.patch.object(split_detection, "GameCapture") as game_capture:
             game_capture.return_value.get_region_rect.return_value = [0, 0, 10, 10]
-            return SplitDetection()._looks_between
+            return SplitDetection().has(split_detection.detection_model.LOOKS_BETWEEN)
 
     def test_only_the_as64pp_model(self):
         self.assertTrue(self.looks_between("as64pp"))
@@ -468,10 +468,19 @@ class DiedTest(unittest.TestCase):
                 self.assertIn(f"Iris {iris}", "\n".join(logs.output))
 
     def test_no_death_in_a_model_without_them(self):
-        self.base._deaths = False
+        self.base._features = set()
         with self.verdict("bowser"):
             self.assertFalse(self.base.died())
         self.assertEqual(self.base.fadeout_count, 3)
+
+    def test_irises_ending_late_only_in_a_model_with_them(self):
+        # A dark stage's centre goes black up to 4 frames before the game does
+        for features, early in (({split_detection.detection_model.DEATHS, split_detection.detection_model.IRISES_ENDING_LATE}, 5),
+                                ({split_detection.detection_model.DEATHS}, 3)):
+            with self.subTest(early=early), self.verdict("star") as classify, self.assertLogs("detection", "INFO"):
+                self.base._features = features
+                self.base.died()
+                self.assertEqual(classify.call_args.kwargs, {"early": early})
 
     def test_no_verdict_from_less_than_a_seconds_looks(self):
         self.base._game_capture.looks = self.base._game_capture.looks[:20]

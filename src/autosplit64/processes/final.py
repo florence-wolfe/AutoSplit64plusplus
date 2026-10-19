@@ -59,12 +59,14 @@ class ProcessFindFinalStar(Process):
         self.star_upper_bound = config.get("split_final_star", "star_upper_bound")
 
     def execute(self):
-        if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
-            return self.signals["FADEOUT"]
+        # Waiting to look again, it looks at nothing, as it did asleep: the AS64+ and legacy models' final split, which
+        # split when they did
         if self._next_look is not None:
             if time.perf_counter() < self._next_look:
                 return self.signals["LOOP"]
             self._next_look = None
+        if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
+            return self.signals["FADEOUT"]
         if self._star_visible() and self.loop_time() > 20:
             if self._looping_iteration == len(self._iteration_value):
                 log.info("Grand Star spawned")

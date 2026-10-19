@@ -17,7 +17,7 @@ from autosplit64.core.constants import (
 
 from autosplit64.core.resource_utils import resource_path
 
-from autosplit64.core import config
+from autosplit64.core import config, detection_model
 from autosplit64.core.image_utils import is_black, is_white
 from autosplit64.core.processing import Process
 
@@ -245,7 +245,8 @@ class _FadeoutProcess(Process):
         frame or two, which the next fadeout can look at again, and it's one reset
         """
         shown = self._logo_shown(region)
-        shows = shown and not self.core.reset_logo_shown
+        # On each look that sees it, in the models before resetting once
+        shows = shown and not (self.core.reset_logo_shown and self.core.has(detection_model.RESET_LOGO_ONCE))
         self.core.reset_logo_shown = shown
         return shows
 

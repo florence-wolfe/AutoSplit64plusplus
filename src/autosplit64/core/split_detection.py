@@ -83,8 +83,7 @@ class SplitDetection(Thread):
         self._running = False
 
         # What the detection model does
-        self._looks_between = detection_model.has(detection_model.LOOKS_BETWEEN)
-        self._deaths = detection_model.has(detection_model.DEATHS)
+        self._features = detection_model.FEATURES[detection_model.get()]
 
         # Operation Mode
         self._operation_mode = CONFIRMATION_MODE
@@ -271,7 +270,7 @@ class SplitDetection(Thread):
                     look_at = self._processor_switch.look_at()
                     if look_at is not None:
                         wait = min(wait, look_at - time.perf_counter())
-                    self._game_capture.wait(wait, self.look_now if self._looks_between else None)
+                    self._game_capture.wait(wait, self.look_now if self.has(detection_model.LOOKS_BETWEEN) else None)
                 except ValueError:
                     pass
                 
@@ -492,13 +491,14 @@ class SplitDetection(Thread):
         with Bowser's head. A death takes back two fadeouts: its own, and the one that brought Mario into the stage, or
         into the fight, where dying sends him back to the stage.
         """
-        if not self._deaths:
+        if not self.has(detection_model.DEATHS):
             return False
         looks = list(self._game_capture.looks)
         # Too little to judge from, as when split detection has only just started
         if not looks or looks[-1][0] - looks[0][0] < MIN_LOOKING:
             return False
-        verdict = irises.classify(looks)
+        late = self.has(detection_model.IRISES_ENDING_LATE)
+        verdict = irises.classify(looks, early=irises.EARLY if late else irises.SHORT_EARLY)
         log.info("Iris %s: %s", verdict.iris, ", ".join(f"{name} {score:.2f}" for name, score in verdict.scores.items()))
         if verdict.iris != "bowser":
             return False
@@ -516,7 +516,7 @@ class SplitDetection(Thread):
 
     def analyze_lives(self):
         """ Read the lives, which count once the star count model is sure of the same number LIVES_LOOKS looks in a row """
-        if not self._lives_trusted or not self._deaths:
+        if not self._lives_trusted or not self.has(detection_model.DEATHS):
             return
         reading = self._read_lives()
         if reading.probability < LIVES_SURE or reading.prediction > 120:
@@ -571,6 +571,10 @@ class SplitDetection(Thread):
         index = self.split_index()
         if index > 0 and self.star_count < self._route.splits[index - 1].star_count:
             self.undo()
+
+    def has(self, feature):
+        """ Whether the detection model does the feature, as detection_model.FEATURES says """
+        return feature in self._features
 
     def get_region(self, region):
         return self._game_capture.get_region(region)
