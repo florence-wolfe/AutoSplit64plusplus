@@ -26,14 +26,14 @@ class XCamTest(ProcessTestCase):
         self.assertEqual(self.names(), [])
         self.detection.xcam_count = 2
         self.assertIs(self.process.execute(), self.process.signals["LOOP"])
-        self.assertEqual(self.names(), ["split"])
+        self.assertEqual(self.calls, [("split", ("X-Cam", 3))])
         self.assertEqual(self.detection.xcam_count, 0)
 
     def test_split_on_an_xcam_within_a_second_of_a_star(self):
         self.detection.in_xcam = True
         self.detection.collection_time = self.detection.current_time - 0.9
         self.process.execute()
-        self.assertEqual(self.names(), ["split"])
+        self.assertEqual(self.calls, [("split", ("X-Cam", 3))])
 
     def test_no_split_on_an_xcam_a_second_after_a_star(self):
         self.detection.in_xcam = True

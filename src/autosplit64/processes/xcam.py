@@ -23,10 +23,10 @@ class ProcessXCam(Process):
 
         if self.core.incoming_split():
             if self.core.xcam_count == 0 and self.core.in_xcam and self.core.current_time - self.core.collection_time < 1:
-                self.core.split()
+                self.core.split(self.core.xcam_event())
             elif self.core.xcam_count == self.core.current_split().on_xcam:
                 self.core.xcam_count = 0
-                self.core.split()
+                self.core.split(self.core.xcam_event())
 
         return self.signals["LOOP"]
 

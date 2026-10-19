@@ -177,7 +177,7 @@ class DetectionLogTest(unittest.TestCase):
         b._current_split = splits[1]
         b._ls_socket = None
         b._split_cooldown = 0.5
-        b._split_on_current_xcam = False
+        b._split_event = None
         b._in_game = True
         b._run_ended = False
         b._prediction_processing_length = 3
@@ -203,6 +203,26 @@ class DetectionLogTest(unittest.TestCase):
         log = self.logged(self.base.split)
         self.livesplit.split.assert_not_called()
         self.assertIn("cooldown", log)
+
+    def test_a_split_on_an_event_is_sent_once(self):
+        # A fadeout's centre stays black for many looks, and the next split can need the same one too
+        log = self.logged(lambda: [self.base.split(("fadeout", 3)) for _ in range(2)])
+        self.livesplit.split.assert_called_once()
+        self.assertIn("already split on this fadeout", log)
+
+    def test_a_split_on_another_event_is_sent(self):
+        self.base.split(("fadeout", 3))
+        self.base.last_split -= 1
+        self.base.split(("fadeout", 4))
+        self.base.last_split -= 1
+        self.base.split(("X-Cam", 4))
+        self.assertEqual(self.livesplit.split.call_count, 3)
+
+    def test_a_split_on_no_event_is_sent(self):
+        self.base.split(("X-Cam", 1))
+        self.base.last_split -= 1
+        self.base.split()
+        self.assertEqual(self.livesplit.split.call_count, 2)
 
     def test_no_split_once_the_timer_ended_the_run(self):
         # The timer is past the last split, which split detection stays on
@@ -238,7 +258,7 @@ class DetectionLogTest(unittest.TestCase):
     def test_fades_counted(self):
         b = self.base
         b._game_capture, b._count_fades, b._black_threshold, b._white_threshold = mock.Mock(), True, 0.1, 0.8
-        b._fade_start_time, b._minimum_fadeout_time, b._fade_seen = 0, 0.4, (None, 0.0)
+        b._fade_start_time, b._minimum_fadeout_time, b._fade_seen, b._fade_number = 0, 0.4, (None, 0.0), 0
         b.current_time = 100.0
         black = split_detection.perception.Fade(hud_black=True, hud_white=False, centre_black=True, fadein_white=False)
         with mock.patch.object(split_detection.perception, "fade", return_value=black):
@@ -430,6 +450,40 @@ class DiedTest(unittest.TestCase):
         with mock.patch.object(split_detection.irises, "classify") as classify:
             self.assertFalse(self.base.died())
         classify.assert_not_called()
+
+
+class EventNumberTest(unittest.TestCase):
+    """ Each fade and X-Cam is an event of its own, which a split can be sent on once """
+
+    def detection(self):
+        b = SplitDetection.__new__(SplitDetection)
+        b._game_capture, b._black_threshold, b._white_threshold = mock.Mock(), 0.1, 0.8
+        b._count_fades, b._fade_start_time, b._minimum_fadeout_time, b._fade_seen = False, 0, 0.4, (None, 0.0)
+        b._fade_number = b._xcam_number = b.xcam_count = 0
+        b.fade_status, b.current_time = "NO_FADE", 100.0
+        b.forget_lives()
+        return b
+
+    def look(self, b, hud):
+        fade = split_detection.perception.Fade(hud_black=hud == "black", hud_white=hud == "white",
+                                               centre_black=False, fadein_white=False)
+        with mock.patch.object(split_detection.perception, "fade", return_value=fade):
+            b.analyze_fade_status()
+        return b.fade_event()
+
+    def test_each_fade_is_another_event_counted_or_not(self):
+        b = self.detection()
+        events = [self.look(b, hud) for hud in (None, "black", "black", None, "white", None, "black")]
+        self.assertEqual(events, [("fade", 0), ("fade", 1), ("fade", 1), ("fade", 1), ("fade", 2), ("fade", 2), ("fade", 3)])
+
+    def test_each_xcam_is_another_event(self):
+        b = self.detection()
+        b._xcam_found_time = 0
+        # An X-Cam is a new one half a second after the last was seen, as the X-Cam count goes
+        for at, number in ((100.0, 1), (100.3, 1), (101.0, 2)):
+            b.current_time = at
+            b._xcam_seen()
+            self.assertEqual(b.xcam_event(), ("X-Cam", number))
 
 
 class FadeStartTest(unittest.TestCase):

@@ -153,7 +153,7 @@ class ProcessFadein(Process):
 
     def execute(self):
         if self.core.incoming_split() and self.core.fade_status == FADEIN_COMPLETE:
-            self.core.split()
+            self.core.split(self.core.fade_event())
 
         if self.core.fade_status == FADEIN_PARTIAL:
             return self.signals["LOOP"]
@@ -269,7 +269,7 @@ class ProcessFadeout(_FadeoutProcess):
         # TODO: SWITCH TO USING FADE_STATUS
         # If centre of screen is black, and the current split conditions are met, trigger split
         if is_black(reset_region, self._black_threshold) and self.core.incoming_split() and self.core.current_split().split_type == SPLIT_NORMAL:
-            self.core.split()
+            self.core.split(self.core.fade_event())
 
 
 class ProcessFadeoutNoStar(_FadeoutProcess):
@@ -277,7 +277,7 @@ class ProcessFadeoutNoStar(_FadeoutProcess):
         # TODO: SWITCH TO USING FADE_STATUS
         # If centre of screen is black, and the current split conditions are met, trigger split
         if is_black(reset_region, self._black_threshold) and self.core.incoming_split(star_count=False) and self.core.current_split().split_type == SPLIT_FADE_ONLY:
-            self.core.split()
+            self.core.split(self.core.fade_event())
 
 
 class ProcessFadeoutResetOnly(_FadeoutProcess):
@@ -304,10 +304,10 @@ class ProcessPostFadeout(Process):
 
         if self.core.incoming_split():
             if self.core.xcam_count == 0 and self.core.in_xcam:
-                self.core.split()
+                self.core.split(self.core.xcam_event())
             elif self.core.xcam_count == self.core.current_split().on_xcam:
                 self.core.xcam_count = 0
-                self.core.split()
+                self.core.split(self.core.xcam_event())
 
         if self.loop_time() < 6:
             return self.signals["LOOP"]

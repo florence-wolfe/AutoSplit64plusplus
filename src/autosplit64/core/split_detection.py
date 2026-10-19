@@ -94,11 +94,14 @@ class SplitDetection(Thread):
         self._fade_start_time = 0
         # What fade the HUD showed in the last frame captured, on a look or between, and since when
         self._fade_seen = (None, 0.0)
+        # Each fade and X-Cam split detection saw so far, which a split is sent on once, and the last split's
+        self._fade_number = 0
+        self._xcam_number = 0
+        self._split_event = None
         self._minimum_fadeout_time = 0.4
 
         # X-Cam Detection
         self._xcam_found_time = 0
-        self._split_on_current_xcam = False
         self._xcam_point_x_ratio = 5/23
         self._xcam_point_y_ratio = 16/23
         _, _, self._xcam_region_width, self._xcam_region_height = self._game_capture.get_region_rect(XCAM_REGION)
@@ -306,14 +309,25 @@ class SplitDetection(Thread):
         self.xcam_percent = np.count_nonzero(output_1d) / output_1d.size
 
         if self.xcam_percent > self._xcam_threshold and output[int(self._xcam_point_x_ratio*self._xcam_region_width), int(self._xcam_point_y_ratio*self._xcam_region_height), 2] > 20:
-            self.in_xcam = True
-            if self.current_time - self._xcam_found_time > 0.5:
-                self.xcam_count += 1
-
-            self._xcam_found_time = self.current_time
+            self._xcam_seen()
         else:
             self.in_xcam = False
-            self._split_on_current_xcam = False
+
+    def _xcam_seen(self):
+        """ An X-Cam is in view, a new one half a second after the last was """
+        self.in_xcam = True
+        if self.current_time - self._xcam_found_time > 0.5:
+            self.xcam_count += 1
+            self._xcam_number += 1
+        self._xcam_found_time = self.current_time
+
+    def fade_event(self):
+        """ The fade split detection saw last, which a split on a fadeout or a fade-in is sent on once """
+        return "fade", self._fade_number
+
+    def xcam_event(self):
+        """ The X-Cam split detection saw last, which a split on an X-Cam is sent on once """
+        return "X-Cam", self._xcam_number
 
     def analyze_fade_status(self):
         seen = perception.fade(self._game_capture, self._black_threshold, self._white_threshold)
@@ -322,6 +336,7 @@ class SplitDetection(Thread):
         # Determine the current fade status
         if seen.hud_black:
             if self.fade_status == NO_FADE:
+                self._fade_number += 1
                 # Counted or not, a fadeout is where a life can be lost
                 self._lives_since["fadeouts"] += 1
             if self.fade_status == NO_FADE and self._count_fades:
@@ -334,6 +349,8 @@ class SplitDetection(Thread):
             else:
                 self.fade_status = FADEOUT_PARTIAL
         elif seen.hud_white:
+            if self.fade_status == NO_FADE:
+                self._fade_number += 1
             if self.fade_status == NO_FADE and self._count_fades:
                 self.fadein_count += 1
                 self.xcam_count = 0
@@ -562,7 +579,12 @@ class SplitDetection(Thread):
     # TIMER FUNCTIONS
     #
 
-    def split(self):
+    def split(self, event=None):
+        """ Split, once for `event`, the fade or X-Cam it's on, which the looks after see too, if it's on one """
+        if event is not None and event == self._split_event:
+            log.info("Split not sent, already split on this %s: %s", event[0], self._state())
+            return
+
         # Cool-down period between splits
         if time.perf_counter() - self.last_split < self._split_cooldown:
             log.info("Split not sent, within the split cooldown: %s", self._state())
@@ -573,14 +595,8 @@ class SplitDetection(Thread):
             log.info("Split not sent, past the last split: %s", self._state())
             return
 
-        # Prevent splitting twice on one X-Cam
-        if self._split_on_current_xcam:
-            log.info("Split not sent, already split on this X-Cam: %s", self._state())
-            return
-        else:
-            self._split_on_current_xcam = True
-
         log.info("Split: %s", self._state())
+        self._split_event = event
         # The split, and the fadeouts it split on, to undo it if the lives show it split on a death
         self._lives_since["split"] = (self.split_index(), self.fadeout_count)
         livesplit.split(self._ls_socket)
@@ -600,7 +616,6 @@ class SplitDetection(Thread):
         self.set_star_count(self._route.initial_star)
         self.xcam_count = 0
         self._in_game = False
-        self._split_on_current_xcam = False
 
     def skip(self):
         log.info("Skipped the split: %s", self._state())
@@ -650,9 +665,6 @@ class SplitDetection(Thread):
 
     def enable_xcam_count(self, enable):
         self._count_xcams = enable
-
-        if not enable:
-            self._split_on_current_xcam = False
 
     def set_in_game(self, in_game):
         if in_game != self._in_game:

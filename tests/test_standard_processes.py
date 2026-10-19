@@ -5,7 +5,8 @@ from unittest import mock
 
 import numpy as np
 
-from autosplit64.core.constants import FADEOUT_COMPLETE, FADEOUT_PARTIAL, NO_FADE, SPLIT_FADE_ONLY, SPLIT_NORMAL
+from autosplit64.core.constants import (FADEIN_COMPLETE, FADEIN_PARTIAL, FADEOUT_COMPLETE, FADEOUT_PARTIAL, NO_FADE,
+                                        SPLIT_FADE_ONLY, SPLIT_NORMAL)
 from autosplit64.core import config
 from autosplit64.core.model import PredictionInfo
 from autosplit64.processes import standard
@@ -43,6 +44,9 @@ class ProcessTestCase(unittest.TestCase):
         # anything or changes what else is called
         functions["died"] = mock.Mock(return_value=False)
         functions["forget_lives"] = mock.Mock()
+        # The fade and the X-Cam a split is on, which it's sent on once
+        functions["fade_event"] = lambda: ("fade", 7)
+        functions["xcam_event"] = lambda: ("X-Cam", 3)
         self.detection = SimpleNamespace(
             fade_status=NO_FADE, star_count=5, prediction_info=PredictionInfo(5, 0.9),
             route=SimpleNamespace(splits=splits, initial_star=0), fadein_count=0, fadeout_count=0,
@@ -122,7 +126,7 @@ class FadeoutTest(ProcessTestCase):
                 self.detection.incoming_split.reset_mock()
                 process, result = self.run_process(cls, split_type=split_type)
                 self.assertIs(result, process.signals["LOOP"])
-                self.assertEqual(self.names(), ["split"])
+                self.assertEqual(self.calls, [("split", ("fade", 7))])
                 self.assertEqual(self.detection.incoming_split.call_args.kwargs, incoming_split_args[0] if incoming_split_args else {})
 
     def test_no_split_on_other_split_types(self):
@@ -265,6 +269,19 @@ class ClockTestCase(ProcessTestCase):
 
 
 
+class FadeinTest(ProcessTestCase):
+    """ ProcessFadein: splits once the fade-in clears, on its fade """
+
+    def test_split_once_the_fade_in_clears(self):
+        process = standard.ProcessFadein(self.detection)
+        self.detection.fade_status = FADEIN_PARTIAL
+        self.assertIs(process.execute(), process.signals["LOOP"])
+        self.assertEqual(self.calls, [])
+        self.detection.fade_status = FADEIN_COMPLETE
+        process.execute()
+        self.assertEqual(self.calls, [("split", ("fade", 7))])
+
+
 class FileSelectSplitTest(ClockTestCase):
     """ ProcessFileSelectSplit: the split a set time after File Select's second fade-in, timed without sleeping """
 
@@ -339,7 +356,7 @@ class PostFadeoutTest(ClockTestCase):
         self.assertNotIn("split", self.names())
         self.detection.xcam_count = 2
         self.at(0.6)
-        self.assertIn("split", self.names())
+        self.assertIn(("split", ("X-Cam", 3)), self.calls)
         self.assertEqual(self.detection.xcam_count, 0)
 
     def test_split_on_an_xcam_long_after_a_star(self):

@@ -31,24 +31,24 @@
 97.600 Running ProcessFadeout
 97.967 Iris mario: star 0.07, circle 0.18, mario 0.30, bowser 0.03, fade 0.93
 97.967 Split: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
-98.000 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
-98.033 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
-98.067 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
-98.100 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
-98.133 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
-98.167 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
-98.200 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
-98.233 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
-98.267 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
-98.300 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
-98.333 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
-98.367 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
-98.400 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
-98.433 Split not sent, within the split cooldown: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
-98.467 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
-98.500 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
-98.533 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
-98.567 Split not sent, already split on this X-Cam: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+98.000 Split not sent, already split on this fade: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+98.033 Split not sent, already split on this fade: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+98.067 Split not sent, already split on this fade: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+98.100 Split not sent, already split on this fade: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+98.133 Split not sent, already split on this fade: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+98.167 Split not sent, already split on this fade: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+98.200 Split not sent, already split on this fade: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+98.233 Split not sent, already split on this fade: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+98.267 Split not sent, already split on this fade: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+98.300 Split not sent, already split on this fade: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+98.333 Split not sent, already split on this fade: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+98.367 Split not sent, already split on this fade: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+98.400 Split not sent, already split on this fade: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+98.433 Split not sent, already split on this fade: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+98.467 Split not sent, already split on this fade: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+98.500 Split not sent, already split on this fade: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+98.533 Split not sent, already split on this fade: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+98.567 Split not sent, already split on this fade: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
 99.033 Running ProcessPostFadeout
 100.500 Running ProcessFlashCheck
 101.467 Star count flashed 4 times, running total -2
