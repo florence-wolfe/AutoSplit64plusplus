@@ -24,6 +24,7 @@ class FadeoutNoStarResetTest(unittest.TestCase):
         self.process = make_process(standard.ProcessFadeoutNoStar, detection, "RESET", "COMPLETE")
         self.process._black_threshold = 0.1
         self.process._split_occurred = False
+        self.process._judged = self.process._death = False
         self.process._reset_template = "template one"
         self.process._reset_template_2 = "template two"
         self.process._reset = mock.Mock()

@@ -39,6 +39,8 @@ class ProcessTestCase(unittest.TestCase):
         for name in ("enable_fade_count", "enable_xcam_count", "enable_predictions", "set_in_game", "set_star_count",
                      "split", "reset", "undo", "skip"):
             functions[name] = record(name)
+        # Whether the fadeout is a death, by its iris; not recorded, as it only decides what's called
+        functions["died"] = mock.Mock(return_value=False)
         self.detection = SimpleNamespace(
             fade_status=NO_FADE, star_count=5, prediction_info=PredictionInfo(5, 0.9),
             route=SimpleNamespace(splits=splits, initial_star=0), fadein_count=0, fadeout_count=0,
@@ -154,6 +156,32 @@ class FadeoutTest(ProcessTestCase):
                 self.assertIs(result, process.signals["LOOP"])
                 self.assertNotIn("split", self.names())
 
+    def test_no_split_on_a_death(self):
+        self.detection.died.return_value = True
+        for cls, split_type in [(standard.ProcessFadeout, SPLIT_NORMAL),
+                                (standard.ProcessFadeoutNoStar, SPLIT_FADE_ONLY)]:
+            with self.subTest(cls.__name__):
+                self.calls.clear()
+                process, result = self.run_process(cls, split_type=split_type)
+                self.assertIs(result, process.signals["LOOP"])
+                self.assertNotIn("split", self.names())
+
+    def test_a_fadeout_is_judged_once_when_the_centre_goes_black(self):
+        process = standard.ProcessFadeout(self.detection)
+        process.on_transition()
+        self.detection.fade_status = FADEOUT_COMPLETE
+        self.detection.get_region.return_value = np.full((137, 251, 3), 255, np.uint8)
+        process.execute()
+        self.detection.died.assert_not_called()
+        self.detection.get_region.return_value = np.zeros((137, 251, 3), np.uint8)
+        process.execute()
+        process.execute()
+        self.detection.died.assert_called_once_with()
+        # The next fadeout is judged afresh
+        process.on_transition()
+        process.execute()
+        self.assertEqual(self.detection.died.call_count, 2)
+
     def test_reset_without_undo_after_the_undo_threshold(self):
         self.detection.last_split = self.detection.current_time - 5
         process, result = self.run_process(standard.ProcessFadeoutResetOnly, "_reset_template")
@@ -209,13 +237,10 @@ class ClockTestCase(ProcessTestCase):
         return {signal: name for name, signal in self.process.signals.items()}[result]
 
 
-# The power meter, and none of it (BGR)
-POWER = np.full((40, 40, 3), (230, 100, 0), np.uint8)
-NO_POWER = np.zeros((40, 40, 3), np.uint8)
 
 
 class PostFadeoutTest(ClockTestCase):
-    """ ProcessPostFadeout: the death check, and the signal for the flashes of a star """
+    """ ProcessPostFadeout: the signal for the flashes of a star, and splits on X-Cams """
 
     def setUp(self):
         super().setUp()
@@ -225,61 +250,10 @@ class PostFadeoutTest(ClockTestCase):
         self.process = standard.ProcessPostFadeout(self.detection)
         self.process.on_transition()
 
-    def at(self, seconds, frame=NO_POWER):
-        """ The signal for the frame, seconds after the fadeout """
+    def at(self, seconds):
+        """ The signal, seconds after the fadeout """
         self.now = self.start + seconds
-        self.detection.get_region.return_value = frame
         return self.signal(self.process.execute())
-
-    def test_death_removes_two_fadeouts(self):
-        # The power meter shows after a death, and goes away after 3 s
-        self.assertEqual([self.at(2.5, POWER), self.at(3.5)], ["LOOP", "LOOP"])
-        self.assertEqual(self.detection.fadeout_count, 1)
-
-    def test_death_removes_no_fadeouts_below_zero(self):
-        self.detection.fadeout_count = 1
-        self.at(2.5, POWER)
-        self.at(3.5)
-        self.assertEqual(self.detection.fadeout_count, 0)
-
-    def test_no_death_while_the_power_meter_stays(self):
-        self.at(2.5, POWER)
-        self.at(3.5, POWER)
-        self.assertEqual(self.detection.fadeout_count, 3)
-
-    def test_no_death_without_the_power_meter_between_2_and_3_seconds(self):
-        self.at(1.5, POWER)
-        self.at(3.5)
-        self.assertEqual(self.detection.fadeout_count, 3)
-
-    def test_no_death_check_within_11_seconds_of_a_star(self):
-        # 9.5 and 10.5 s after the star
-        self.detection.collection_time = self.start - 7
-        self.at(2.5, POWER)
-        self.at(3.5)
-        self.assertEqual(self.detection.fadeout_count, 3)
-
-    def test_death_is_logged(self):
-        with self.assertLogs("detection") as logs:
-            self.at(2.5, POWER)
-            self.at(3.5)
-        self.assertEqual([r.getMessage() for r in logs.records],
-                         ["Power meter seen 2 to 3 s after the fadeout, fadeouts 3",
-                          "Death, the power meter went away, fadeouts 3 -> 1"])
-
-    def test_no_power_meter_is_logged_once(self):
-        with self.assertLogs("detection") as logs:
-            self.at(2.5)
-            self.at(3.5)
-            self.at(4.5)
-        self.assertEqual([r.getMessage() for r in logs.records],
-                         ["No power meter 2 to 3 s after the fadeout, fadeouts 3"])
-
-    def test_nothing_is_logged_within_11_seconds_of_a_star(self):
-        self.detection.collection_time = self.start - 7
-        with self.assertNoLogs("detection"):
-            self.at(2.5, POWER)
-            self.at(3.5)
 
     def test_flash_after_a_second(self):
         for prediction in (121, 122):

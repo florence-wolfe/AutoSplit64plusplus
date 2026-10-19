@@ -383,3 +383,46 @@ class StarSkipTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DiedTest(unittest.TestCase):
+    """ Whether a fadeout is a death, by the iris it closes with """
+
+    def setUp(self):
+        self.base = make_base()
+        self.base.fadeout_count = 3
+        # Two seconds of looks at 30 a second
+        looks = [(n / 30, np.zeros((60, 80), np.float32)) for n in range(60)]
+        self.base._game_capture = SimpleNamespace(looks=looks)
+
+    def verdict(self, iris):
+        return mock.patch.object(split_detection.irises, "classify",
+                                 return_value=split_detection.irises.Verdict(iris, {"bowser": 0.2, "star": 0.05}))
+
+    def test_bowsers_iris_is_a_death_and_takes_back_two_fadeouts(self):
+        # This fadeout, and the one that brought Mario into the stage or the fight
+        with self.verdict("bowser"), self.assertLogs("detection", "INFO") as logs:
+            self.assertTrue(self.base.died())
+        self.assertEqual(self.base.fadeout_count, 1)
+        self.assertIn("Death, Bowser's iris, fadeouts 3 -> 1", "\n".join(logs.output))
+
+    def test_no_fadeouts_taken_back_below_zero(self):
+        self.base.fadeout_count = 1
+        with self.verdict("bowser"), self.assertLogs("detection", "INFO"):
+            self.base.died()
+        self.assertEqual(self.base.fadeout_count, 0)
+
+    def test_any_other_iris_is_no_death(self):
+        for iris in ("star", "circle", "mario", "unknown"):
+            with self.subTest(iris), self.verdict(iris), self.assertLogs("detection", "INFO") as logs:
+                self.assertFalse(self.base.died())
+                self.assertEqual(self.base.fadeout_count, 3)
+                # The verdict is logged either way, to tell from a bug report what each fadeout was
+                self.assertIn(f"Iris {iris}", "\n".join(logs.output))
+
+    def test_no_verdict_from_less_than_a_seconds_looks(self):
+        self.base._game_capture.looks = self.base._game_capture.looks[:20]
+        with mock.patch.object(split_detection.irises, "classify") as classify:
+            self.assertFalse(self.base.died())
+        classify.assert_not_called()
+

@@ -35,7 +35,7 @@ _PREFIXES = (
     ("Reset the timer", "reset"),
     ("Fadeout ", "fadeout"),
     ("Fade-in ", "fade_in"),
-    ("Death, the power meter went away", "death"),
+    ("Death, Bowser's iris", "death"),
     ("Grand Star grabbed", "grand_star"),
 )
 

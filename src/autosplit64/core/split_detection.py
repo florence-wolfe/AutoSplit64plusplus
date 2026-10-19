@@ -5,7 +5,7 @@ import logging
 import cv2
 import numpy as np
 
-from . import config, detection_model, livesplit
+from . import config, detection_model, irises, livesplit
 from .game_capture import GameCapture
 from .model import Model, PredictionInfo
 from .image_utils import is_black, is_white, convert_to_cv2
@@ -36,6 +36,8 @@ from .constants import (
 
 # What split detection does and why, in the session log
 log = logging.getLogger("detection")
+# Seconds of looks the iris matcher needs to judge a fadeout
+MIN_LOOKING = 1
 # Settings' names for the connection and operation modes
 CONNECTION_MODES = ["Named Pipe", "TCP", "LiveSplit One"]
 OPERATION_MODES = ["Probability", "X-Cam"]
@@ -425,6 +427,25 @@ class SplitDetection(Thread):
             pass
 
         self._previous_prediction = self.prediction_info
+
+    def died(self):
+        """
+        Whether the fadeout ending now was a death, by the iris it closed with: the game closes the screen on a death
+        with Bowser's head. A death takes back two fadeouts: its own, and the one that brought Mario into the stage, or
+        into the fight, where dying sends him back to the stage.
+        """
+        looks = list(self._game_capture.looks)
+        # Too little to judge from, as when split detection has only just started
+        if not looks or looks[-1][0] - looks[0][0] < MIN_LOOKING:
+            return False
+        verdict = irises.classify(looks)
+        log.info("Iris %s: %s", verdict.iris, ", ".join(f"{name} {score:.2f}" for name, score in verdict.scores.items()))
+        if verdict.iris != "bowser":
+            return False
+        fadeouts = self.fadeout_count
+        self.fadeout_count = max(fadeouts - 2, 0)
+        log.info("Death, Bowser's iris, fadeouts %d -> %d", fadeouts, self.fadeout_count)
+        return True
 
     def _undo_if_below_previous_split(self):
         """ Undo the previous split when the star count is now below the star count it split on """

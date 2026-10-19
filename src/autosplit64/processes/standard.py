@@ -10,7 +10,6 @@ from autosplit64.core.constants import (
     FADEOUT_COMPLETE,
     FADEOUT_PARTIAL,
     FADEOUT_REGION,
-    POWER_REGION,
     RESET_REGION,
     SPLIT_FADE_ONLY,
     SPLIT_NORMAL,
@@ -182,6 +181,9 @@ class _FadeoutProcess(Process):
         self.register_signal("COMPLETE")
 
         self._fps = config.get("advanced", "fadeout_process_frame_rate")
+        # Whether this fadeout was judged by its iris yet, and was a death
+        self._judged = False
+        self._death = False
         self._black_threshold = config.get("thresholds", "black_threshold")
         self._undo_threshold = config.get("thresholds", "undo_threshold")
 
@@ -194,7 +196,12 @@ class _FadeoutProcess(Process):
 
     def execute(self):
         reset_region = self.core.get_region(RESET_REGION)
-        self._split(reset_region)
+        # Once the centre is black the iris has all but closed: a death's doesn't count, nor split
+        if not self._judged and is_black(reset_region, self._black_threshold):
+            self._judged = True
+            self._death = self.core.died()
+        if not self._death:
+            self._split(reset_region)
 
         # Check for a match against the reset templates (SM64 logo)
         if self._is_reset(reset_region, self._reset_template) or self._is_reset(reset_region, self._reset_template_2):
@@ -233,6 +240,8 @@ class _FadeoutProcess(Process):
         self.core.fps = self._fps
         self.core.enable_predictions(False)
         self.core.enable_xcam_count(False)
+        self._judged = False
+        self._death = False
         super().on_transition()
 
 
@@ -264,11 +273,6 @@ class ProcessPostFadeout(Process):
         self.register_signal("FLASH")
         self.register_signal("COMPLETE")
 
-        self.power_lower_bound = [215, 40, 0]
-        self.power_upper_bound = [255, 150, 0]
-        self._power_found = False
-        self._power_logged = False
-
     def execute(self):
         if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
@@ -278,9 +282,6 @@ class ProcessPostFadeout(Process):
 
         if self.core.prediction_info.prediction in (121, 122) and self.loop_time() > 1:
             return self.signals["FLASH"]
-
-        if time.perf_counter() - self.core.collection_time > 11:
-            self._death_check()
 
         if self.core.incoming_split():
             if self.core.xcam_count == 0 and self.core.in_xcam:
@@ -294,36 +295,7 @@ class ProcessPostFadeout(Process):
         else:
             return self.signals["COMPLETE"]
 
-    def _death_check(self):
-        if 2 < self.loop_time() < 3:
-            self._power_found = self._power_check()
-        elif self.loop_time() >= 3:
-            if not self._power_logged:
-                self._power_logged = True
-                log.info("%s 2 to 3 s after the fadeout, fadeouts %d",
-                         "Power meter seen" if self._power_found else "No power meter", self.core.fadeout_count)
-
-            if self._power_found:
-                self._power_found = self._power_check()
-                if not self._power_found:
-                    fadeouts = self.core.fadeout_count
-                    self.core.fadeout_count = max(fadeouts - 2, 0)
-                    log.info("Death, the power meter went away, fadeouts %d -> %d", fadeouts, self.core.fadeout_count)
-
-    def _power_check(self):
-        power_region = self.core.get_region(POWER_REGION)
-
-        lower = np.array(self.power_lower_bound, dtype="uint8")
-        upper = np.array(self.power_upper_bound, dtype="uint8")
-
-        power_mask = cv2.inRange(power_region, lower, upper)
-        output = cv2.bitwise_and(power_region, power_region, mask=power_mask)
-
-        return not is_black(output, 0.1, 0.9)
-
     def on_transition(self):
-        self._power_found = False
-        self._power_logged = False
         self.core.enable_predictions(True)
         self.core.enable_xcam_count(True)
         self.core.fps = 15

@@ -15,7 +15,7 @@ class ParseTraceTest(unittest.TestCase):
             "65.700 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0",
             "78.067 Fade-in 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0",
             "94.267 Star count 0 -> 1, prediction 1 at 0.99",
-            "100.000 Death, the power meter went away, fadeouts 3 -> 1",
+            "100.000 Death, Bowser's iris, fadeouts 3 -> 1",
             "361.867 Grand Star grabbed",
             "362.000 Running ProcessReset",
         ]
