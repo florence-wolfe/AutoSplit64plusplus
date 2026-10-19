@@ -1,9 +1,11 @@
 """
 Starts the labels of a recording (tests/score.py) from what split detection detected over it, and draws the frames
 around each event, so labelling means correcting the times, deleting what isn't an event, and adding what detection
-missed, rather than finding everything in the video.
+missed, rather than finding everything in the video. Fadeouts and fade-ins come from every frame of the video instead,
+each time the game is all black or all white, which finds those detection doesn't count too, at their exact frame.
 
     uv run python -m tests.label greensuigi_16_star [run|ending]
+    uv run python -m tests.label flo_bitdw_fall_ares split 3
     uv run python -m tests.label at greensuigi_16_star 65.7
 
 The second draws 12 video frames in a row from just before a time, to set it to the first frame that shows an event.
@@ -17,11 +19,14 @@ events detection missed, which are the point of this: look for them wherever the
 logged, e.g. every death, key grab and fade. Then set "reviewed" to true.
 
 What counts as each event, by the first frame it shows:
-    fadeout     the screen starts going black, for a level change, a death or a reset, anything detection counts
-    fade_in     the screen is white or starts coming back from black
-    death       Mario's death starts: the power meter empties, or he falls out of bounds
+    fadeout     the game is all black, for a level change, a death or a reset, anything detection counts: a split
+                on a fadeout happens as the centre goes black, a frame or two before, and detection counts it as the
+                HUD goes black, which is up to a second before, as the iris closes
+    fade_in     the game is all white, which is what detection and a route's fade-ins count
+    death       the game is all black for Mario's death, which is its fadeout's time: the iris that shows it closes a
+                second or more after he starts dying, and the lives show it only once he respawns
     star_grab   the star count goes up
-    key_grab    Mario touches the key
+    key_grab    the key goes, in the white puff when Mario touches it
     reset       the SM64 logo shows after a console reset
     grand_star  Mario grabs the Grand Star
 """
@@ -37,6 +42,13 @@ from tests import score
 from tests.replay import CACHE, Recording, generate_reset_templates
 
 SHEETS = CACHE / "sheets"
+# The part of the game that's black, or white, for it to be a fade, and how dark and bright that is: split detection's
+# default black and white thresholds
+FULL = 0.99
+# How far from all black (or white) the game has to get, for the next time it is to be another fade: a course's intro
+# shows its title on white, between the painting's white and the course's
+UNTIL = 0.9
+BLACK, WHITE = 0.1 * 255, 0.8 * 255
 # The frames of a picture, in a grid, and a coarse picture's seconds before the event and between frames
 FRAMES, COLUMNS, WIDTH = 12, 4, 240
 BEFORE, APART = 1.0, 1 / 6
@@ -72,6 +84,42 @@ def sheet(recording, first, step, path):
     return True
 
 
+def fade_frames(fractions, full=FULL, until=UNTIL):
+    """
+    The frame of each fade, given each frame's part of the game that's black (or white): the first that's `full`, once
+    it was below `until` since the last
+    """
+    frames, ended = [], True
+    for frame, fraction in enumerate(fractions):
+        if fraction >= full and ended:
+            frames.append(frame)
+            ended = False
+        elif fraction < until:
+            ended = True
+    return frames
+
+
+def fades(recording):
+    """ The fadeouts and fade-ins in every frame of the video, as score.Events """
+    x, y, width, height = recording.game_region
+    black, white = [], []
+    video = cv2.VideoCapture(str(recording.video))
+    try:
+        while True:
+            ok, frame = video.read()
+            if not ok:
+                break
+            game = frame[y:y + height, x:x + width]
+            black.append(np.count_nonzero(game < BLACK) / game.size)
+            white.append(np.count_nonzero(game > WHITE) / game.size)
+    finally:
+        video.release()
+    fps = recording.fps()
+    events = [score.Event("fadeout", round(frame / fps, 3)) for frame in fade_frames(black)]
+    events += [score.Event("fade_in", round(frame / fps, 3)) for frame in fade_frames(white)]
+    return events
+
+
 def at(name, time):
     """ Frames in a row from five before the time, which a coarse picture's times are within a few frames of """
     recording = Recording.load(name)
@@ -85,7 +133,7 @@ def at(name, time):
     print(path)
 
 
-def main(name, mode="run"):
+def main(name, mode="run", split=None):
     recording = Recording.load(name)
     if not recording.available():
         sys.exit("Needs the recording, from: uv run python -m tests.replay")
@@ -95,8 +143,11 @@ def main(name, mode="run"):
     start, end = (recording.ending or (0, recording.length())) if mode == "ending" else (0, recording.length())
     with tempfile.TemporaryDirectory() as directory:
         templates = generate_reset_templates(recording, directory) if mode == "run" else None
-        result = score.replay_recording(recording, mode, end, templates)
-    events = [event for event in score.parse_trace(result.trace) if start <= event.time <= end]
+        split = None if split is None else int(split)
+        result = score.replay_recording(recording, mode, end, templates, split)
+    detected = [event for event in score.parse_trace(result.trace) if event.event not in ("fadeout", "fade_in")]
+    events = sorted((event for event in detected + fades(recording) if start <= event.time <= end),
+                    key=lambda event: event.time)
 
     folder = SHEETS / name
     folder.mkdir(parents=True, exist_ok=True)
@@ -109,7 +160,8 @@ def main(name, mode="run"):
     path.parent.mkdir(exist_ok=True)
     # One event to a line, to read and edit
     lines = ",\n".join(f"        {json.dumps(item)}" for item in listed)
-    path.write_text(f'{{\n    "reviewed": false,\n    "mode": "{mode}",\n    "start": {start},\n    "end": {end},\n'
+    split_line = "" if split is None else f'    "split": {split},\n'
+    path.write_text(f'{{\n    "reviewed": false,\n    "mode": "{mode}",\n{split_line}    "start": {start},\n    "end": {end},\n'
                     f'    "events": [\n{lines}\n    ]\n}}\n')
     print(f"{len(events)} events detected: labels in {path}, pictures in {folder}")
 

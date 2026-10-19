@@ -16,12 +16,14 @@ class ParseTraceTest(unittest.TestCase):
             "78.067 Fade-in 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0",
             "94.267 Star count 0 -> 1, prediction 1 at 0.99",
             "100.000 Death, Bowser's iris, fadeouts 3 -> 1",
+            "200.000 Death, a life lost, fadeouts 2 -> 0",
+            "300.000 Death, a life lost after a split, undid it, fadeouts 3 -> 1",
             "361.867 Grand Star grabbed",
             "362.000 Running ProcessReset",
         ]
         self.assertEqual(score.parse_trace(trace), [
             Event("reset", 4.133), Event("fadeout", 65.7), Event("fade_in", 78.067), Event("star_grab", 94.267),
-            Event("death", 100.0), Event("grand_star", 361.867)])
+            Event("death", 100.0), Event("death", 200.0), Event("death", 300.0), Event("grand_star", 361.867)])
 
     def test_only_a_star_count_going_up_by_one_is_a_star_grab(self):
         # Down is a correction, and a jump is detection finding its place, e.g. starting mid-run
@@ -34,11 +36,20 @@ class ScoreTest(unittest.TestCase):
     def test_matches_each_event_to_the_nearest_of_its_type_within_the_tolerance(self):
         labelled = [Event("fadeout", 10.0), Event("fadeout", 20.0), Event("death", 30.0)]
         detected = [Event("fadeout", 10.1), Event("fadeout", 20.4), Event("death", 31.0)]
-        result = score.score(detected, labelled, tolerance=0.5)
+        result = score.score(detected, labelled, tolerance=0.5, windows={})
         self.assertEqual((result["fadeout"].found, result["fadeout"].missed, result["fadeout"].extra), (2, 0, 0))
         self.assertEqual([round(error, 3) for error in result["fadeout"].errors], [0.1, 0.4])
         # Out of tolerance is a miss and an extra, not a match
         self.assertEqual((result["death"].found, result["death"].missed, result["death"].extra), (0, 1, 1))
+
+    def test_a_type_can_have_its_own_window(self):
+        # e.g. a death the lives show after the respawn, seconds after it ended
+        labelled = [Event("death", 10.0), Event("death", 20.0)]
+        detected = [Event("death", 13.0), Event("death", 19.0)]
+        result = score.score(detected, labelled, tolerance=0.5, windows={"death": (0.5, 4.0)})
+        # Late is within it, early isn't
+        self.assertEqual((result["death"].found, result["death"].missed, result["death"].extra), (1, 1, 1))
+        self.assertEqual(result["death"].errors, [3.0])
 
     def test_an_event_matches_only_one_label(self):
         result = score.score([Event("fadeout", 10.0)], [Event("fadeout", 9.9), Event("fadeout", 10.2)], tolerance=0.5)
@@ -96,6 +107,15 @@ class LabelFileTest(unittest.TestCase):
             self.assertEqual(score.load_labels(path).types, ["grand_star"])
             path.write_text(json.dumps({"reviewed": True, "mode": "ending", "start": 0, "end": 1, "types": ["nap"], "events": []}))
             with self.assertRaisesRegex(ValueError, "nap"):
+                score.load_labels(path)
+
+    def test_a_recording_of_part_of_a_run_says_the_split_it_starts_on(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "part.json"
+            path.write_text(json.dumps({"reviewed": False, "mode": "split", "split": 3, "start": 0, "end": 1, "events": []}))
+            self.assertEqual(score.load_labels(path).split, 3)
+            path.write_text(json.dumps({"reviewed": False, "mode": "split", "start": 0, "end": 1, "events": []}))
+            with self.assertRaisesRegex(ValueError, "split"):
                 score.load_labels(path)
 
     def test_an_unknown_event_type_is_an_error(self):

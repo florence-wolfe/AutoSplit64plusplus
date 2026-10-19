@@ -1,0 +1,15 @@
+{
+    "reviewed": false,
+    "checked": "by Claude, by eye on tests/label.py's pictures of the frames, for a person to spot-check",
+    "mode": "split",
+    "split": 9,
+    "start": 0,
+    "end": 228.4,
+    "events": [
+        {"event": "fadeout", "time": 6.467},
+        {"event": "fadeout", "time": 87.333},
+        {"event": "death", "time": 139.067},
+        {"event": "fadeout", "time": 139.067},
+        {"event": "fadeout", "time": 145.867}
+    ]
+}
