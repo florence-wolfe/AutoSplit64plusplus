@@ -17,6 +17,8 @@ def make_base(star_counts=(1, 2, 3, 4, 5, 6), current=3):
               for s in star_counts]
     b._route = SimpleNamespace(title="Route", splits=splits, initial_star=0, version="JP", timing="RTA")
     b._current_split = b._route.splits[current]
+    b._lives_trusted = True
+    b.forget_lives()
     return b
 
 
@@ -180,6 +182,8 @@ class DetectionLogTest(unittest.TestCase):
         b._run_ended = False
         b._prediction_processing_length = 3
         b._update_occurred = mock.Mock()
+        b._lives_trusted = True
+        b.forget_lives()
         vars(b).update(star_count=7, fadeout_count=1, fadein_count=0, xcam_count=0, last_split=0.0,
                        prediction_info=PredictionInfo(8, 0.97), fade_status="NO_FADE")
 
@@ -425,4 +429,113 @@ class DiedTest(unittest.TestCase):
         with mock.patch.object(split_detection.irises, "classify") as classify:
             self.assertFalse(self.base.died())
         classify.assert_not_called()
+
+
+class LivesTest(unittest.TestCase):
+    """ A death the iris couldn't see, as a falls into the dark, from a life lost after it """
+
+    def setUp(self):
+        self.livesplit = mock.Mock()
+        patcher = mock.patch.object(split_detection, "livesplit", self.livesplit)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        b = self.base = make_base(current=3)
+        b._ls_socket = None
+        b._update_occurred = mock.Mock()
+        vars(b).update(star_count=3, fadeout_count=0, fadein_count=0, xcam_count=0, last_split=0.0)
+        b._lives_trusted = True
+        b.forget_lives()
+        b._lives_changed(4)
+
+    def test_a_life_lost_after_a_fadeout_takes_back_two_fadeouts(self):
+        self.base.fadeout_count = 2
+        self.base._lives_since["fadeouts"] = 1
+        with self.assertLogs("detection", "INFO") as logs:
+            self.base._lives_changed(3)
+        self.assertEqual(self.base.fadeout_count, 0)
+        self.assertIn("Death, a life lost, fadeouts 2 -> 0", "\n".join(logs.output))
+        self.livesplit.undo.assert_not_called()
+
+    def test_a_death_bowsers_iris_counted_isnt_counted_again(self):
+        self.base.fadeout_count = 1
+        self.base._lives_since.update(fadeouts=1, death=True)
+        self.base._lives_changed(3)
+        self.assertEqual(self.base.fadeout_count, 1)
+
+    def test_a_split_on_the_death_is_undone(self):
+        # Three fadeouts made the split, the third a fall; the timer moved on to split 5, with no fadeouts yet
+        self.base._lives_since.update(fadeouts=1, split=(3, 3))
+        self.base.set_split_index(4)
+        with self.assertLogs("detection", "INFO") as logs:
+            self.base._lives_changed(3)
+        self.livesplit.undo.assert_called_once()
+        self.assertEqual((self.base.split_index(), self.base.fadeout_count), (3, 1))
+        self.assertIn("Death, a life lost after a split, undid it, fadeouts 3 -> 1", "\n".join(logs.output))
+
+    def test_a_life_gained_is_no_death(self):
+        self.base.fadeout_count = 2
+        self.base._lives_since["fadeouts"] = 1
+        self.base._lives_changed(5)
+        self.assertEqual(self.base.fadeout_count, 2)
+
+    def test_lives_that_dont_move_by_one_arent_lives(self):
+        # As Usamune shows its own counter where the lives are
+        with self.assertLogs("detection", "INFO") as logs:
+            self.base._lives_changed(29)
+        self.assertIn("aren't lives", "\n".join(logs.output))
+        self.base.fadeout_count = 2
+        self.base._lives_since["fadeouts"] = 1
+        self.base._lives_changed(28)
+        self.assertEqual(self.base.fadeout_count, 2)
+
+    def test_a_life_lost_without_a_fadeout_isnt_lives(self):
+        self.base.fadeout_count = 2
+        self.base._lives_changed(3)
+        self.assertEqual(self.base.fadeout_count, 2)
+        self.assertFalse(self.base._lives_trusted)
+
+    def test_a_reset_forgets_the_lives(self):
+        # A new file starts with 4 lives, after the attempt before ended with 5
+        self.base._lives_changed(5)
+        self.base.forget_lives()
+        self.base.fadeout_count = 1
+        self.base._lives_since["fadeouts"] = 1
+        self.base._lives_changed(4)
+        self.assertEqual(self.base.fadeout_count, 1)
+
+
+class LivesReadingTest(unittest.TestCase):
+    """ The lives count only when the model is sure of the same number three looks in a row """
+
+    def setUp(self):
+        self.base = make_base()
+        self.base._lives_trusted = True
+        self.base.forget_lives()
+        # Taking the new lives, as it does
+        self.base._lives_changed = mock.Mock(side_effect=lambda lives: setattr(self.base, "_lives", lives))
+        self.readings = []
+        self.base._read_lives = lambda: self.readings.pop(0)
+
+    def read(self, *readings):
+        self.readings = [PredictionInfo(lives, probability) for lives, probability in readings]
+        for _ in readings:
+            self.base.analyze_lives()
+
+    def test_three_sure_readings_in_a_row(self):
+        self.read((4, 0.95), (4, 0.99), (4, 0.97))
+        self.base._lives_changed.assert_called_once_with(4)
+
+    def test_unsure_readings_start_again(self):
+        self.read((4, 0.95), (4, 0.5), (4, 0.97), (4, 0.99))
+        self.base._lives_changed.assert_not_called()
+
+    def test_the_same_lives_again_change_nothing(self):
+        self.read((4, 0.95), (4, 0.99), (4, 0.97), (4, 0.95))
+        self.base._lives_changed.assert_called_once_with(4)
+
+    def test_no_reading_once_they_arent_lives(self):
+        self.base._lives_trusted = False
+        self.base._read_lives = mock.Mock()
+        self.base.analyze_lives()
+        self.base._read_lives.assert_not_called()
 

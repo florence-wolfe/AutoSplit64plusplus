@@ -217,6 +217,8 @@ class _FadeoutProcess(Process):
             return self.signals["COMPLETE"]
 
     def _reset(self):
+        # A new file starts with its own lives, whether the timer resets or not
+        self.core.forget_lives()
         if not config.get("general", "srl_mode"):
             if self.core.current_time - self.core.last_split < self._undo_threshold:
                 self.core.undo()

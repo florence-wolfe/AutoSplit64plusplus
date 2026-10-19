@@ -39,8 +39,10 @@ class ProcessTestCase(unittest.TestCase):
         for name in ("enable_fade_count", "enable_xcam_count", "enable_predictions", "set_in_game", "set_star_count",
                      "split", "reset", "undo", "skip"):
             functions[name] = record(name)
-        # Whether the fadeout is a death, by its iris; not recorded, as it only decides what's called
+        # Whether the fadeout is a death, by its iris, and forgetting the lives; not recorded, as neither sends the timer
+        # anything or changes what else is called
         functions["died"] = mock.Mock(return_value=False)
+        functions["forget_lives"] = mock.Mock()
         self.detection = SimpleNamespace(
             fade_status=NO_FADE, star_count=5, prediction_info=PredictionInfo(5, 0.9),
             route=SimpleNamespace(splits=splits, initial_star=0), fadein_count=0, fadeout_count=0,
@@ -206,6 +208,15 @@ class FadeoutTest(ProcessTestCase):
         self.assertEqual(self.calls, [("enable_predictions", True), ("enable_fade_count", False),
                                       ("enable_xcam_count", False), ("set_in_game", False)])
         self.assertEqual(self.detection.star_count, 2)
+
+    def test_a_console_reset_forgets_the_lives_in_any_mode(self):
+        # A new file starts with its own lives, whether the timer resets or not
+        for srl_mode in (False, True):
+            with self.subTest(srl_mode=srl_mode), mock.patch.dict(SETTINGS, {("general", "srl_mode"): srl_mode}):
+                self.detection.forget_lives.reset_mock()
+                self.detection.last_split = self.detection.current_time - 5
+                self.run_process(standard.ProcessFadeoutResetOnly, "_reset_template")
+                self.detection.forget_lives.assert_called_once_with()
 
     def test_fadeout_completes(self):
         for cls in (standard.ProcessFadeout, standard.ProcessFadeoutNoStar, standard.ProcessFadeoutResetOnly):

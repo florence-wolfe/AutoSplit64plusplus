@@ -37,6 +37,7 @@ RESET_REGION = 5
 NO_HUD_REGION = 6
 POWER_REGION = 7
 XCAM_REGION = 8
+LIVES_REGION = 9
 
 GAME_REGION_BASE = [617, 454]
 GAME_REGION_RATIO = [0, 0, 617, 454]
@@ -51,6 +52,10 @@ NO_HUD_REGION_RATIO = [0, 106, 617, 285]
 POWER_REGION_RATIO = [246, 48, 52, 46]
 
 XCAM_REGION_RATIO = [555, 403, 23, 23]
+# Framed like the star region, so the star count model reads the lives: the HUD draws the lives' x and digits 220 of
+# the N64's 320 left of the stars' (hud.c), and 226 frames them alike, 436 of these 617
+LIVES_REGION_US_RATIO = [77, 7, 89, 47]
+LIVES_REGION_JP_RATIO = [85, 6, 89, 47]
 
 # Files shipped in the package, found wherever it runs from
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"

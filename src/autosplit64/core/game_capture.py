@@ -27,6 +27,8 @@ from .constants import (
     NO_HUD_REGION_RATIO,
     POWER_REGION_RATIO,
     XCAM_REGION_RATIO,
+    LIVES_REGION_US_RATIO,
+    LIVES_REGION_JP_RATIO,
     GAME_REGION,
     STAR_REGION,
     LIFE_REGION,
@@ -35,7 +37,8 @@ from .constants import (
     RESET_REGION,
     NO_HUD_REGION,
     POWER_REGION,
-    XCAM_REGION
+    XCAM_REGION,
+    LIVES_REGION
 )
 
 
@@ -94,9 +97,11 @@ class GameCapture(object):
         if self._version == GAME_US:
             self._regions[STAR_REGION] = calc_region(calc_ratio(STAR_REGION_US_RATIO, GAME_REGION_BASE))
             self._regions[LIFE_REGION] = calc_region(calc_ratio(LIFE_REGION_US_RATIO, GAME_REGION_BASE))
+            self._regions[LIVES_REGION] = calc_region(calc_ratio(LIVES_REGION_US_RATIO, GAME_REGION_BASE))
         else:
             self._regions[STAR_REGION] = calc_region(calc_ratio(STAR_REGION_JP_RATIO, GAME_REGION_BASE))
             self._regions[LIFE_REGION] = calc_region(calc_ratio(LIFE_REGION_JP_RATIO, GAME_REGION_BASE))
+            self._regions[LIVES_REGION] = calc_region(calc_ratio(LIVES_REGION_JP_RATIO, GAME_REGION_BASE))
 
         self._regions[GAME_REGION] = calc_region(calc_ratio(GAME_REGION_RATIO, GAME_REGION_BASE))
         self._regions[FADEOUT_REGION] = calc_region(calc_ratio(FADEOUT_REGION_RATIO, GAME_REGION_BASE))

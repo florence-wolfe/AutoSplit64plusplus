@@ -24,6 +24,7 @@ from .constants import (
     RESET_REGION,
     FADEIN_REGION,
     XCAM_REGION,
+    LIVES_REGION,
     SPLIT_INITIAL,
     MODEL_PATH,
     MODEL_PATH_LEGACY,
@@ -38,6 +39,8 @@ from .constants import (
 log = logging.getLogger("detection")
 # Seconds of looks the iris matcher needs to judge a fadeout
 MIN_LOOKING = 1
+# The lives count once the star count model is this sure of the same number this many looks in a row
+LIVES_SURE, LIVES_LOOKS = 0.9, 3
 # Settings' names for the connection and operation modes
 CONNECTION_MODES = ["Named Pipe", "TCP", "LiveSplit One"]
 OPERATION_MODES = ["Probability", "X-Cam"]
@@ -162,6 +165,10 @@ class SplitDetection(Thread):
 
         self.logger = logging.getLogger(".log")
 
+        # Whether what the HUD shows where the lives are is lives, which it isn't in Usamune
+        self._lives_trusted = True
+        self.forget_lives()
+
     def validity_check(self):
 
         if not livesplit.check_connection(self._ls_socket):
@@ -232,6 +239,7 @@ class SplitDetection(Thread):
                     self.analyze_fade_status()
                     if self._make_predictions:
                         self.analyze_star_count()
+                        self.analyze_lives()
 
                     if self._count_xcams:
                         self.analyze_xcam_status()
@@ -307,6 +315,9 @@ class SplitDetection(Thread):
 
         # Determine the current fade status
         if is_black(star_region, self._black_threshold) and is_black(life_region, self._black_threshold):
+            if self.fade_status == NO_FADE:
+                # Counted or not, a fadeout is where a life can be lost
+                self._lives_since["fadeouts"] += 1
             if self.fade_status == NO_FADE and self._count_fades:
                 self.fadeout_count += 1
                 self.xcam_count = 0
@@ -442,10 +453,69 @@ class SplitDetection(Thread):
         log.info("Iris %s: %s", verdict.iris, ", ".join(f"{name} {score:.2f}" for name, score in verdict.scores.items()))
         if verdict.iris != "bowser":
             return False
+        self._lives_since["death"] = True
         fadeouts = self.fadeout_count
         self.fadeout_count = max(fadeouts - 2, 0)
         log.info("Death, Bowser's iris, fadeouts %d -> %d", fadeouts, self.fadeout_count)
         return True
+
+    def forget_lives(self):
+        """ Learn the lives afresh, and what happened since """
+        self._lives = None
+        self._lives_readings = []
+        self._lives_since = {"fadeouts": 0, "death": False, "split": None}
+
+    def analyze_lives(self):
+        """ Read the lives, which count once the star count model is sure of the same number LIVES_LOOKS looks in a row """
+        if not self._lives_trusted:
+            return
+        reading = self._read_lives()
+        if reading.probability < LIVES_SURE or reading.prediction > 120:
+            self._lives_readings = []
+            return
+        self._lives_readings = (self._lives_readings + [reading.prediction])[-LIVES_LOOKS:]
+        if len(self._lives_readings) == LIVES_LOOKS and len(set(self._lives_readings)) == 1:
+            if self._lives_readings[0] != self._lives:
+                self._lives_changed(self._lives_readings[0])
+
+    def _read_lives(self):
+        region = convert_to_cv2(self._game_capture.get_region(LIVES_REGION))
+        return self._model.predict(cv2.resize(region, (self._model.width, self._model.height)))
+
+    def _lives_changed(self, lives):
+        """
+        The lives the HUD shows are now `lives`. One lost after a fadeout is a death, which takes back two fadeouts, as
+        died() does, unless Bowser's iris counted it already: deaths it can't see are falls, which close with a circle,
+        as doors do, often into the dark. If it split on the death, it undoes the split.
+        """
+        if not self._lives_trusted:
+            return
+        before, since = self._lives, self._lives_since
+        self._lives = lives
+        self._lives_since = {"fadeouts": 0, "death": False, "split": None}
+        if before is None:
+            return
+        log.info("Lives %d -> %d", before, lives)
+        if lives == before + 1:
+            return
+        if lives != before - 1 or not since["fadeouts"]:
+            # Lives go up or down by one, and down only in a death, which fades out
+            self._lives_trusted = False
+            log.info("Not following the lives: %d -> %d%s, so what the HUD shows there aren't lives, as in Usamune",
+                     before, lives, " with no fadeout" if lives == before - 1 else "")
+            return
+        if since["death"]:
+            return
+        if since["split"]:
+            index, fadeouts = since["split"]
+            self.undo()
+            self.set_split_index(index)
+            self.fadeout_count = max(fadeouts - 2, 0)
+            log.info("Death, a life lost after a split, undid it, fadeouts %d -> %d", fadeouts, self.fadeout_count)
+            return
+        fadeouts = self.fadeout_count
+        self.fadeout_count = max(fadeouts - 2, 0)
+        log.info("Death, a life lost, fadeouts %d -> %d", fadeouts, self.fadeout_count)
 
     def _undo_if_below_previous_split(self):
         """ Undo the previous split when the star count is now below the star count it split on """
@@ -485,6 +555,8 @@ class SplitDetection(Thread):
             self._split_on_current_xcam = True
 
         log.info("Split: %s", self._state())
+        # The split, and the fadeouts it split on, to undo it if the lives show it split on a death
+        self._lives_since["split"] = (self.split_index(), self.fadeout_count)
         livesplit.split(self._ls_socket)
         self.last_split = time.perf_counter()
 
