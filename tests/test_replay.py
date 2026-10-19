@@ -298,6 +298,28 @@ class FlosBitfsDeathTest(_BowserStageDeathTest):
         self.assertEqual(self.fadeouts_after(self.PIPE_AGAIN - 1), [(2, "BitFS")])
 
 
+class FlosDeathsTest(unittest.TestCase):
+    """ Deaths in stage after stage, with Usamune, which split detection doesn't follow the lives in """
+    RECORDING = Recording.load("flo_deaths_ares")
+    # When the game is all black for each death that closes with Bowser's iris; the others are falls
+    BOWSER_IRISES = [49.4, 66.767, 102.433, 158.933, 284.667]
+
+    @classmethod
+    def setUpClass(cls):
+        if not cls.RECORDING.available():
+            raise unittest.SkipTest(f"No {cls.RECORDING.video}")
+        advanced = json.loads(DEFAULTS.read_text())["advanced"]
+        templates = [DEFAULTS.parent / advanced["reset_frame_one"], DEFAULTS.parent / advanced["reset_frame_two"]]
+        cls.result = replay(cls.RECORDING, 0, cls.RECORDING.length(), templates, split_index=0)
+
+    def test_each_death_by_bowsers_iris_is_a_death(self):
+        deaths = [float(line.split()[0]) for line in self.result.trace if " Death, Bowser's iris" in line]
+        # Judged as the centre goes black, a few frames before the game is
+        self.assertEqual(len(deaths), len(self.BOWSER_IRISES), f"Deaths at {deaths}")
+        for death, black in zip(deaths, self.BOWSER_IRISES):
+            self.assertTrue(black - 0.3 <= death <= black + ROUNDING, f"Death at {death}, the game black at {black}")
+
+
 class _EndingTest(unittest.TestCase):
     """ AS64++'s final split over a recording of a run's ending, with the timer on BitS, the route's last split """
 

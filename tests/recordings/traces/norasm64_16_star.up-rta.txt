@@ -7,20 +7,20 @@
 0.333 Running ProcessXCamStartUpSegment
 8.033 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
 8.133 Running ProcessFadeoutResetOnly
-8.133 Iris unknown: star 0.02, circle 0.02, mario 0.01, bowser 0.00, fade 0.89
+8.133 Iris unknown: star 0.02, circle 0.02, mario 0.01, bowser 0.01, fade 0.89
 10.033 Reset the timer: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
 10.033 Star count 1 -> 0, prediction 122 at 0.94
 10.067 Running ProcessReset
 10.100 Running Processor
 10.100 Running ProcessRunStartUpSegment
 10.267 Running ProcessFadeoutResetOnly
-12.833 Iris unknown: star 0.04, circle 0.06, mario 0.03, bowser 0.01, fade 0.62
+12.833 Iris unknown: star 0.04, circle 0.06, mario 0.03, bowser 0.02, fade 0.62
 15.267 Running ProcessRunStartUpSegment
 55.267 Running Processor
 55.267 Running ProcessXCamStartUpSegment
 72.067 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 0
 72.167 Running ProcessFadeoutResetOnly
-72.400 Iris circle: star 0.08, circle 0.20, mario 0.08, bowser 0.00, fade 0.59
+72.400 Iris circle: star 0.08, circle 0.26, mario 0.09, bowser 0.02, fade 0.59
 73.467 Running ProcessXCamStartUpSegment
 79.100 Split: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 0
 79.100 In game

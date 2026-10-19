@@ -129,8 +129,11 @@ MIN_RATIO = {"star": 1.5, "circle": 1.5, "mario": 1.1, "bowser": 1.25}
 
 
 # The game goes black within a few frames of the iris's last frame: up to EARLY frames before it, as the capture's blur
-# hides the last pixels of a closing window, and up to LATE after it, as a head's iris holds a small window until the warp
-EARLY, LATE = 3, 3
+# hides the last pixels of a closing window, and split detection judges once the centre is black, which over a dark
+# stage is up to 4 frames before the game is (a death in BitFS), and up to LATE after it, as a head's iris holds a small
+# window until the warp. Over the labelled recordings, judged as split detection does, 3 frames got 31 of 34 right and
+# 5 frames 33, the one wrong a fade called Mario's head, which changes nothing; judged at every frame, 34 either way.
+EARLY, LATE = 5, 3
 
 
 def observe(brightness, before):
