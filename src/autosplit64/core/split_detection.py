@@ -248,7 +248,7 @@ class SplitDetection(Thread):
                 
                 try:
                     self.execution_time = time.perf_counter() - self.current_time
-                    time.sleep(1 / self.fps - self.execution_time)
+                    self._game_capture.wait(1 / self.fps - self.execution_time)
                 except ValueError:
                     pass
                 

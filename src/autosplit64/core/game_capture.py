@@ -1,5 +1,7 @@
 import logging
 import sys
+import time
+from collections import deque
 
 from . import capture_shmem
 if sys.platform == "darwin":
@@ -8,6 +10,7 @@ if sys.platform == "darwin":
 else:
     from . import capture_window_win as capture_window
 from .image_utils import enhance_contrast
+from . import irises
 import numpy as np
 
 from .constants import (
@@ -34,6 +37,12 @@ from .constants import (
     POWER_REGION,
     XCAM_REGION
 )
+
+
+# How long the looks at the game are kept for the iris matcher: a death's iris (1.6 s) and the looks before it
+LOOKS_KEPT = 2.4
+# The game's frames are 1/30 s apart
+FRAME = 1 / 30
 
 
 class GameCapture(object):
@@ -65,6 +74,8 @@ class GameCapture(object):
         self._regions: dict = {}
         self._window_image = None
         self._region_images: dict = {}
+        # (time, brightness) of every frame captured in the last LOOKS_KEPT seconds, for the iris matcher
+        self.looks = deque()
 
         self._add_default_regions()
 
@@ -128,6 +139,31 @@ class GameCapture(object):
             self._window_image = enhance_contrast(self._window_image, 1.2)
         
         self._region_images = {}  
+        self._remember(time.perf_counter(), self._window_image)
+
+    def _remember(self, at, image):
+        """ Keep a look at the game in `image`, captured at `at`, for the iris matcher """
+        x, y, width, height = self._regions[GAME_REGION]
+        self.looks.append((at, irises.brightness_of(image[y:y + height, x:x + width])))
+        while self.looks[0][0] < at - LOOKS_KEPT:
+            self.looks.popleft()
+
+    def wait(self, seconds):
+        """
+        Sleep `seconds` until split detection's next look, capturing every frame of the game in between, so the iris
+        matcher sees every frame of a transition however seldom split detection looks
+        """
+        end = time.perf_counter() + seconds
+        while end - time.perf_counter() > FRAME:
+            time.sleep(FRAME)
+            try:
+                self.capture()
+            except Exception:
+                # The next look captures again, and reports it
+                break
+        remaining = end - time.perf_counter()
+        if remaining > 0:
+            time.sleep(remaining)
 
     def get_capture_size(self):
         if self._use_obs:

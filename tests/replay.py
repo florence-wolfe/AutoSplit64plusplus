@@ -20,6 +20,7 @@ import logging
 import math
 import os
 import tempfile
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from unittest import mock
@@ -196,10 +197,17 @@ class VideoCapture(GameCapture):
                 break
             self._index += 1
             self._frame = frame
+            # Every frame of the video, as the app captures every frame between looks while it waits
+            self._remember(self._index / self._fps, frame)
         # The time of the frame in the video, which split detection decides on
         self.frame_time = self._index / self._fps
         self._window_image = self._frame
         self._region_images = {}
+
+    def wait(self, seconds):
+        # One sleep, as before the app captured between looks, so looks fall at the same times; capture() keeps every
+        # frame on the way to the next look instead
+        time.sleep(seconds)
 
     def get_capture_size(self):
         return [int(self._video.get(p)) for p in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT)]
