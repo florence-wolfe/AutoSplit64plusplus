@@ -265,6 +265,45 @@ class ClockTestCase(ProcessTestCase):
 
 
 
+class FileSelectSplitTest(ClockTestCase):
+    """ ProcessFileSelectSplit: the split a set time after File Select's second fade-in, timed without sleeping """
+
+    def setUp(self):
+        super().setUp()
+        # Not in game yet, past the second fade-in, with the region showing what it splits on
+        self.detection.prediction_info = PredictionInfo(5, 0.3)
+        self.detection.fadein_count = 2
+        patcher = mock.patch.object(standard.time, "sleep", side_effect=AssertionError("slept, leaving frames unseen"))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.process = standard.ProcessFileSelectSplit(self.detection)
+        self.delay = 1.2012 + SETTINGS[("advanced", "file_select_frame_offset")] / 29.97
+
+    def test_splits_at_its_time(self):
+        self.assertEqual(self.signal(self.process.execute()), "LOOP")
+        self.assertNotIn("split", self.names())
+        self.assertAlmostEqual(self.process.look_at(), self.now + self.delay)
+        self.now += self.delay - 0.01
+        self.assertEqual(self.signal(self.process.execute()), "LOOP")
+        self.assertNotIn("split", self.names())
+        self.now += 0.01
+        self.assertEqual(self.signal(self.process.execute()), "COMPLETE")
+        self.assertEqual(self.names()[-2:], ["split", "set_in_game"])
+        self.assertIsNone(self.process.look_at())
+
+    def test_waits_for_its_time_whatever_it_sees(self):
+        # As it did asleep
+        self.process.execute()
+        self.detection.fade_status = FADEOUT_PARTIAL
+        self.assertEqual(self.signal(self.process.execute()), "LOOP")
+
+    def test_a_time_that_passed_splits_now(self):
+        with mock.patch.dict(SETTINGS, {("advanced", "file_select_frame_offset"): -60}):
+            process = standard.ProcessFileSelectSplit(self.detection)
+        self.assertIs(process.execute(), process.signals["COMPLETE"])
+        self.assertIn("split", self.names())
+
+
 class PostFadeoutTest(ClockTestCase):
     """ ProcessPostFadeout: the signal for the flashes of a star, and splits on X-Cams """
 

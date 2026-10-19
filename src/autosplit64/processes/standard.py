@@ -405,37 +405,46 @@ class ProcessFileSelectSplit(_RunStartProcess):
         self.register_signal("COMPLETE")
 
         self._restart_split_delay = 1.2012 + (config.get("advanced", "file_select_frame_offset") / 29.97)
+        # When it splits, once File Select's second fade-in showed what it splits after
+        self._split_at = None
 
     def execute(self):
-        region = self.core.get_region(FADEOUT_REGION)
+        # Waiting for the split's time, it looks at nothing else, as it did asleep
+        if self._split_at is None:
+            region = self.core.get_region(FADEOUT_REGION)
 
-        if self.core.fade_status in (FADEOUT_COMPLETE, FADEOUT_PARTIAL):
-            return self.signals["FADEOUT"]
-        if self._in_game_detected():
-            self.core.set_in_game(True)
-            return self.signals["COMPLETE"]
+            if self.core.fade_status in (FADEOUT_COMPLETE, FADEOUT_PARTIAL):
+                return self.signals["FADEOUT"]
+            if self._in_game_detected():
+                self.core.set_in_game(True)
+                return self.signals["COMPLETE"]
+            if self.core.fadein_count != 2:
+                return self.signals["LOOP"]
 
-        if self.core.fadein_count == 2:
             region_int = region.astype(int)
             region_int_b, region_int_g, region_int_r = region_int.transpose(2, 0, 1)
             mask = (np.abs(region_int_r - region_int_g) > 25)
 
             region[mask] = [0, 0, 0]
 
-            if np.any(region == [0, 0, 0]):
-                try:
-                    time.sleep(self._restart_split_delay)
-                except ValueError:
-                    pass
-                self.core.fadein_count = 0
-                self.core.fadeout_count = 0
-                self.core.split()
-                self.core.set_in_game(True)
-                return self.signals["COMPLETE"]
+            if not np.any(region == [0, 0, 0]):
+                return self.signals["LOOP"]
+            self._split_at = time.perf_counter() + self._restart_split_delay
 
-        return self.signals["LOOP"]
+        if time.perf_counter() < self._split_at:
+            return self.signals["LOOP"]
+        self._split_at = None
+        self.core.fadein_count = 0
+        self.core.fadeout_count = 0
+        self.core.split()
+        self.core.set_in_game(True)
+        return self.signals["COMPLETE"]
+
+    def look_at(self):
+        return self._split_at
 
     def on_transition(self):
         super().on_transition()
         self.core.fps = 29.97
         self.core.enable_fade_count(True)
+        self._split_at = None

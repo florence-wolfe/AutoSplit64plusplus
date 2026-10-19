@@ -156,6 +156,10 @@ class Process(object):
         """ Whether split detection should look at the frame just captured, between its looks """
         return False
 
+    def look_at(self):
+        """ When split detection should look next at the latest, for something timed, or None """
+        return None
+
     def loop_time(self):
         return time.perf_counter() - self._transition_time
 
@@ -233,6 +237,9 @@ class Processor(Process):
     def look_now(self):
         return bool(self._current_process) and self._current_process.look_now()
 
+    def look_at(self):
+        return self._current_process.look_at() if self._current_process else None
+
 
 class ProcessorSwitch(object):
     def __init__(self):
@@ -269,6 +276,11 @@ class ProcessorSwitch(object):
         """ Whether the process running wants split detection to look at the frame just captured """
         processor = self._processors.get(self._current_processor)
         return bool(processor) and processor.look_now()
+
+    def look_at(self):
+        """ When the process running wants split detection to look next at the latest, or None """
+        processor = self._processors.get(self._current_processor)
+        return processor.look_at() if processor else None
 
     def register_processor(self, name, processor):
         self._processors[name] = processor

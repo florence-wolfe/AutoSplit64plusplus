@@ -75,9 +75,9 @@
 15.283 Running ProcessFileSelectSplit
 15.783 Fade-in 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 0, fade-ins 1
 17.050 Fade-in 2: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 0, fade-ins 2
-20.367 Split: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 0, fade-ins 0
-20.367 In game
-20.600 Running ProcessStarCount
+20.600 Split: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 0, fade-ins 0
+20.600 In game
+20.633 Running ProcessStarCount
 72.100 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 0
 72.267 Running ProcessFadeout
 72.400 Iris circle: star 0.08, circle 0.26, mario 0.09, bowser 0.02, fade 0.59

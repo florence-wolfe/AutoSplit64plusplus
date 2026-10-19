@@ -98,6 +98,20 @@ class LookNowTest(unittest.TestCase):
     def test_a_process_doesnt_by_default(self):
         self.assertFalse(Process(None).look_now())
 
+    def test_no_time_to_look_at_by_default(self):
+        self.assertIsNone(Process(None).look_at())
+        self.assertIsNone(ProcessorSwitch().look_at())
+
+    def test_a_processor_asks_its_current_process_when_to_look(self):
+        processor = Processor()
+        process = Process(None)
+        process.look_at = lambda: 12.5
+        processor.initial_process = process
+        switch = ProcessorSwitch()
+        switch.register_processor("Normal", processor)
+        switch._current_processor = "Normal"
+        self.assertEqual(switch.look_at(), 12.5)
+
     def test_a_processor_asks_its_current_process(self):
         processor = Processor()
         process = Process(None)

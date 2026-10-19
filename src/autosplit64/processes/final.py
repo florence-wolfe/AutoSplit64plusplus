@@ -52,6 +52,8 @@ class ProcessFindFinalStar(Process):
         self.register_signal("FADEOUT")
         self._iteration_value = {0: 1, 1: 4, 2: 1}
         self._looping_iteration = 0
+        # When to look for the star again, after seeing it
+        self._next_look = None
 
         self.star_lower_bound = config.get("split_final_star", "star_lower_bound")
         self.star_upper_bound = config.get("split_final_star", "star_upper_bound")
@@ -59,16 +61,17 @@ class ProcessFindFinalStar(Process):
     def execute(self):
         if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
+        if self._next_look is not None:
+            if time.perf_counter() < self._next_look:
+                return self.signals["LOOP"]
+            self._next_look = None
         if self._star_visible() and self.loop_time() > 20:
             if self._looping_iteration == len(self._iteration_value):
                 log.info("Grand Star spawned")
                 return self.signals["SPAWNED"]
             else:
-                try:
-                    log.info("Grand Star seen, iteration %d", self._looping_iteration)
-                    time.sleep(self._iteration_value[self._looping_iteration])
-                except IndexError:
-                    pass
+                log.info("Grand Star seen, iteration %d", self._looping_iteration)
+                self._next_look = time.perf_counter() + self._iteration_value[self._looping_iteration]
 
             self._looping_iteration += 1
 
@@ -78,9 +81,13 @@ class ProcessFindFinalStar(Process):
 
         return self.signals["LOOP"]
 
+    def look_at(self):
+        return self._next_look
+
     def on_transition(self):
         self.core.fps = 29.97
         self._looping_iteration = 0
+        self._next_look = None
 
         super().on_transition()
 
