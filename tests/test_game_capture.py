@@ -50,6 +50,23 @@ class WaitTest(unittest.TestCase):
         self.assertAlmostEqual(self.now, 0.25)
         self.assertEqual(self.capture.capture.call_count, 7)
 
+    def test_capturing_doesnt_delay_the_next_frame(self):
+        # A capture that takes 10 ms, which only shortens the sleep to the next frame
+        times = []
+        self.capture.capture.side_effect = lambda: times.append(self.now) or setattr(self, "now", self.now + 0.01)
+        self.capture.wait(0.25)
+        self.assertEqual(len(times), 7)
+        for frame, at in enumerate(times, 1):
+            self.assertAlmostEqual(at, frame * game_capture.FRAME)
+        self.assertAlmostEqual(self.now, 0.25)
+
+    def test_a_capture_longer_than_a_frame_doesnt_capture_twice_at_once(self):
+        # 50 ms captures: the next starts as soon as one ends, not to catch up on the frames it missed
+        times = []
+        self.capture.capture.side_effect = lambda: times.append(self.now) or setattr(self, "now", self.now + 0.05)
+        self.capture.wait(0.25)
+        self.assertTrue(all(b - a >= 0.05 - 1e-9 for a, b in zip(times, times[1:])), times)
+
     def test_a_frame_split_detection_wants_to_look_at_ends_the_wait(self):
         frames = []
         self.capture.wait(0.2, lambda: frames.append(self.now) or len(frames) == 2)

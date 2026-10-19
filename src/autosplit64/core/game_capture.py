@@ -160,8 +160,12 @@ class GameCapture(object):
         says split detection should look at now.
         """
         end = time.perf_counter() + seconds
-        while end - time.perf_counter() > FRAME:
-            time.sleep(FRAME)
+        # A frame after the last capture started, not after it ended, so capturing doesn't make it fall behind the game
+        next_frame = time.perf_counter() + FRAME
+        while next_frame < end:
+            time.sleep(max(next_frame - time.perf_counter(), 0))
+            # Once behind, as soon as this capture is done, rather than again and again to catch up
+            next_frame = max(next_frame + FRAME, time.perf_counter())
             try:
                 self.capture()
             except Exception:
