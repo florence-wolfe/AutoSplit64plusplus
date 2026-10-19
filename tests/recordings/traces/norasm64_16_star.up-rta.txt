@@ -8,18 +8,18 @@
 8.033 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
 8.133 Running ProcessFadeoutResetOnly
 8.133 Iris unknown: star 0.02, circle 0.02, mario 0.01, bowser 0.01, fade 0.89
-10.017 Reset the timer: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
-10.017 Star count 1 -> 0, prediction 122 at 0.94
-10.050 Running ProcessReset
-10.083 Running Processor
-10.083 Running ProcessRunStartUpSegment
-10.250 Running ProcessFadeoutResetOnly
-12.850 Iris unknown: star 0.04, circle 0.06, mario 0.03, bowser 0.02, fade 0.62
-15.283 Running ProcessRunStartUpSegment
-55.400 Running Processor
-55.400 Running ProcessXCamStartUpSegment
-72.100 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 0
-72.200 Running ProcessFadeoutResetOnly
+10.033 Reset the timer: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+10.033 Star count 1 -> 0, prediction 122 at 0.94
+10.067 Running ProcessReset
+10.100 Running Processor
+10.100 Running ProcessRunStartUpSegment
+10.267 Running ProcessFadeoutResetOnly
+12.833 Iris unknown: star 0.04, circle 0.06, mario 0.03, bowser 0.02, fade 0.62
+15.267 Running ProcessRunStartUpSegment
+55.267 Running Processor
+55.267 Running ProcessXCamStartUpSegment
+72.067 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 0
+72.167 Running ProcessFadeoutResetOnly
 72.400 Iris circle: star 0.08, circle 0.26, mario 0.09, bowser 0.02, fade 0.59
 73.467 Running ProcessXCamStartUpSegment
 79.100 Split: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 0
@@ -35,19 +35,22 @@
 86.400 Running ProcessFadein
 86.433 Running ProcessStarCount
 86.600 Running ProcessFadein
-87.283 Running ProcessStarCount
-102.617 Star count 0 -> 1, prediction 1 at 0.99
-105.733 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
-105.900 Running ProcessFadeout
+87.267 Fade-in 2: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 0, fade-ins 2
+87.267 Running ProcessStarCount
+87.433 Running ProcessFadein
+87.467 Running ProcessStarCount
+102.633 Star count 0 -> 1, prediction 1 at 0.99
+105.800 Fadeout 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
+105.967 Running ProcessFadeout
 106.233 Iris mario: star 0.07, circle 0.18, mario 0.27, bowser 0.03, fade 0.87
 106.233 Split: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 1, fadeouts 1, fade-ins 0
 106.267 Timer on split 2: WF 6
-107.300 Running ProcessPostFadeout
-108.567 Running ProcessFlashCheck
-109.533 Star count flashed 4 times, running total -2
-109.567 Running ProcessStarCount
-135.317 Fade-in 1: split 2 of 12, WF 6 (needs 6 stars, fadeout 1, fade-in 0), star count 1, fadeouts 0, fade-ins 1
-135.483 Running ProcessFadein
+107.317 Running ProcessPostFadeout
+108.517 Running ProcessFlashCheck
+109.517 Star count flashed 4 times, running total -1
+109.550 Running ProcessStarCount
+135.383 Fade-in 1: split 2 of 12, WF 6 (needs 6 stars, fadeout 1, fade-in 0), star count 1, fadeouts 0, fade-ins 1
+135.550 Running ProcessFadein
 136.283 Running ProcessStarCount
 136.450 Running ProcessFadein
 136.483 Running ProcessStarCount

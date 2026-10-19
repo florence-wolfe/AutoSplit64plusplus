@@ -14,6 +14,19 @@ MODELS = [LEGACY, STAR_PREDICTOR, AS64PP]
 # What settings call them, for the log
 NAMES = {LEGACY: "AS64 Legacy Model", STAR_PREDICTOR: "AS64+ Star Predictor", AS64PP: "AS64++ Detection"}
 
+# What split detection does with each model. A new feature that changes which splits happen or when goes in AS64++
+# only, so the others split as they did, which runners' times and golds are compared against, and the changelog says
+# what changed for which.
+# Telling a death from other fadeouts, by Bowser's iris or a life lost: in every model since 0.8.0
+DEATHS = "deaths"
+# Looking at a frame between looks that starts a fade or shows the reset logo, which moves splits by a frame either way
+LOOKS_BETWEEN = "looks_between"
+FEATURES = {
+    LEGACY: {DEATHS},
+    STAR_PREDICTOR: {DEATHS},
+    AS64PP: {DEATHS, LOOKS_BETWEEN},
+}
+
 
 def get():
     legacy = config.get("model", "legacy")
@@ -27,3 +40,8 @@ def get():
 def legacy(model):
     """ model.legacy for the model, for releases before model.detection """
     return model == LEGACY
+
+
+def has(feature):
+    """ Whether the model chosen has the feature """
+    return feature in FEATURES[get()]

@@ -30,6 +30,8 @@ def variants(recording):
         Variant("file-select", route={"timing": "File Select"}, length=150),
         Variant("up-rta", route={"timing": "Up RTA"}, length=150),
         Variant("srl-mode", settings={("general", "srl_mode"): True}, length=150),
+        # Which looks at frames between looks too
+        Variant("as64pp", settings={("model", "detection"): detection_model.AS64PP}),
     ]
 
 

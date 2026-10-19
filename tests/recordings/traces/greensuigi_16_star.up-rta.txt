@@ -2,8 +2,8 @@
 0.000 Detection model AS64+ Star Predictor (star_predictor)
 0.000 Running Processor
 0.000 Running ProcessRunStartUpSegment
-2.267 Running ProcessFadeoutResetOnly
-2.267 Iris unknown: star 0.02, circle 0.02, mario 0.02, bowser 0.01, fade 0.92
+2.300 Running ProcessFadeoutResetOnly
+2.300 Iris unknown: star 0.02, circle 0.02, mario 0.02, bowser 0.01, fade 0.92
 4.133 Reset the timer: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 0, fade-ins 0
 4.167 Running ProcessReset
 4.200 Running ProcessRunStartUpSegment
@@ -19,8 +19,8 @@
 73.167 Split: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 1, fade-ins 0
 73.167 In game
 73.267 Running ProcessStarCount
-78.067 Fade-in 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 0, fade-ins 1
-78.233 Running ProcessFadein
+78.100 Fade-in 1: split 1 of 12, BOB 1 (needs 1 stars, fadeout 1, fade-in 0), star count 0, fadeouts 0, fade-ins 1
+78.267 Running ProcessFadein
 79.167 Running ProcessStarCount
 79.333 Running ProcessFadein
 79.367 Running ProcessStarCount

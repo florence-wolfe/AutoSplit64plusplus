@@ -82,6 +82,10 @@ class SplitDetection(Thread):
         # Main Loop Toggle
         self._running = False
 
+        # What the detection model does
+        self._looks_between = detection_model.has(detection_model.LOOKS_BETWEEN)
+        self._deaths = detection_model.has(detection_model.DEATHS)
+
         # Operation Mode
         self._operation_mode = CONFIRMATION_MODE
 
@@ -267,7 +271,7 @@ class SplitDetection(Thread):
                     look_at = self._processor_switch.look_at()
                     if look_at is not None:
                         wait = min(wait, look_at - time.perf_counter())
-                    self._game_capture.wait(wait, self.look_now)
+                    self._game_capture.wait(wait, self.look_now if self._looks_between else None)
                 except ValueError:
                     pass
                 
@@ -488,6 +492,8 @@ class SplitDetection(Thread):
         with Bowser's head. A death takes back two fadeouts: its own, and the one that brought Mario into the stage, or
         into the fight, where dying sends him back to the stage.
         """
+        if not self._deaths:
+            return False
         looks = list(self._game_capture.looks)
         # Too little to judge from, as when split detection has only just started
         if not looks or looks[-1][0] - looks[0][0] < MIN_LOOKING:
@@ -510,7 +516,7 @@ class SplitDetection(Thread):
 
     def analyze_lives(self):
         """ Read the lives, which count once the star count model is sure of the same number LIVES_LOOKS looks in a row """
-        if not self._lives_trusted:
+        if not self._lives_trusted or not self._deaths:
             return
         reading = self._read_lives()
         if reading.probability < LIVES_SURE or reading.prediction > 120:

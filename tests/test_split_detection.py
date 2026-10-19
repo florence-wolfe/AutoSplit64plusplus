@@ -13,6 +13,8 @@ from autosplit64.core.model import PredictionInfo
 def make_base(star_counts=(1, 2, 3, 4, 5, 6), current=3):
     """ A SplitDetection with a route of splits with the given star counts, without capture, model or timer """
     b = SplitDetection.__new__(SplitDetection)
+    # Every model tells deaths
+    b._deaths = True
     splits = [SimpleNamespace(title=f"Split {s}", star_count=s, on_fadeout=1, on_fadein=0, split_type="Normal")
               for s in star_counts]
     b._route = SimpleNamespace(title="Route", splits=splits, initial_star=0, version="JP", timing="RTA")
@@ -128,6 +130,26 @@ class GameVersionTest(unittest.TestCase):
 
     def test_route_that_failed_to_load(self):
         self.assertEqual(self.version_for(None), "US")
+
+
+class LookingBetweenLooksTest(unittest.TestCase):
+    """ Looking at a frame between looks changes when splits happen, by a frame, so only the AS64++ model does it """
+
+    def looks_between(self, model):
+        real_get = split_detection.config.get
+        settings = {("route", "path"): "routes/missing.as64", ("model", "detection"): model,
+                    ("model", "legacy"): model == "legacy"}
+        with mock.patch.object(split_detection.config, "load_config"), \
+             mock.patch.object(split_detection.config, "get", side_effect=lambda section, key=None: settings.get((section, key), real_get(section, key))), \
+             mock.patch.object(split_detection, "Model"), \
+             mock.patch.object(split_detection, "GameCapture") as game_capture:
+            game_capture.return_value.get_region_rect.return_value = [0, 0, 10, 10]
+            return SplitDetection()._looks_between
+
+    def test_only_the_as64pp_model(self):
+        self.assertTrue(self.looks_between("as64pp"))
+        self.assertFalse(self.looks_between("star_predictor"))
+        self.assertFalse(self.looks_between("legacy"))
 
 
 class StateTest(unittest.TestCase):
@@ -444,6 +466,12 @@ class DiedTest(unittest.TestCase):
                 self.assertEqual(self.base.fadeout_count, 3)
                 # The verdict is logged either way, to tell from a bug report what each fadeout was
                 self.assertIn(f"Iris {iris}", "\n".join(logs.output))
+
+    def test_no_death_in_a_model_without_them(self):
+        self.base._deaths = False
+        with self.verdict("bowser"):
+            self.assertFalse(self.base.died())
+        self.assertEqual(self.base.fadeout_count, 3)
 
     def test_no_verdict_from_less_than_a_seconds_looks(self):
         self.base._game_capture.looks = self.base._game_capture.looks[:20]

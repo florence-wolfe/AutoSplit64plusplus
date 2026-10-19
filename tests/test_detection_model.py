@@ -32,6 +32,17 @@ class DetectionModelTest(unittest.TestCase):
         self.assertEqual(chosen(legacy=False, detection="as64pp_2"), detection_model.STAR_PREDICTOR)
         self.assertEqual(chosen(legacy=True, detection="as64pp_2"), detection_model.LEGACY)
 
+    def test_features_of_the_model_chosen(self):
+        with mock.patch.object(config, "_config", {"model": {"legacy": False, "detection": detection_model.AS64PP}}):
+            self.assertTrue(detection_model.has(detection_model.LOOKS_BETWEEN))
+            self.assertTrue(detection_model.has(detection_model.DEATHS))
+        with mock.patch.object(config, "_config", {"model": {"legacy": False, "detection": detection_model.STAR_PREDICTOR}}):
+            self.assertFalse(detection_model.has(detection_model.LOOKS_BETWEEN))
+            self.assertTrue(detection_model.has(detection_model.DEATHS))
+
+    def test_every_model_has_features_listed(self):
+        self.assertEqual(set(detection_model.FEATURES), set(detection_model.MODELS))
+
     def test_defaults(self):
         # Opting in to AS64++ is up to the runner
         self.assertEqual(config.get_default("model", "detection"), detection_model.STAR_PREDICTOR)
