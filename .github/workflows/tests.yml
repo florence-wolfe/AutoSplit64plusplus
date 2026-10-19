@@ -23,4 +23,4 @@ jobs:
           enable-cache: true
 
       - name: Test
-        run: uv run pytest -v --replay
+        run: uv run pytest -v
