@@ -92,6 +92,20 @@ class ShippedProcessorsTest(unittest.TestCase):
                     self.assertIsNotNone(ProcessorGenerator.generate(path.relative_to(LOGIC_DIR).as_posix(), stand_ins))
 
 
+class LookNowTest(unittest.TestCase):
+    """ Whether the process running wants split detection to look at the frame just captured, between its looks """
+
+    def test_a_process_doesnt_by_default(self):
+        self.assertFalse(Process(None).look_now())
+
+    def test_a_processor_asks_its_current_process(self):
+        processor = Processor()
+        process = Process(None)
+        process.look_now = lambda: True
+        processor.initial_process = process
+        self.assertTrue(processor.look_now())
+
+
 class ProcessorSwitchTest(unittest.TestCase):
     def setUp(self):
         self.switch = ProcessorSwitch()
@@ -117,6 +131,16 @@ class ProcessorSwitchTest(unittest.TestCase):
         self.assertEqual(len(logs.records), 1)
         self.assertIn("KeyError", logs.output[0])
         self.assertEqual(self.processor.execute.call_count, 2)
+
+    def test_the_running_process_says_whether_to_look_at_a_frame_now(self):
+        self.processor.look_now.return_value = True
+        self.assertTrue(self.switch.look_now())
+        self.processor.look_now.return_value = False
+        self.assertFalse(self.switch.look_now())
+
+    def test_no_look_now_without_a_processor(self):
+        self.switch._current_processor = "Unregistered"
+        self.assertFalse(self.switch.look_now())
 
     def test_lost_timer_connection_reaches_the_run_loop(self):
         self.processor.execute.side_effect = ConnectionAbortedError

@@ -85,4 +85,6 @@ INITIAL_STATE = {
     "prediction_info": None,
     "execution_time": 0.0,
     "start_on_reset": True,
+    # Whether the fadeout processes' last look saw the SM64 logo of a console reset
+    "reset_logo_shown": False,
 }

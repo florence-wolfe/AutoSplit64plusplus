@@ -29,6 +29,35 @@ class RegionTest(unittest.TestCase):
 
 
 
+class WaitTest(unittest.TestCase):
+    """ Waiting until split detection's next look, capturing every frame of the game in between """
+
+    def setUp(self):
+        self.now = 0.0
+        self.capture = GameCapture.__new__(GameCapture)
+        self.capture.capture = mock.Mock()
+
+        def sleep(seconds):
+            self.now += seconds
+        for name, value in (("perf_counter", lambda: self.now), ("sleep", sleep)):
+            patcher = mock.patch.object(game_capture.time, name, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def test_waits_the_whole_time_capturing_each_frame(self):
+        # 7.5 frames
+        self.capture.wait(0.25)
+        self.assertAlmostEqual(self.now, 0.25)
+        self.assertEqual(self.capture.capture.call_count, 7)
+
+    def test_a_frame_split_detection_wants_to_look_at_ends_the_wait(self):
+        frames = []
+        self.capture.wait(0.2, lambda: frames.append(self.now) or len(frames) == 2)
+        # On the second frame, without waiting the rest
+        self.assertEqual(len(frames), 2)
+        self.assertAlmostEqual(self.now, 2 * game_capture.FRAME)
+
+
 @unittest.skipUnless(sys.platform == "darwin", "macOS window capture")
 class StartWithoutScreenRecordingTest(unittest.TestCase):
     """ Starting split detection never shows macOS's Screen Recording prompt; Configure Capture does """

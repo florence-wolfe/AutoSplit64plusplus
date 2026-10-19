@@ -153,10 +153,11 @@ class GameCapture(object):
         while self.looks[0][0] < at - LOOKS_KEPT:
             self.looks.popleft()
 
-    def wait(self, seconds):
+    def wait(self, seconds, look_now=None):
         """
         Sleep `seconds` until split detection's next look, capturing every frame of the game in between, so the iris
-        matcher sees every frame of a transition however seldom split detection looks
+        matcher sees every frame of a transition however seldom split detection looks. Ends on a frame `look_now`
+        says split detection should look at now.
         """
         end = time.perf_counter() + seconds
         while end - time.perf_counter() > FRAME:
@@ -166,6 +167,8 @@ class GameCapture(object):
             except Exception:
                 # The next look captures again, and reports it
                 break
+            if look_now and look_now():
+                return
         remaining = end - time.perf_counter()
         if remaining > 0:
             time.sleep(remaining)

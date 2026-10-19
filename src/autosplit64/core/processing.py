@@ -152,6 +152,10 @@ class Process(object):
     def relinquish(self):
         return True
 
+    def look_now(self):
+        """ Whether split detection should look at the frame just captured, between its looks """
+        return False
+
     def loop_time(self):
         return time.perf_counter() - self._transition_time
 
@@ -226,6 +230,9 @@ class Processor(Process):
         except AttributeError:
             return True
 
+    def look_now(self):
+        return bool(self._current_process) and self._current_process.look_now()
+
 
 class ProcessorSwitch(object):
     def __init__(self):
@@ -257,6 +264,11 @@ class ProcessorSwitch(object):
             if repr(e) != self._last_error:
                 logging.getLogger(".log").exception("Split processor %s failed", self._current_processor)
             self._last_error = repr(e)
+
+    def look_now(self):
+        """ Whether the process running wants split detection to look at the frame just captured """
+        processor = self._processors.get(self._current_processor)
+        return bool(processor) and processor.look_now()
 
     def register_processor(self, name, processor):
         self._processors[name] = processor

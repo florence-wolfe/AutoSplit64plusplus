@@ -20,7 +20,7 @@ class FadeoutNoStarResetTest(unittest.TestCase):
     def setUp(self):
         detection = SimpleNamespace(get_region=mock.Mock(return_value="reset region"),
                                     incoming_split=mock.Mock(return_value=False), enable_predictions=mock.Mock(),
-                                    fade_status=FADEOUT_COMPLETE)
+                                    fade_status=FADEOUT_COMPLETE, reset_logo_shown=False)
         self.process = make_process(standard.ProcessFadeoutNoStar, detection, "RESET", "COMPLETE")
         self.process._black_threshold = 0.1
         self.process._split_occurred = False
@@ -44,6 +44,14 @@ class FadeoutNoStarResetTest(unittest.TestCase):
     def test_second_reset_template_resets(self):
         self.assertIs(self.run_with_matching_template("template two"), self.process.signals["RESET"])
         self.process._reset.assert_called_once()
+
+    def test_a_frame_matching_a_reset_template_is_looked_at_now(self):
+        # Between looks, which can be two frames apart, and the SM64 logo matches for two
+        for template in ("template one", "template two"):
+            self.process._is_reset = lambda region, t: t == template
+            self.assertTrue(self.process.look_now())
+        self.process._is_reset = lambda region, t: False
+        self.assertFalse(self.process.look_now())
 
 
 if __name__ == "__main__":

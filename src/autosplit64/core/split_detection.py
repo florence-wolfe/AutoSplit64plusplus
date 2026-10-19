@@ -34,6 +34,8 @@ from .constants import (
 
 # What split detection does and why, in the session log
 log = logging.getLogger("detection")
+# How long the HUD shows a fade for it to start one between looks: a game frame, give or take the capture's timing
+GAME_FRAME = 0.9 / 30
 # Seconds of looks the iris matcher needs to judge a fadeout
 MIN_LOOKING = 1
 # The lives count once the star count model is this sure of the same number this many looks in a row
@@ -90,6 +92,8 @@ class SplitDetection(Thread):
 
         # Fadeout
         self._fade_start_time = 0
+        # What fade the HUD showed in the last frame captured, on a look or between, and since when
+        self._fade_seen = (None, 0.0)
         self._minimum_fadeout_time = 0.4
 
         # X-Cam Detection
@@ -255,7 +259,7 @@ class SplitDetection(Thread):
                 
                 try:
                     self.execution_time = time.perf_counter() - self.current_time
-                    self._game_capture.wait(1 / self.fps - self.execution_time)
+                    self._game_capture.wait(1 / self.fps - self.execution_time, self.look_now)
                 except ValueError:
                     pass
                 
@@ -308,6 +312,7 @@ class SplitDetection(Thread):
 
     def analyze_fade_status(self):
         seen = perception.fade(self._game_capture, self._black_threshold, self._white_threshold)
+        self._saw_fade(seen)
 
         # Determine the current fade status
         if seen.hud_black:
@@ -336,6 +341,26 @@ class SplitDetection(Thread):
         else:
             self.fade_status = NO_FADE
             self._fade_start_time = self.current_time
+
+    def look_now(self):
+        """ Whether to look at the frame just captured, between looks: it starts a fade, or a process wants it """
+        return self.fade_start() or self._processor_switch.look_now()
+
+    def fade_start(self):
+        """
+        Whether the frame just captured starts a fade, which split detection then looks at right away, instead of up to
+        a look later, or never for a fade shorter than a look. Once the HUD is black or white for a game frame: it can
+        flicker across the black threshold as it comes back, within a frame on a 60 fps capture, which isn't a fade.
+        """
+        kind, since = self._saw_fade(perception.fade(self._game_capture, self._black_threshold, self._white_threshold))
+        return kind is not None and self.fade_status == NO_FADE and time.perf_counter() - since >= GAME_FRAME
+
+    def _saw_fade(self, seen):
+        """ The fade the HUD shows, on a look or a frame between, and since when it's shown it """
+        kind = "black" if seen.hud_black else "white" if seen.hud_white else None
+        if kind != self._fade_seen[0]:
+            self._fade_seen = (kind, time.perf_counter())
+        return self._fade_seen
 
     def _analyze_star_count_probability_mode(self):
         try:

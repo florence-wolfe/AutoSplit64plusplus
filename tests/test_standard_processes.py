@@ -46,7 +46,7 @@ class ProcessTestCase(unittest.TestCase):
         self.detection = SimpleNamespace(
             fade_status=NO_FADE, star_count=5, prediction_info=PredictionInfo(5, 0.9),
             route=SimpleNamespace(splits=splits, initial_star=0), fadein_count=0, fadeout_count=0,
-            current_time=100.0, last_split=0.0, start_on_reset=True, fps=0.0,
+            current_time=100.0, last_split=0.0, start_on_reset=True, fps=0.0, reset_logo_shown=False,
             xcam_count=0, in_xcam=False, collection_time=0.0, **functions)
         patcher = mock.patch.object(config, "get", side_effect=lambda section, key=None: SETTINGS[(section, key)])
         patcher.start()
@@ -139,6 +139,7 @@ class FadeoutTest(ProcessTestCase):
             for template in ("_reset_template", "_reset_template_2"):
                 with self.subTest(cls=cls.__name__, template=template):
                     self.calls.clear()
+                    self.detection.reset_logo_shown = False
                     self.detection.star_count = 9
                     # The last split was under undo_threshold seconds ago
                     self.detection.last_split = self.detection.current_time - 1
@@ -147,6 +148,19 @@ class FadeoutTest(ProcessTestCase):
                     self.assertEqual(self.names(), ["enable_predictions", "undo", "reset", "split",
                                                     "enable_fade_count", "enable_xcam_count", "set_in_game"])
                     self.assertEqual(self.detection.star_count, 0)
+
+    def test_the_logo_resets_once_however_many_looks_it_matches(self):
+        # It matches for a frame or two, and the next fadeout can look at one of them again
+        process, result = self.run_process(standard.ProcessFadeoutResetOnly, "_reset_template")
+        self.assertIs(result, process.signals["RESET"])
+        self.assertFalse(process.look_now())
+        process, result = self.run_process(standard.ProcessFadeoutResetOnly, "_reset_template_2")
+        self.assertIsNot(result, process.signals["RESET"])
+        self.assertEqual(self.names().count("reset"), 1)
+        # Until a look sees it gone
+        self.run_process(standard.ProcessFadeoutResetOnly)
+        process, result = self.run_process(standard.ProcessFadeoutResetOnly, "_reset_template")
+        self.assertIs(result, process.signals["RESET"])
 
     def test_no_split_while_the_centre_is_not_black(self):
         self.detection.get_region.return_value = np.full((137, 251, 3), 255, np.uint8)
@@ -214,6 +228,7 @@ class FadeoutTest(ProcessTestCase):
         for srl_mode in (False, True):
             with self.subTest(srl_mode=srl_mode), mock.patch.dict(SETTINGS, {("general", "srl_mode"): srl_mode}):
                 self.detection.forget_lives.reset_mock()
+                self.detection.reset_logo_shown = False
                 self.detection.last_split = self.detection.current_time - 5
                 self.run_process(standard.ProcessFadeoutResetOnly, "_reset_template")
                 self.detection.forget_lives.assert_called_once_with()

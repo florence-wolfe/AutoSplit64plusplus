@@ -204,10 +204,21 @@ class VideoCapture(GameCapture):
         self._window_image = self._frame
         self._region_images = {}
 
-    def wait(self, seconds):
-        # One sleep, as before the app captured between looks, so looks fall at the same times; capture() keeps every
-        # frame on the way to the next look instead
-        time.sleep(seconds)
+    def wait(self, seconds, look_now=None):
+        # Each frame before the next look's, for look_now, which can end the wait on it, as in the app. Otherwise the
+        # clock ends where one sleep would, so looks fall at the same times.
+        # Less than none, once a look took longer than a look's time, as a process's own sleep does: none, as in the app
+        end = self._clock.now + max(seconds, 0)
+        if look_now:
+            # From the clock's time, which a process's own sleep can have moved past the last frame captured
+            for frame in range(int(self._clock.now * self._fps) + 1, int(end * self._fps)):
+                # Within the frame, so it's the frame that's captured
+                self._clock.now = (frame + 0.5) / self._fps
+                self.capture()
+                if look_now():
+                    return
+        time.sleep(max(end - self._clock.now, 0))
+        self._clock.now = end
 
     def get_capture_size(self):
         return [int(self._video.get(p)) for p in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT)]

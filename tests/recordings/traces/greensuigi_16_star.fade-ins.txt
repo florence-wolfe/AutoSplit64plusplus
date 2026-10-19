@@ -1,8 +1,8 @@
 0.000 Started: route greensuigi 16 Star No LBLJ, fade-ins (JP, RTA, 14 splits), capturing the window of AmaRecTV.exe, game region [291, 0, 989, 720] of [1280, 720], VC fix False, connection mode Named Pipe, operation mode Probability, SRL mode False
 0.000 Detection model AS64+ Star Predictor (star_predictor)
 0.000 Running ProcessRunStart
-2.300 Running ProcessFadeoutResetOnly
-2.300 Iris unknown: star 0.02, circle 0.02, mario 0.02, bowser 0.01, fade 0.92
+2.267 Running ProcessFadeoutResetOnly
+2.267 Iris unknown: star 0.02, circle 0.02, mario 0.02, bowser 0.01, fade 0.92
 4.133 Reset the timer: split 1 of 14, 0 stars, fade-in (needs 0 stars, fadeout 1, fade-in 1), star count 0, fadeouts 0, fade-ins 0
 4.133 Split: split 1 of 14, 0 stars, fade-in (needs 0 stars, fadeout 1, fade-in 1), star count 0, fadeouts 0, fade-ins 0
 4.167 Running ProcessReset
@@ -12,8 +12,8 @@
 9.367 Running ProcessRunStart
 49.367 In game
 49.533 Running ProcessStarCount
-65.700 Fadeout 1: split 1 of 14, 0 stars, fade-in (needs 0 stars, fadeout 1, fade-in 1), star count 0, fadeouts 1, fade-ins 0
-65.867 Running ProcessFadeout
+65.667 Fadeout 1: split 1 of 14, 0 stars, fade-in (needs 0 stars, fadeout 1, fade-in 1), star count 0, fadeouts 1, fade-ins 0
+65.833 Running ProcessFadeout
 65.967 Iris circle: star 0.09, circle 0.30, mario 0.10, bowser 0.02, fade 0.57
 67.000 Running ProcessPostFadeout
 73.067 Running ProcessStarCount
@@ -71,13 +71,13 @@
 153.967 Running ProcessFadein
 154.733 Running ProcessStarCount
 166.233 Star count 2 -> 3, prediction 3 at 0.99
-169.233 Fadeout 1: split 4 of 14, 3 stars, fade-in (needs 3 stars, fadeout 1, fade-in 1), star count 3, fadeouts 1, fade-ins 0
-169.400 Running ProcessFadeout
+169.200 Fadeout 1: split 4 of 14, 3 stars, fade-in (needs 3 stars, fadeout 1, fade-in 1), star count 3, fadeouts 1, fade-ins 0
+169.367 Running ProcessFadeout
 169.667 Iris mario: star 0.07, circle 0.18, mario 0.26, bowser 0.03, fade 0.84
 170.700 Running ProcessPostFadeout
 176.767 Running ProcessStarCount
-180.267 Fade-in 1: split 4 of 14, 3 stars, fade-in (needs 3 stars, fadeout 1, fade-in 1), star count 3, fadeouts 1, fade-ins 1
-180.433 Running ProcessFadein
+180.233 Fade-in 1: split 4 of 14, 3 stars, fade-in (needs 3 stars, fadeout 1, fade-in 1), star count 3, fadeouts 1, fade-ins 1
+180.400 Running ProcessFadein
 181.333 Split: split 4 of 14, 3 stars, fade-in (needs 3 stars, fadeout 1, fade-in 1), star count 3, fadeouts 1, fade-ins 1
 181.367 Timer on split 5: 4 stars, fade-in
 181.367 Running ProcessStarCount
@@ -90,8 +90,8 @@
 182.133 Running ProcessFadein
 182.933 Running ProcessStarCount
 192.767 Star count 3 -> 4, prediction 4 at 0.97
-195.767 Fadeout 1: split 5 of 14, 4 stars, fade-in (needs 4 stars, fadeout 1, fade-in 1), star count 4, fadeouts 1, fade-ins 0
-195.933 Running ProcessFadeout
+195.700 Fadeout 1: split 5 of 14, 4 stars, fade-in (needs 4 stars, fadeout 1, fade-in 1), star count 4, fadeouts 1, fade-ins 0
+195.867 Running ProcessFadeout
 196.200 Iris mario: star 0.07, circle 0.16, mario 0.21, bowser 0.02, fade 1.69
 197.333 Running ProcessPostFadeout
 203.400 Running ProcessStarCount
@@ -133,8 +133,8 @@
 276.400 Iris mario: star 0.07, circle 0.19, mario 0.27, bowser 0.03, fade 0.99
 277.467 Running ProcessPostFadeout
 283.533 Running ProcessStarCount
-303.700 Fade-in 1: split 7 of 14, 6 stars, fade-in (needs 6 stars, fadeout 1, fade-in 1), star count 6, fadeouts 1, fade-ins 1
-303.867 Running ProcessFadein
+303.600 Fade-in 1: split 7 of 14, 6 stars, fade-in (needs 6 stars, fadeout 1, fade-in 1), star count 6, fadeouts 1, fade-ins 1
+303.767 Running ProcessFadein
 304.700 Split: split 7 of 14, 6 stars, fade-in (needs 6 stars, fadeout 1, fade-in 1), star count 6, fadeouts 1, fade-ins 1
 304.733 Timer on split 8: 7 stars, fade-in
 304.733 Running ProcessStarCount
@@ -147,13 +147,13 @@
 305.500 Running ProcessFadein
 306.300 Running ProcessStarCount
 316.800 Star count 6 -> 7, prediction 7 at 0.99
-320.133 Fadeout 1: split 8 of 14, 7 stars, fade-in (needs 7 stars, fadeout 1, fade-in 1), star count 7, fadeouts 1, fade-ins 0
-320.300 Running ProcessFadeout
+320.100 Fadeout 1: split 8 of 14, 7 stars, fade-in (needs 7 stars, fadeout 1, fade-in 1), star count 7, fadeouts 1, fade-ins 0
+320.267 Running ProcessFadeout
 320.600 Iris mario: star 0.06, circle 0.17, mario 0.31, bowser 0.03, fade 0.58
 321.733 Running ProcessPostFadeout
 327.800 Running ProcessStarCount
-329.467 Fade-in 1: split 8 of 14, 7 stars, fade-in (needs 7 stars, fadeout 1, fade-in 1), star count 7, fadeouts 1, fade-ins 1
-329.633 Running ProcessFadein
+329.400 Fade-in 1: split 8 of 14, 7 stars, fade-in (needs 7 stars, fadeout 1, fade-in 1), star count 7, fadeouts 1, fade-ins 1
+329.567 Running ProcessFadein
 330.467 Split: split 8 of 14, 7 stars, fade-in (needs 7 stars, fadeout 1, fade-in 1), star count 7, fadeouts 1, fade-ins 1
 330.500 Timer on split 9: 9 stars, fade-in
 330.500 Running ProcessStarCount
@@ -166,19 +166,19 @@
 331.267 Running ProcessFadein
 332.067 Running ProcessStarCount
 350.567 Star count 7 -> 8, prediction 8 at 0.97
-354.400 Fadeout 1: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 8, fadeouts 1, fade-ins 0
-354.567 Running ProcessFadeout
+354.300 Fadeout 1: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 8, fadeouts 1, fade-ins 0
+354.467 Running ProcessFadeout
 354.767 Iris mario: star 0.07, circle 0.19, mario 0.27, bowser 0.03, fade 0.83
 355.900 Running ProcessPostFadeout
 361.967 Running ProcessStarCount
-380.633 Fadeout 2: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 8, fadeouts 2, fade-ins 0
-380.800 Running ProcessFadeout
+380.600 Fadeout 2: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 8, fadeouts 2, fade-ins 0
+380.767 Running ProcessFadeout
 381.033 Iris star: star 0.21, circle 0.06, mario 0.04, bowser 0.01, fade 1.04
 382.133 Running ProcessPostFadeout
 388.200 Running ProcessStarCount
 427.533 Star count 8 -> 9, prediction 9 at 0.99
-432.867 Fadeout 1: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 9, fadeouts 1, fade-ins 0
-433.033 Running ProcessFadeout
+432.800 Fadeout 1: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 9, fadeouts 1, fade-ins 0
+432.967 Running ProcessFadeout
 433.333 Iris star: star 0.24, circle 0.09, mario 0.06, bowser 0.02, fade 0.95
 434.200 Running ProcessPostFadeout
 440.267 Running ProcessStarCount
@@ -188,8 +188,8 @@
 465.033 Running ProcessPostFadeout
 469.833 Running ProcessFlashCheck
 471.867 Running ProcessStarCount
-472.533 Fadeout 3: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 9, fadeouts 3, fade-ins 0
-472.700 Running ProcessFadeout
+472.467 Fadeout 3: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 9, fadeouts 3, fade-ins 0
+472.633 Running ProcessFadeout
 472.933 Iris star: star 0.20, circle 0.07, mario 0.04, bowser 0.02, fade 0.97
 474.033 Running ProcessPostFadeout
 475.233 Running ProcessFlashCheck
@@ -198,8 +198,8 @@
 475.367 Iris unknown: star 0.02, circle 0.02, mario 0.01, bowser 0.01, fade 1.78
 477.000 Running ProcessPostFadeout
 483.067 Running ProcessStarCount
-488.067 Fadeout 5: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 9, fadeouts 5, fade-ins 0
-488.233 Running ProcessFadeout
+488.033 Fadeout 5: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 9, fadeouts 5, fade-ins 0
+488.200 Running ProcessFadeout
 488.367 Iris circle: star 0.08, circle 0.24, mario 0.10, bowser 0.02, fade 1.06
 488.967 Running ProcessPostFadeout
 495.033 Running ProcessStarCount
@@ -231,8 +231,8 @@
 526.667 Running ProcessFlashCheck
 527.767 Star count flashed 4 times, running total -2
 527.800 Running ProcessStarCount
-532.967 Fade-in 1: split 10 of 14, 10 stars, fade-in (needs 10 stars, fadeout 1, fade-in 1), star count 10, fadeouts 1, fade-ins 1
-533.133 Running ProcessFadein
+532.900 Fade-in 1: split 10 of 14, 10 stars, fade-in (needs 10 stars, fadeout 1, fade-in 1), star count 10, fadeouts 1, fade-ins 1
+533.067 Running ProcessFadein
 533.967 Split: split 10 of 14, 10 stars, fade-in (needs 10 stars, fadeout 1, fade-in 1), star count 10, fadeouts 1, fade-ins 1
 534.000 Timer on split 11: 11 stars, fade-in
 534.000 Running ProcessStarCount
@@ -245,15 +245,15 @@
 534.767 Running ProcessFadein
 535.533 Running ProcessStarCount
 542.533 Star count 10 -> 11, prediction 11 at 0.98
-545.533 Fadeout 1: split 11 of 14, 11 stars, fade-in (needs 11 stars, fadeout 1, fade-in 1), star count 11, fadeouts 1, fade-ins 0
-545.700 Running ProcessFadeout
+545.467 Fadeout 1: split 11 of 14, 11 stars, fade-in (needs 11 stars, fadeout 1, fade-in 1), star count 11, fadeouts 1, fade-ins 0
+545.633 Running ProcessFadeout
 545.933 Iris mario: star 0.07, circle 0.19, mario 0.27, bowser 0.03, fade 0.64
 546.967 Running ProcessPostFadeout
 548.100 Running ProcessFlashCheck
 549.200 Star count flashed 4 times, running total -2
 549.233 Running ProcessStarCount
-557.067 Fade-in 1: split 11 of 14, 11 stars, fade-in (needs 11 stars, fadeout 1, fade-in 1), star count 11, fadeouts 1, fade-ins 1
-557.233 Running ProcessFadein
+557.033 Fade-in 1: split 11 of 14, 11 stars, fade-in (needs 11 stars, fadeout 1, fade-in 1), star count 11, fadeouts 1, fade-ins 1
+557.200 Running ProcessFadein
 558.067 Split: split 11 of 14, 11 stars, fade-in (needs 11 stars, fadeout 1, fade-in 1), star count 11, fadeouts 1, fade-ins 1
 558.100 Timer on split 12: 12 stars, fade-in
 558.100 Running ProcessStarCount
@@ -272,8 +272,8 @@
 578.733 Running ProcessPostFadeout
 583.133 Running ProcessFlashCheck
 585.167 Running ProcessStarCount
-586.333 Fade-in 1: split 12 of 14, 12 stars, fade-in (needs 12 stars, fadeout 1, fade-in 1), star count 12, fadeouts 1, fade-ins 1
-586.500 Running ProcessFadein
+586.267 Fade-in 1: split 12 of 14, 12 stars, fade-in (needs 12 stars, fadeout 1, fade-in 1), star count 12, fadeouts 1, fade-ins 1
+586.433 Running ProcessFadein
 587.300 Split: split 12 of 14, 12 stars, fade-in (needs 12 stars, fadeout 1, fade-in 1), star count 12, fadeouts 1, fade-ins 1
 587.333 Timer on split 13: 14 stars, fade-in
 587.333 Running ProcessStarCount
@@ -293,8 +293,8 @@
 610.433 Running ProcessFlashCheck
 612.467 Running ProcessStarCount
 624.133 Star count 13 -> 14, prediction 14 at 0.98
-631.467 Fade-in 1: split 13 of 14, 14 stars, fade-in (needs 14 stars, fadeout 0, fade-in 1), star count 14, fadeouts 0, fade-ins 1
-631.633 Running ProcessFadein
+631.400 Fade-in 1: split 13 of 14, 14 stars, fade-in (needs 14 stars, fadeout 0, fade-in 1), star count 14, fadeouts 0, fade-ins 1
+631.567 Running ProcessFadein
 632.433 Split: split 13 of 14, 14 stars, fade-in (needs 14 stars, fadeout 0, fade-in 1), star count 14, fadeouts 0, fade-ins 1
 632.467 Timer on split 14: 15 stars, fade-in
 632.467 Running ProcessStarCount
@@ -307,9 +307,9 @@
 633.233 Running ProcessFadein
 634.000 Running ProcessStarCount
 645.333 Star count 14 -> 15, prediction 15 at 0.98
-648.500 Fadeout 1: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 15, fadeouts 1, fade-ins 0
-648.667 Running ProcessFadeout
-648.967 Iris mario: star 0.02, circle 0.07, mario 0.11, bowser 0.02, fade 0.81
+648.467 Fadeout 1: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 15, fadeouts 1, fade-ins 0
+648.633 Running ProcessFadeout
+648.933 Iris mario: star 0.02, circle 0.07, mario 0.11, bowser 0.01, fade 0.80
 649.933 Running ProcessPostFadeout
 654.800 Running ProcessFlashCheck
 656.833 Running ProcessStarCount
@@ -330,8 +330,8 @@
 688.900 Running ProcessFadein
 689.667 Running ProcessStarCount
 722.167 Star count 15 -> 16, prediction 16 at 0.99
-725.667 Fadeout 1: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 1, fade-ins 0
-725.833 Running ProcessFadeout
+725.633 Fadeout 1: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 1, fade-ins 0
+725.800 Running ProcessFadeout
 726.100 Iris mario: star 0.05, circle 0.12, mario 0.15, bowser 0.02, fade 0.82
 727.100 Running ProcessPostFadeout
 731.167 Running ProcessFlashCheck
@@ -346,14 +346,14 @@
 769.467 Iris star: star 0.07, circle 0.04, mario 0.03, bowser 0.02, fade 0.75
 770.367 Running ProcessPostFadeout
 776.433 Running ProcessStarCount
-806.600 Fadeout 4: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 4, fade-ins 0
-806.767 Running ProcessFadeout
+806.567 Fadeout 4: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 4, fade-ins 0
+806.733 Running ProcessFadeout
 807.033 Iris mario: star 0.07, circle 0.17, mario 0.22, bowser 0.03, fade 1.37
 808.067 Running ProcessPostFadeout
 812.933 Running ProcessFlashCheck
 814.967 Running ProcessStarCount
-815.967 Fadeout 5: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 5, fade-ins 0
-816.133 Running ProcessFadeout
+815.900 Fadeout 5: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 5, fade-ins 0
+816.067 Running ProcessFadeout
 816.467 Iris star: star 0.27, circle 0.09, mario 0.06, bowser 0.02, fade 0.87
 817.467 Running ProcessPostFadeout
 818.933 Fadeout 6: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 6, fade-ins 0
@@ -361,13 +361,13 @@
 819.000 Iris unknown: star 0.02, circle 0.03, mario 0.02, bowser 0.01, fade 1.00
 820.700 Running ProcessPostFadeout
 826.767 Running ProcessStarCount
-827.933 Fadeout 7: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 7, fade-ins 0
-828.100 Running ProcessFadeout
+827.833 Fadeout 7: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 7, fade-ins 0
+828.000 Running ProcessFadeout
 828.167 Iris circle: star 0.09, circle 0.30, mario 0.10, bowser 0.02, fade 1.53
 828.800 Running ProcessPostFadeout
 834.867 Running ProcessStarCount
-850.700 Fadeout 8: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 8, fade-ins 0
-850.867 Running ProcessFadeout
+850.667 Fadeout 8: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 8, fade-ins 0
+850.833 Running ProcessFadeout
 851.200 Iris star: star 0.30, circle 0.10, mario 0.06, bowser 0.02, fade 0.65
 852.333 Running ProcessPostFadeout
 858.400 Running ProcessStarCount
@@ -376,9 +376,9 @@
 891.467 Iris star: star 0.28, circle 0.10, mario 0.06, bowser 0.02, fade 0.85
 892.367 Running ProcessPostFadeout
 898.433 Running ProcessStarCount
-956.767 Fadeout 10: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 10, fade-ins 0
-956.933 Running ProcessFadeout
-956.933 Iris unknown: star 0.01, circle 0.01, mario 0.01, bowser 0.01, fade 0.51
+956.667 Fadeout 10: split 14 of 14, 15 stars, fade-in (needs 15 stars, fadeout 1, fade-in 1), star count 16, fadeouts 10, fade-ins 0
+956.833 Running ProcessFadeout
+956.833 Iris unknown: star 0.01, circle 0.01, mario 0.01, bowser 0.01, fade 0.52
 957.400 Running ProcessPostFadeout
 958.533 Running ProcessFlashCheck
 960.567 Running ProcessStarCount

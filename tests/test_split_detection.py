@@ -238,7 +238,7 @@ class DetectionLogTest(unittest.TestCase):
     def test_fades_counted(self):
         b = self.base
         b._game_capture, b._count_fades, b._black_threshold, b._white_threshold = mock.Mock(), True, 0.1, 0.8
-        b._fade_start_time, b._minimum_fadeout_time = 0, 0.4
+        b._fade_start_time, b._minimum_fadeout_time, b._fade_seen = 0, 0.4, (None, 0.0)
         b.current_time = 100.0
         black = split_detection.perception.Fade(hud_black=True, hud_white=False, centre_black=True, fadein_white=False)
         with mock.patch.object(split_detection.perception, "fade", return_value=black):
@@ -430,6 +430,57 @@ class DiedTest(unittest.TestCase):
         with mock.patch.object(split_detection.irises, "classify") as classify:
             self.assertFalse(self.base.died())
         classify.assert_not_called()
+
+
+class FadeStartTest(unittest.TestCase):
+    """ Whether a frame between looks starts a fade, which split detection looks at right away """
+
+    def setUp(self):
+        b = self.detection = SplitDetection.__new__(SplitDetection)
+        b._game_capture, b._black_threshold, b._white_threshold, b.fade_status = mock.Mock(), 0.1, 0.8, "NO_FADE"
+        b._fade_seen = (None, 0.0)
+
+    def frames(self, *frames):
+        """ Whether each frame, (seconds, what the HUD shows), starts a fade """
+        starts = []
+        for at, hud in frames:
+            fade = split_detection.perception.Fade(hud_black=hud == "black", hud_white=hud == "white",
+                                                   centre_black=False, fadein_white=False)
+            with mock.patch.object(split_detection.perception, "fade", return_value=fade), \
+                 mock.patch.object(split_detection.time, "perf_counter", return_value=at):
+                starts.append(self.detection.fade_start())
+        return starts
+
+    def test_a_fade_starts_once_the_hud_is_black_for_a_game_frame(self):
+        frame = 1 / 30
+        self.assertEqual(self.frames((1.0, None), (1.0 + frame, "black"), (1.0 + 2 * frame, "black")), [False, False, True])
+
+    def test_and_white(self):
+        frame = 1 / 30
+        self.assertEqual(self.frames((1.0, "white"), (1.0 + frame, "white")), [False, True])
+
+    def test_not_a_flicker_shorter_than_a_game_frame(self):
+        # The HUD coming back near the black threshold, on a 60 fps capture
+        self.assertEqual(self.frames((1.0, "black"), (1.017, None), (1.033, "black"), (1.05, None)), [False] * 4)
+
+    def test_a_look_that_sees_the_fade_end_ends_it_for_the_frames_too(self):
+        b = self.detection
+        b.fade_status, b._count_fades, b._fade_start_time, b._minimum_fadeout_time = "FADEOUT_PARTIAL", False, 0, 0.4
+        self.frames((1.0, "black"), (1.1, "black"))
+        # The look on the frame between, where the HUD came back
+        clear = split_detection.perception.Fade(hud_black=False, hud_white=False, centre_black=False, fadein_white=False)
+        with mock.patch.object(split_detection.perception, "fade", return_value=clear), \
+             mock.patch.object(split_detection.time, "perf_counter", return_value=1.117):
+            b.current_time = 1.117
+            b.analyze_fade_status()
+        self.assertEqual(b.fade_status, "NO_FADE")
+        # A flicker back to black isn't a fade that started at 1.0
+        self.assertEqual(self.frames((1.133, "black"), (1.15, None)), [False, False])
+
+    def test_not_while_a_fade_goes_on_or_ends(self):
+        # The looks tell when it ends, as they did
+        self.detection.fade_status = "FADEOUT_PARTIAL"
+        self.assertEqual(self.frames((1.0, "black"), (1.1, "black"), (1.2, None), (1.3, None)), [False] * 4)
 
 
 class LivesTest(unittest.TestCase):

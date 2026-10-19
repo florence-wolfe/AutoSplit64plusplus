@@ -203,8 +203,8 @@ class _FadeoutProcess(Process):
         if not self._death:
             self._split(reset_region)
 
-        # Check for a match against the reset templates (SM64 logo)
-        if self._is_reset(reset_region, self._reset_template) or self._is_reset(reset_region, self._reset_template_2):
+        # The SM64 logo, once per time it shows
+        if self._logo_shows(reset_region):
             self.core.enable_predictions(True)
             self._reset()
             return self.signals["RESET"]
@@ -231,6 +231,23 @@ class _FadeoutProcess(Process):
         self.core.enable_xcam_count(False)
         self.core.set_in_game(False)
         self.core.star_count = self.core.route.initial_star
+
+    def look_now(self):
+        # The SM64 logo matches the reset templates for a frame or two, which looks can fall either side of
+        return self._logo_shown(self.core.get_region(RESET_REGION)) and not self.core.reset_logo_shown
+
+    def _logo_shown(self, region):
+        return self._is_reset(region, self._reset_template) or self._is_reset(region, self._reset_template_2)
+
+    def _logo_shows(self, region):
+        """
+        Whether the SM64 logo shows now and didn't at the look before that checked: it matches the reset templates for a
+        frame or two, which the next fadeout can look at again, and it's one reset
+        """
+        shown = self._logo_shown(region)
+        shows = shown and not self.core.reset_logo_shown
+        self.core.reset_logo_shown = shown
+        return shows
 
     def _is_reset(self, region, template):
         match = cv2.minMaxLoc(cv2.matchTemplate(region,
