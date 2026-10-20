@@ -195,7 +195,7 @@
 475.233 Running ProcessFlashCheck
 475.333 Fadeout 4: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 9, fadeouts 4, fade-ins 0
 475.367 Running ProcessFadeout
-475.367 Iris unknown: star 0.01, circle 0.01, mario 0.01, bowser 0.01, fade 1.78
+475.367 Iris unknown: star 0.01, circle 0.01, mario 0.01, bowser 0.01, fade 1.73
 477.000 Running ProcessPostFadeout
 483.067 Running ProcessStarCount
 488.067 Fadeout 5: split 9 of 14, 9 stars, fade-in (needs 9 stars, fadeout 5, fade-in 1), star count 9, fadeouts 5, fade-ins 0

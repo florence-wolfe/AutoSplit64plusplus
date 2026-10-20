@@ -295,4 +295,9 @@ def classify(looks, early=EARLY):
 
 def brightness_of(game):
     """ A look at the game region, as the matcher takes it: its brightest channel, at a quarter of the N64's resolution """
-    return cv2.resize(game, (W, H), interpolation=cv2.INTER_AREA).max(axis=2).astype(np.float32)
+    # The same average over each pixel's area, its rows and then its columns, which is 2 to 6 times as fast when the
+    # region isn't a whole multiple of the size, e.g. 0.8 ms a frame instead of 2.6 at 989x720, 3.5 instead of 22 at
+    # 4K. In 16 bits, so the columns average the rows' averages before rounding, almost as one pass does: within 1.
+    rows = cv2.resize(game.astype(np.uint16) << 8, (game.shape[1], H), interpolation=cv2.INTER_AREA)
+    area = cv2.resize(rows, (W, H), interpolation=cv2.INTER_AREA)
+    return ((area.max(axis=2) + 128) >> 8).astype(np.float32)
