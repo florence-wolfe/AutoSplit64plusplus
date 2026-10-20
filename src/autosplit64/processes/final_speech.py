@@ -32,6 +32,11 @@ SPEECH_BACKGROUND = 55
 STAR_THRESHOLD = 0.999
 # Yellow in no more of the region than this is none
 NO_YELLOW_THRESHOLD = 0.9999
+# Mario grabbed the Grand Star when the region's yellow drops to less than this share of what it was the look before,
+# and to less of it than GRAB_YELLOW: the star is 0.05 to 6% of the region, and Mario's buttons after the grab up to
+# 0.06%, close behind him, which no frame of the star's ever dropped to at once
+GRAB_DROP = 0.25
+GRAB_YELLOW = 0.001
 
 
 def speech_shown(game):
@@ -46,13 +51,22 @@ def speech_shown(game):
             and text.any(axis=0).mean() >= SPEECH_SPREAD[0] and text.any(axis=1).mean() >= SPEECH_SPREAD[1])
 
 
+def _star_mask(no_hud):
+    lower = np.array(config.get("split_final_star", "star_lower_bound"), dtype="uint8")
+    upper = np.array(config.get("split_final_star", "star_upper_bound"), dtype="uint8")
+    return cv2.inRange(no_hud, lower, upper)
+
+
 def star_visible(core, threshold):
     """ Whether there's Grand Star yellow in more of the region than threshold allows """
     no_hud = core.get_region(NO_HUD_REGION)
-    lower = np.array(config.get("split_final_star", "star_lower_bound"), dtype="uint8")
-    upper = np.array(config.get("split_final_star", "star_upper_bound"), dtype="uint8")
-    star_mask = cv2.inRange(no_hud, lower, upper)
-    return not is_black(cv2.bitwise_and(no_hud, no_hud, mask=star_mask), 0.1, threshold)
+    return not is_black(cv2.bitwise_and(no_hud, no_hud, mask=_star_mask(no_hud)), 0.1, threshold)
+
+
+def star_yellow(core):
+    """ How much of the region is Grand Star yellow """
+    star_mask = _star_mask(core.get_region(NO_HUD_REGION))
+    return cv2.countNonZero(star_mask) / star_mask.size
 
 
 class ProcessFindBowserSpeech(Process):
@@ -127,24 +141,33 @@ class ProcessFindGrandStar(Process):
 
 
 class ProcessGrandStarSplit(Process):
-    """ Splits once Mario grabbed the Grand Star, on the first frame without it """
+    """
+    Splits once Mario grabbed the Grand Star, on the first frame without it: where its yellow drops at once, or none is
+    left, for when it was already gone at the first look
+    """
 
     def __init__(self, core):
         super().__init__(core)
         self.register_signal("COMPLETE")
         self.register_signal("FADEOUT")
+        # How much of the region was yellow at the last look, or None
+        self._yellow = None
 
     def execute(self):
         if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
 
-        if not star_visible(self.core, NO_YELLOW_THRESHOLD):
+        yellow = star_yellow(self.core)
+        dropped = self._yellow is not None and yellow < GRAB_YELLOW and yellow < self._yellow * GRAB_DROP
+        if dropped or not star_visible(self.core, NO_YELLOW_THRESHOLD):
             self.core.split()
-            log.info("Grand Star grabbed")
+            log.info("Grand Star grabbed, yellow %.3f%% -> %.3f%%", 100 * (self._yellow or 0), 100 * yellow)
             return self.signals["COMPLETE"]
+        self._yellow = yellow
 
         return self.signals["LOOP"]
 
     def on_transition(self):
         self.core.fps = 29.97
+        self._yellow = None
         super().on_transition()

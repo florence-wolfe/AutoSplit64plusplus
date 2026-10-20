@@ -381,6 +381,14 @@ class FlosBitsOverThePinkSkyTest(_EndingTest):
     SPEECH = (108.4, 109.2)
 
 
+class FlosBitsCloseBehindMarioTest(_EndingTest):
+    """ His Bowser in the Sky where the camera is close behind Mario after the grab, with his yellow buttons in sight """
+    RECORDING = Recording.load("flo_bits_ares_3")
+    # At 146.6 s
+    GRAB = 4398 / 30
+    SPEECH = (136.9, 137.8)
+
+
 class JorbiieEndingTest(_EndingTest):
     """ On console, where the speech's text is grey """
     RECORDING = Recording.load("jorbiie_70_star")

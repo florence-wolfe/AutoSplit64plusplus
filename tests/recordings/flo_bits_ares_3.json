@@ -1,0 +1,11 @@
+{
+    "title": "Flo's Bowser in the Sky on the ares emulator (US), where AutoSplit64++ 0.8.0 split the Grand Star 4 s after Mario grabbed it, and in a run before never did",
+    "url": null,
+    "height": 460,
+    "game_region": [0, 0, 640, 460],
+    "route": "flo_bits_ares.as64",
+    "labels": "Only the game, cut from 1465 s of a 1080p OBS recording of the whole run, compressed to fit in the repository. Mario takes the pipe to the fight at 12 s, Bowser's defeat speech shows from 137 to 137.7 s, and Mario grabs the Grand Star at 146.6 s, the first frame without it. The camera is close behind Mario after, so his yellow buttons stay in the area the Grand Star is looked for in, which kept 0.8.0 from splitting until a frame without them, 4 s after the grab in the run's log and 1.1 s after at this size. Mario is hurt, so the power meter shows.",
+    "timer_offset": 0,
+    "timer_start": 0,
+    "splits": []
+}
