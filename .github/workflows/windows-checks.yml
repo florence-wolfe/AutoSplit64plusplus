@@ -1,6 +1,7 @@
 # Runs a release of AutoSplit64++ on Windows the ways runners meet it, to find where it crashes: installed fresh, or
 # updated from an earlier release by that release's own updater, and each left idle, or autostarting split detection
-# on a game window (a recording of deaths, in tests/recordings) with LiveSplit running. Each uploads the app's logs,
+# on a game window (a recording of deaths, in tests/recordings) with LiveSplit running, with the AS64+ or the AS64++
+# detection model. Each uploads the app's logs,
 # Windows' crash reports, a dump of a crash with what cdb makes of it, and screenshots. Run by hand.
 name: Windows checks
 
@@ -15,7 +16,7 @@ on:
         default: v0.5.2
       seconds:
         description: Seconds to leave AutoSplit64++ running
-        default: "60"
+        default: "300"
   # workflow_dispatch only runs workflows on the default branch, so until this one is there, pushing to its branch
   # runs it with the inputs' defaults
   push:
@@ -23,13 +24,18 @@ on:
 
 jobs:
   check:
-    name: ${{ matrix.install }}, ${{ matrix.start }}
+    name: ${{ matrix.install }}, ${{ matrix.start }}${{ matrix.start == 'autostart' && format(', {0}', matrix.model) || '' }}
     strategy:
       # See every way it crashes, not only the first
       fail-fast: false
       matrix:
         install: [fresh, update]
         start: [idle, autostart]
+        # 0.9.0's changes to split detection are mostly the AS64++ model's
+        model: [star_predictor, as64pp]
+        exclude:
+          - start: idle
+            model: as64pp
     runs-on: windows-2025
     defaults:
       run:
@@ -42,7 +48,7 @@ jobs:
       RECORDING: flo_deaths_ares
       VERSION: ${{ inputs.version || 'v0.9.0' }}
       FROM: ${{ inputs.from || 'v0.5.2' }}
-      SECONDS: ${{ inputs.seconds || '60' }}
+      SECONDS: ${{ inputs.seconds || '300' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -103,7 +109,7 @@ jobs:
 
       - name: Set it to autostart on the game window
         if: matrix.start == 'autostart'
-        run: uv run python $env:CHECKS configure $env:APP "$env:OUT\game_window.json" $env:RECORDING
+        run: uv run python $env:CHECKS configure $env:APP "$env:OUT\game_window.json" $env:RECORDING ${{ matrix.model }}
 
       - name: Update it to ${{ env.VERSION }} with ${{ env.FROM }}'s updater
         if: matrix.install == 'update'
@@ -157,7 +163,7 @@ jobs:
           $log = Get-Content "$env:APP\AutoSplit64++.log" -Raw -ErrorAction SilentlyContinue
           $started = if ($log -match "Started:") { "yes" } else { "no" }
           @(
-            "### ${{ matrix.install }}, ${{ matrix.start }}: AutoSplit64++ $result"
+            "### ${{ matrix.install }}, ${{ matrix.start }}, ${{ matrix.model }}: AutoSplit64++ $result"
             "Split detection started: $started"
             '```'
             $log
@@ -184,7 +190,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: windows-checks-${{ matrix.install }}-${{ matrix.start }}
+          name: windows-checks-${{ matrix.install }}-${{ matrix.start }}-${{ matrix.model }}
           path: out
 
       - name: Fail if AutoSplit64++ crashed

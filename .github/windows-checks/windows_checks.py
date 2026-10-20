@@ -2,8 +2,9 @@
 Helpers for windows-checks.yml, which runs AutoSplit64++ releases on Windows to find where one crashes.
 
 - play VIDEO OUT: plays VIDEO in a window, over and over, as a game to capture, and writes where the window is to OUT
-- configure APP WINDOW RECORDING: sets the app in APP to autostart, capturing the game window that WINDOW (play's
-  OUT) describes, which plays the recording RECORDING of tests/recordings, with its route
+- configure APP WINDOW RECORDING MODEL: sets the app in APP to autostart with the detection model MODEL, capturing the
+  game window that WINDOW (play's OUT) describes, which plays the recording RECORDING of tests/recordings, with its
+  route
 - install-script REF OUT: writes the Windows install script of the updater of the release at the git ref REF to OUT
 - dismiss PID APP: closes the settings changes an update offers, if the app with process id PID shows them
 
@@ -65,7 +66,7 @@ def play(video, out):
             written = True
 
 
-def configure(app, window, recording):
+def configure(app, window, recording, model):
     app = Path(app)
     settings_file = app / "config.ini"
     # Settings an earlier release made, or a fresh install's, which it makes from its defaults
@@ -78,6 +79,7 @@ def configure(app, window, recording):
     offset_x, offset_y = window["client_offset"]
 
     settings.setdefault("general", {})["auto_start"] = True
+    settings["model"] = {"legacy": False, "detection": model}
     settings.setdefault("route", {})["path"] = str(Path(route).resolve())
     settings.setdefault("connection", {})["ls_connection_type"] = 0
     settings.setdefault("game", {}).update(use_obs=False, capture_source="window", process_name=GAME_PROCESS,
