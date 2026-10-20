@@ -10,6 +10,12 @@ Ranked by what matters most to a runner, then by what makes the rest safer to do
 
 4. **Save the last 30 seconds of capture.** A menu item or hotkey that saves the frames split detection looked at in the last 30 seconds, so a bug report has the moment it went wrong even without a recording, and the replay in `tests/replay.py` can run on it. Keep them compressed in memory, roughly 30 MB for 30 seconds by estimate; measure the memory and CPU it takes first.
 
+5. **Spend less CPU per frame.** Now that split detection captures every frame between its looks and shrinks large frames for the iris matcher, CPU is a limit. A look that takes longer splits later by that much, and on a busy computer, capture misses frames. Start by measuring what each stage costs per frame (capture, conversion, the resize, perception, the look) on 1080p and 4K captures. Started: the iris matcher's resize averages rows and then columns, 0.8 ms a frame instead of 2.6 at 989x720 and 3.5 instead of 22 at 4K. Then, in this order:
+   - Keep the per-frame work in OpenCV and avoid numpy copies. Dropping the alpha with OpenCV takes 0.03 to 0.14 ms a frame, where numpy took 1 to 5.6 ms.
+   - Crop to the game before resizing, and shrink each frame once for everything that uses it.
+   - Read frames on their own thread (see Heuristics 2). OpenCV releases the GIL, so capture and detection can run on two cores.
+   - If Python's own overhead between those calls still shows up in the measurements, rewrite the hot path from capture to perception as a native module (Rust with PyO3, or C++) behind the same interface, and keep the processes and the GUI in Python. The resize already runs in OpenCV's C++, so rewriting the whole app wouldn't make it any faster.
+
 ## Heuristics
 
 Ways to make split detection's recognition of deaths, game overs, resets, star and key grabs, fadeouts and fade-ins more accurate, ranked by what pays off most, with the cheap and deterministic ones before the learned ones. Today it polls at 6 to 29.97 fps depending on the process, times events when it looks at a frame, not when the frame was captured, and decides from hand-tuned colour and template checks on small regions. Only the iris matcher sees every frame, kept between looks, and it and the lives tell deaths from other fadeouts.
@@ -39,4 +45,4 @@ Ways to make split detection's recognition of deaths, game overs, resets, star a
 
 8. **Normalise the capture before thresholds.** Estimate the black and white levels from the stream (limited against full range, Virtual Console letterboxing) and normalise before thresholding, so users don't have to tune black, white and colour-range thresholds for their capture.
 
-Not worth it: an end-to-end video model (too little labelled data, hard to debug, and a wrong split costs a runner their run), and a rewrite in a faster language (nothing shows CPU is the limit; the timing problems are in the design).
+Not worth it: an end-to-end video model (too little labelled data, hard to debug, and a wrong split costs a runner their run).
