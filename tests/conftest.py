@@ -24,7 +24,7 @@ def pytest_addoption(parser):
 
 
 def pytest_collection_modifyitems(config, items):
-    """ Replaying the recorded runs takes minutes, so only with --replay, which CI doesn't, to save its minutes """
+    """ Replaying the recorded runs takes minutes, so only with --replay, as CI does """
     if config.getoption("--replay"):
         return
     skip = pytest.mark.skip(reason="Replays recorded runs, which takes minutes: run with --replay")
