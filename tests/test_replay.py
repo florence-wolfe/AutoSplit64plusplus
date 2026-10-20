@@ -175,6 +175,8 @@ for _recording_test in (GreensuigiTest, NoraSM64Test):
     for _variant in variants(_recording_test.RECORDING.name):
         _name = f"{_recording_test.__name__}_{_variant.name.replace('-', '_')}"
         globals()[_name] = type(_name, (_VariantTest,), {"RECORDING": _recording_test.RECORDING, "VARIANT": _variant})
+# Left behind, the loop's last test class would be collected again under this name, and replay its whole run twice
+del _recording_test
 
 
 class GreensuigiTest_x_cam_mode(_VariantTest):
