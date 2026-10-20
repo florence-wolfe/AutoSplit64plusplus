@@ -1,0 +1,192 @@
+# Runs a release of AutoSplit64++ on Windows the ways runners meet it, to find where it crashes: installed fresh, or
+# updated from an earlier release by that release's own updater, and each left idle, or autostarting split detection
+# on a game window (a recording of deaths, in tests/recordings) with LiveSplit running. Each uploads the app's logs,
+# Windows' crash reports, a dump of a crash with what cdb makes of it, and screenshots. Run by hand.
+name: Windows checks
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release to check
+        default: v0.9.0
+      from:
+        description: Release the update starts from
+        default: v0.5.2
+      seconds:
+        description: Seconds to leave AutoSplit64++ running
+        default: "60"
+  # workflow_dispatch only runs workflows on the default branch, so until this one is there, pushing to its branch
+  # runs it with the inputs' defaults
+  push:
+    branches: [windows-crash-checks]
+
+jobs:
+  check:
+    name: ${{ matrix.install }}, ${{ matrix.start }}
+    strategy:
+      # See every way it crashes, not only the first
+      fail-fast: false
+      matrix:
+        install: [fresh, update]
+        start: [idle, autostart]
+    runs-on: windows-2025
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      GH_TOKEN: ${{ github.token }}
+      APP: C:\as64\AutoSplit64++
+      OUT: ${{ github.workspace }}\out
+      CHECKS: .github\windows-checks\windows_checks.py
+      RECORDING: flo_deaths_ares
+      VERSION: ${{ inputs.version || 'v0.9.0' }}
+      FROM: ${{ inputs.from || 'v0.5.2' }}
+      SECONDS: ${{ inputs.seconds || '60' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # setup-uv only publishes exact version tags
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          enable-cache: true
+
+      - name: Set up
+        run: |
+          uv sync
+          New-Item -ItemType Directory $env:OUT, "$env:OUT\dumps", C:\as64 | Out-Null
+          # Windows Error Reporting keeps a minidump of each crash of the app
+          $key = "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\AutoSplit64++.exe"
+          New-Item $key -Force | Out-Null
+          Set-ItemProperty $key DumpFolder "$env:OUT\dumps" -Type ExpandString
+          Set-ItemProperty $key DumpType 1 -Type DWord
+          "START=$((Get-Date).ToString('o'))" >> $env:GITHUB_ENV
+
+      - name: Start LiveSplit and the game window
+        if: matrix.start == 'autostart'
+        run: |
+          gh release download -R LiveSplit/LiveSplit -p "LiveSplit_*.zip" -O livesplit.zip
+          Expand-Archive livesplit.zip C:\livesplit
+          $livesplit = Get-ChildItem C:\livesplit -Recurse -Filter LiveSplit.exe | Select-Object -First 1
+          Start-Process $livesplit.FullName -WorkingDirectory $livesplit.DirectoryName
+
+          # The app doesn't list python.exe's windows to capture, so the game plays in a copy of Python by another name
+          $python = uv run python -c "import sys; print(sys._base_executable)"
+          $game = Join-Path (Split-Path $python) as64game.exe
+          Copy-Item $python $game
+          $env:PYTHONPATH = uv run python -c "import sysconfig; print(sysconfig.get_path('purelib'))"
+          Start-Process $game -ArgumentList $env:CHECKS, "play", "tests\recordings\$env:RECORDING.mp4", "$env:OUT\game_window.json"
+
+          $pipe = { [System.IO.Directory]::GetFiles("\\.\pipe\") -contains "\\.\pipe\LiveSplit" }
+          for ($i = 0; $i -lt 30 -and -not ((Test-Path "$env:OUT\game_window.json") -and (& $pipe)); $i++) { Start-Sleep 1 }
+          if (-not (Test-Path "$env:OUT\game_window.json")) { throw "The game window didn't open" }
+          if (-not (& $pipe)) { throw "LiveSplit's server isn't running" }
+          Get-Content "$env:OUT\game_window.json"
+
+      - name: Install ${{ env.VERSION }}
+        if: matrix.install == 'fresh'
+        run: |
+          gh release download ${{ env.VERSION }} -p "*-windows-x64.zip" -O new.zip
+          Expand-Archive new.zip C:\as64
+
+      - name: Install ${{ env.FROM }} and run it once, which makes its settings
+        if: matrix.install == 'update'
+        run: |
+          gh release download ${{ env.FROM }} -p "*-windows-x64.zip" -O old.zip
+          Expand-Archive old.zip C:\as64
+          $old = Start-Process "$env:APP\AutoSplit64++.exe" -WorkingDirectory $env:APP -PassThru
+          Start-Sleep 20
+          if ($old.HasExited) { throw "${{ env.FROM }} quit by itself" }
+          Stop-Process -InputObject $old
+          $old.WaitForExit()
+          "OLD_PID=$($old.Id)" >> $env:GITHUB_ENV
+
+      - name: Set it to autostart on the game window
+        if: matrix.start == 'autostart'
+        run: uv run python $env:CHECKS configure $env:APP "$env:OUT\game_window.json" $env:RECORDING
+
+      - name: Update it to ${{ env.VERSION }} with ${{ env.FROM }}'s updater
+        if: matrix.install == 'update'
+        run: |
+          gh release download ${{ env.VERSION }} -p "*-windows-x64.zip" -O new.zip
+          git fetch --depth 1 origin tag ${{ env.FROM }}
+          uv run python $env:CHECKS install-script ${{ env.FROM }} C:\as64\install.ps1
+          $work = New-Item -ItemType Directory C:\as64\update
+          # As the updater runs it once the app quits, which it waits for by its process id
+          powershell -NoProfile -ExecutionPolicy Bypass -File C:\as64\install.ps1 -AppPid $env:OLD_PID `
+            -Zip (Resolve-Path new.zip) -InstallDir $env:APP -Work $work -Relaunch 0 *> "$env:OUT\install.log"
+          $code = $LASTEXITCODE
+          Get-Content "$env:OUT\install.log"
+          if ($code) { throw "The update failed with exit code $code" }
+
+      - name: Run ${{ env.VERSION }} for ${{ env.SECONDS }} seconds
+        run: |
+          function Screenshot($name) {
+            try {
+              Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+              $bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+              $bitmap = New-Object System.Drawing.Bitmap $bounds.Width, $bounds.Height
+              $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+              $graphics.CopyFromScreen($bounds.Location, [System.Drawing.Point]::Empty, $bounds.Size)
+              $bitmap.Save("$env:OUT\$name.png")
+            } catch { "No screenshot ${name}: $_" }
+          }
+
+          $app = Start-Process "$env:APP\AutoSplit64++.exe" -WorkingDirectory $env:APP -PassThru
+          # Its exit code is only kept with a handle on the process
+          $null = $app.Handle
+          Start-Sleep 10
+          Screenshot 1-after-10s
+          if ("${{ matrix.install }}" -eq "update" -and -not $app.HasExited) {
+            uv run python $env:CHECKS dismiss $app.Id $env:APP
+            Start-Sleep 5
+            Screenshot 2-after-dismissing
+          }
+          $end = $app.StartTime.AddSeconds(${{ env.SECONDS }})
+          while (-not $app.HasExited -and (Get-Date) -lt $end) { Start-Sleep 1 }
+          Screenshot 3-end
+
+          if ($app.HasExited) {
+            $result = "exited with 0x{0:X8} after {1:N1} s" -f $app.ExitCode, ($app.ExitTime - $app.StartTime).TotalSeconds
+            "CRASHED=$result" >> $env:GITHUB_ENV
+          } else {
+            $result = "still running after ${{ env.SECONDS }} s"
+            Stop-Process -InputObject $app
+          }
+          "AutoSplit64++ $result"
+          $log = Get-Content "$env:APP\AutoSplit64++.log" -Raw -ErrorAction SilentlyContinue
+          $started = if ($log -match "Started:") { "yes" } else { "no" }
+          @(
+            "### ${{ matrix.install }}, ${{ matrix.start }}: AutoSplit64++ $result"
+            "Split detection started: $started"
+            '```'
+            $log
+            '```'
+          ) -join "`n" >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Collect the logs and crash reports
+        if: always()
+        run: |
+          Copy-Item "$env:APP\AutoSplit64++*.log", "$env:APP\config.ini" $env:OUT -ErrorAction SilentlyContinue
+          Get-WinEvent -FilterHashtable @{ LogName = "Application"; StartTime = [datetime]$env:START } -ErrorAction SilentlyContinue |
+            Where-Object ProviderName -in "Application Error", "Windows Error Reporting", "Application Hang" |
+            Format-List TimeCreated, ProviderName, Id, Message | Out-File "$env:OUT\events.txt"
+          Get-Content "$env:OUT\events.txt"
+
+          # What cdb makes of each dump: the exception, and every thread's stack
+          $cdb = "${env:ProgramFiles(x86)}\Windows Kits\10\Debuggers\x64\cdb.exe"
+          foreach ($dump in Get-ChildItem "$env:OUT\dumps" -Filter *.dmp) {
+            if (-not (Test-Path $cdb)) { "cdb isn't installed, so the dumps aren't analysed"; break }
+            & $cdb -z $dump.FullName -c ".symfix; .reload; !analyze -v; ~*kb; q" *> "$($dump.FullName).txt"
+            Get-Content "$($dump.FullName).txt"
+          }
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: windows-checks-${{ matrix.install }}-${{ matrix.start }}
+          path: out
+
+      - name: Fail if AutoSplit64++ crashed
+        if: env.CRASHED
+        run: throw "AutoSplit64++ $env:CRASHED"
