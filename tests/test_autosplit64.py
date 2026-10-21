@@ -104,6 +104,19 @@ class ErrorMessageTest(unittest.TestCase):
             main.tell_about_previous_crash()
         main.QtWidgets.QMessageBox.warning.assert_not_called()
 
+    def test_failed_update(self):
+        with mock.patch.object(main.updater, "take_failed_update_notice", return_value="A file was in use.") as take:
+            main.tell_about_failed_update()
+        take.assert_called_once()
+        message = main.QtWidgets.QMessageBox.warning.call_args.args[2]
+        self.assertIn("A file was in use.", message)
+        self.assertIn(main.VERSION, message)
+
+    def test_no_failed_update(self):
+        with mock.patch.object(main.updater, "take_failed_update_notice", return_value=None):
+            main.tell_about_failed_update()
+        main.QtWidgets.QMessageBox.warning.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

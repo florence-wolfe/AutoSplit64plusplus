@@ -5,10 +5,13 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 import unittest
 import zipfile
 from pathlib import Path
 from unittest import mock
+
+import psutil
 
 from autosplit64.core import updater
 
@@ -93,7 +96,17 @@ class DownloadTest(unittest.TestCase):
 class InstallTestCase(unittest.TestCase):
     def setUp(self):
         self.dir = Path(tempfile.mkdtemp())
-        self.addCleanup(shutil.rmtree, self.dir)
+        self.addCleanup(self.remove_dir)
+
+    def remove_dir(self):
+        # Windows refuses for a moment after an exe in it ran, while antivirus looks at it
+        for _ in range(50):
+            try:
+                shutil.rmtree(self.dir)
+                return
+            except PermissionError:
+                time.sleep(0.2)
+        shutil.rmtree(self.dir)
 
     def running_process(self):
         """ A process standing in for AutoSplit64++, which quits shortly """
@@ -109,6 +122,17 @@ class InstallTestCase(unittest.TestCase):
         path.write_text(text)
 
 
+class FailedUpdateNoticeTest(InstallTestCase):
+    def test_told_once(self):
+        # As the Windows install script writes it, with a byte order mark
+        (self.dir / updater.FAILED_UPDATE_FILE).write_text("A file was in use.\n", encoding="utf-8-sig")
+        self.assertEqual(updater.take_failed_update_notice(self.dir), "A file was in use.")
+        self.assertIsNone(updater.take_failed_update_notice(self.dir))
+
+    def test_none(self):
+        self.assertIsNone(updater.take_failed_update_notice(self.dir))
+
+
 @unittest.skipUnless(sys.platform == "darwin", "installs a macOS app")
 class MacInstallTest(InstallTestCase):
     def setUp(self):
@@ -122,7 +146,8 @@ class MacInstallTest(InstallTestCase):
 
     def install(self, zip_path):
         with mock.patch.object(updater.sys, "platform", "darwin"):
-            process = updater.install_on_exit(zip_path, relaunch=False, pid=self.running_process(), install_path=self.app)
+            process = updater.install_on_exit(zip_path, relaunch=False, pid=self.running_process(), install_path=self.app,
+                                              notice=self.dir / "notice.txt")
         process.wait(10)
         return process
 
@@ -130,6 +155,7 @@ class MacInstallTest(InstallTestCase):
         self.install(self.zip)
         self.assertEqual((self.app / "Contents" / "MacOS" / "AutoSplit64++").read_text(), "new")
         self.assertEqual(sorted(p.name for p in self.app.parent.iterdir()), ["My AS64.app"])
+        self.assertFalse((self.dir / "notice.txt").exists())
 
     def test_broken_update_keeps_app_and_logs_why(self):
         broken = self.dir / "broken.zip"
@@ -137,6 +163,10 @@ class MacInstallTest(InstallTestCase):
         process = self.install(broken)
         self.assertEqual((self.app / "Contents" / "MacOS" / "AutoSplit64++").read_text(), "old")
         self.assertIn("ditto", process.log_path.read_text())
+        # For the app to tell about, the next time it starts
+        notice = (self.dir / "notice.txt").read_text()
+        self.assertIn("Couldn't unpack the update", notice)
+        self.assertIn(str(process.log_path), notice)
 
 
 @unittest.skipUnless(sys.platform == "win32", "installs a Windows app")
@@ -181,9 +211,11 @@ class WindowsInstallTest(InstallTestCase):
     def test_file_in_use_leaves_the_app_as_it_was(self):
         # e.g. another AutoSplit64++ from the same folder, or antivirus scanning it, which once left half the app deleted
         install, zip_path = self.old_app_and_update()
+        notice = self.dir / "notice.txt"
         # Past libraries, which the update replaced first, before it failed on this
         with open(install / "resources" / "old.png"):
-            process = updater.install_on_exit(zip_path, relaunch=False, pid=self.running_process(), install_path=install)
+            process = updater.install_on_exit(zip_path, relaunch=False, pid=self.running_process(), install_path=install,
+                                              notice=notice)
             process.wait(60)
 
         log = process.log_path.read_text()
@@ -193,6 +225,10 @@ class WindowsInstallTest(InstallTestCase):
         self.assertEqual(sorted(p.name for p in (install / "libraries").iterdir()), ["old.dll"])
         self.assertEqual(sorted(p.name for p in (install / "resources").iterdir()), ["old.png"])
         self.assertEqual(sorted(p.name for p in install.iterdir()), ["AutoSplit64++.exe", "config.ini", "libraries", "resources"])
+        # For the app to tell about, the next time it starts
+        text = notice.read_text(encoding="utf-8-sig")
+        self.assertIn("resources", text)
+        self.assertIn(str(process.log_path), text)
 
     def test_waits_for_another_instance_from_the_same_folder(self):
         install, zip_path = self.old_app_and_update()
@@ -209,6 +245,48 @@ class WindowsInstallTest(InstallTestCase):
         self.assertEqual((install / "AutoSplit64++.exe").read_text(), "new exe", log)
         self.assertEqual(sorted(p.name for p in (install / "libraries").iterdir()), ["new.dll"])
         self.assertFalse(list(install.glob("*.old*")))
+
+    def app_exe(self, marker):
+        """ An exe that keeps running when it's opened, Windows' cmd, told apart by the marker at its end """
+        return (Path(os.environ["SystemRoot"]) / "System32" / "cmd.exe").read_bytes() + marker
+
+    def reopened(self, exe):
+        """ The process opened from exe after the update, if one was, which is then ended """
+        deadline = time.monotonic() + 15
+        while time.monotonic() < deadline:
+            for process in psutil.process_iter(["exe"]):
+                if process.info["exe"] and Path(process.info["exe"]) == exe:
+                    process.kill()
+                    # Before the test's folder is deleted, which Windows refuses while the exe runs
+                    process.wait(10)
+                    return process
+            time.sleep(0.2)
+        return None
+
+    def test_restart_now_opens_the_update(self):
+        install, zip_path = self.old_app_and_update()
+        (install / "AutoSplit64++.exe").write_bytes(self.app_exe(b"old"))
+        with zipfile.ZipFile(zip_path, "a") as archive:
+            archive.writestr("AutoSplit64++/AutoSplit64++.exe", self.app_exe(b"new"))
+        process = updater.install_on_exit(zip_path, relaunch=True, pid=self.running_process(), install_path=install,
+                                          notice=self.dir / "notice.txt")
+        process.wait(60)
+
+        self.assertIsNotNone(self.reopened(install / "AutoSplit64++.exe"), process.log_path.read_text())
+        self.assertTrue((install / "AutoSplit64++.exe").read_bytes().endswith(b"new"))
+        self.assertFalse((self.dir / "notice.txt").exists())
+
+    def test_restart_now_opens_the_app_as_it_was_when_the_update_fails(self):
+        install, zip_path = self.old_app_and_update()
+        (install / "AutoSplit64++.exe").write_bytes(self.app_exe(b"old"))
+        with open(install / "resources" / "old.png"):
+            process = updater.install_on_exit(zip_path, relaunch=True, pid=self.running_process(), install_path=install,
+                                              notice=self.dir / "notice.txt")
+            process.wait(60)
+
+        self.assertIsNotNone(self.reopened(install / "AutoSplit64++.exe"), process.log_path.read_text())
+        self.assertTrue((install / "AutoSplit64++.exe").read_bytes().endswith(b"old"))
+        self.assertTrue((self.dir / "notice.txt").exists())
 
 
 if __name__ == "__main__":

@@ -23,7 +23,7 @@ from autosplit64.core.constants import (
 from autosplit64.core.split_detection import SplitDetection
 from autosplit64.core.processing import ProcessorGenerator
 from autosplit64.core.route_loader import load_or_none
-from autosplit64.core import config, detection_model, livesplit, logs
+from autosplit64.core import config, detection_model, livesplit, logs, updater
 from autosplit64.core.resource_utils import resource_path
 from autosplit64.processes.standard import (
     ProcessDummy,
@@ -221,6 +221,16 @@ def tell_about_previous_crash():
             "Please send it with a bug report before starting AutoSplit64++ again, which replaces it.")
 
 
+def tell_about_failed_update():
+    """ Why the last update couldn't be installed, which its install script left, after it reopened this version """
+    notice = updater.take_failed_update_notice()
+    if notice:
+        logging.getLogger(".log").warning("The last update failed: %s", notice)
+        QtWidgets.QMessageBox.warning(
+            None, "AutoSplit64++",
+            f"The update couldn't be installed, so AutoSplit64++ is still v{VERSION}.\n\n{notice}")
+
+
 def main():
     # First, so the log has everything that goes wrong
     handler = logs.start_session(VERSION)
@@ -243,6 +253,7 @@ def main():
     # Create main application
     autosplit64 = AutoSplit64(qt_app)
     tell_about_previous_crash()
+    tell_about_failed_update()
 
     # Exit
     sys.exit(qt_app.exec())

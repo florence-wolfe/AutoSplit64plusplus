@@ -20,6 +20,8 @@ import requests
 # The asset of each platform, as named by .github/workflows/release.yml
 ASSET_SUFFIXES = {"darwin": "-macos-arm64.zip", "win32": "-windows-x64.zip"}
 CHECKSUMS = "SHA256SUMS"
+# Why the last update couldn't be installed, which the install script leaves next to the settings for the app to tell
+FAILED_UPDATE_FILE = "AutoSplit64++.update-failed.txt"
 
 
 class UpdateError(Exception):
@@ -95,19 +97,25 @@ def download(release, directory, progress=None):
 # Waits for AutoSplit64++ to quit, then swaps the app for the update, keeping the old one if that fails
 _MACOS_INSTALL = """#!/bin/sh
 set -x
+# Leave why for the app to tell, and open it as it was
+fail() {
+    printf '%s\n\nWhat happened is in %s.\n' "$1" "$AS64_WORK/install.log" > "$AS64_NOTICE"
+    if [ "$AS64_RELAUNCH" = 1 ]; then open "$AS64_APP"; fi
+    exit 1
+}
 while kill -0 "$AS64_PID" 2>/dev/null; do sleep 0.2; done
 staging="$AS64_WORK/update"
 rm -rf "$staging"
-ditto -x -k "$AS64_ZIP" "$staging" || exit 1
+ditto -x -k "$AS64_ZIP" "$staging" || fail "Couldn't unpack the update."
 new=$(find "$staging" -maxdepth 1 -name "*.app" | head -n 1)
-[ -d "$new" ] || exit 1
+[ -d "$new" ] || fail "The update has no app in it."
 rm -rf "$AS64_APP.old"
-mv "$AS64_APP" "$AS64_APP.old" || exit 1
+mv "$AS64_APP" "$AS64_APP.old" || fail "Couldn't move $AS64_APP aside."
 if mv "$new" "$AS64_APP"; then
     rm -rf "$AS64_APP.old"
 else
     mv "$AS64_APP.old" "$AS64_APP"
-    exit 1
+    fail "Couldn't put the update in place of $AS64_APP."
 fi
 if [ "$AS64_RELAUNCH" = 1 ]; then open "$AS64_APP"; fi
 """
@@ -115,7 +123,7 @@ if [ "$AS64_RELAUNCH" = 1 ]; then open "$AS64_APP"; fi
 # Waits for AutoSplit64++ to quit, then replaces the app's files. Settings, routes and
 # generated reset templates are the user's, so routes and templates only gain missing files.
 _WINDOWS_INSTALL = r"""
-param([int]$AppPid, [string]$Zip, [string]$InstallDir, [string]$Work, [int]$Relaunch)
+param([int]$AppPid, [string]$Zip, [string]$InstallDir, [string]$Work, [int]$Relaunch, [string]$Notice)
 $ErrorActionPreference = "Stop"
 # The app's files moved aside, as (where it was, where it is now), to put back if the update fails
 $aside = New-Object System.Collections.ArrayList
@@ -175,6 +183,9 @@ try {
 }
 catch {
     "Install failed: $($_ | Out-String)"
+    # For the app to tell, the next time it starts
+    Set-Content -LiteralPath $Notice -Encoding UTF8 `
+        -Value "$($_.Exception.Message)`r`n`r`nWhat happened is in $(Join-Path $Work "install.log")."
     # Put the app back as it was, newest first, over whatever of the update was copied
     for ($i = $aside.Count - 1; $i -ge 0; $i--) {
         $target, $old = $aside[$i]
@@ -193,17 +204,31 @@ catch {
 """
 
 
+def take_failed_update_notice(directory="."):
+    """ Why the last update couldn't be installed, which is then forgotten, or None if it could """
+    path = Path(directory) / FAILED_UPDATE_FILE
+    try:
+        # The Windows install script writes it with a byte order mark
+        text = path.read_text(encoding="utf-8-sig").strip()
+    except FileNotFoundError:
+        return None
+    path.unlink()
+    return text
+
+
 def can_install():
     """ Updates are installed into the built app, not when running from source """
     return getattr(sys, "frozen", False) and sys.platform in ASSET_SUFFIXES
 
 
-def install_on_exit(zip_path, relaunch, pid=None, install_path=None):
+def install_on_exit(zip_path, relaunch, pid=None, install_path=None, notice=None):
     """
     Installs the update in zip_path once the process pid (this one by default) has exited.
     install_path is the app to replace: the .app on macOS, the app's folder on Windows.
+    If it fails, why is left in notice, FAILED_UPDATE_FILE next to the settings by default, for the app to tell.
     """
     pid = pid or os.getpid()
+    notice = Path(notice or FAILED_UPDATE_FILE).absolute()
     work = tempfile.mkdtemp(prefix="as64-update-")
     # Nobody sees the script run, so log all its output, including errors starting it
     log_path = Path(work) / "install.log"
@@ -215,7 +240,7 @@ def install_on_exit(zip_path, relaunch, pid=None, install_path=None):
         script = Path(work) / "install.sh"
         script.write_text(_MACOS_INSTALL)
         env = dict(os.environ, AS64_PID=str(pid), AS64_ZIP=str(zip_path), AS64_APP=str(install_path),
-                   AS64_WORK=work, AS64_RELAUNCH="1" if relaunch else "0")
+                   AS64_WORK=work, AS64_RELAUNCH="1" if relaunch else "0", AS64_NOTICE=str(notice))
         process = subprocess.Popen(["/bin/sh", str(script)], env=env, start_new_session=True, stdout=log, stderr=subprocess.STDOUT)
 
     elif sys.platform == "win32":
@@ -225,7 +250,7 @@ def install_on_exit(zip_path, relaunch, pid=None, install_path=None):
         process = subprocess.Popen(
             ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script),
              "-AppPid", str(pid), "-Zip", str(zip_path), "-InstallDir", str(install_path), "-Work", work,
-             "-Relaunch", "1" if relaunch else "0"],
+             "-Relaunch", "1" if relaunch else "0", "-Notice", str(notice)],
             stdout=log, stderr=subprocess.STDOUT,
             creationflags=subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP)
     else:
