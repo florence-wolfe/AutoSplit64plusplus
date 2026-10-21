@@ -12,6 +12,9 @@ ThemedPane {
 
     SystemPalette { id: system; colorGroup: SystemPalette.Active }
 
+    // The menu while it's open, see makeMenu()
+    property var openedMenu: null
+
     // Anywhere else, dragging moves the window and the right button opens the menu
     MouseArea {
         anchors.fill: parent
@@ -20,6 +23,10 @@ ThemedPane {
         onPressed: mouse => {
             if (mouse.button === Qt.RightButton)
                 root.openMenu(mouse.x, mouse.y)
+            // On Windows, pressing a menu entry over the window presses the window too, and moving it would raise
+            // it over the menu, which then never gets the click
+            else if (root.openedMenu)
+                mouse.accepted = false
             else {
                 const point = global(mouse)
                 main.press(point.x, point.y)
@@ -230,7 +237,12 @@ ThemedPane {
     function makeMenu() {
         const menu = menuComponent.createObject(root)
         fill(menu, main.menu())
-        menu.closed.connect(() => menu.destroy())
+        root.openedMenu = menu
+        menu.closed.connect(() => {
+            if (root.openedMenu === menu)
+                root.openedMenu = null
+            menu.destroy()
+        })
         return menu
     }
 

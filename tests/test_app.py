@@ -274,6 +274,25 @@ class DragTest(unittest.TestCase):
         start_system_move.assert_called_once()
         self.assertEqual(self.app.pos(), self.start)
 
+    def test_no_drag_while_the_menu_is_open(self):
+        # On Windows, pressing a menu entry over the main window presses the main window too, and moving it raised it
+        # over the menu, whose entry then never got the click
+        def menu():
+            return next((window for window in QtGui.QGuiApplication.topLevelWindows()
+                         if window.metaObject().className() == "QQuickPopupWindow" and window.isVisible()), None)
+
+        QtCore.QMetaObject.invokeMethod(qml(self.app.view, "menuButton"), "clicked")
+        wait_until(menu)
+        start_system_move = self.drag(system_move=True)
+        start_system_move.assert_not_called()
+        self.assertEqual(self.app.pos(), self.start)
+
+        # And again once it's closed
+        self.mouse("release", 60, 40)
+        QTest.keyClick(menu(), QtCore.Qt.Key.Key_Escape)
+        wait_until(lambda: not menu())
+        self.drag(system_move=True).assert_called_once()
+
     def test_moves_it_itself_when_the_window_manager_cant(self):
         self.drag(system_move=False)
         self.assertEqual(self.app.pos(), self.start + QtCore.QPoint(50, 30))
