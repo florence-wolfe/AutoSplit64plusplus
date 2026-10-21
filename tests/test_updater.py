@@ -274,10 +274,17 @@ class WindowsInstallTest(InstallTestCase):
 
     def reopened(self, exe):
         """ The process opened from exe after the update, if one was, which is then ended """
+        def same(path):
+            # The same file, as Windows may give either path by its short 8.3 names, e.g. a temporary folder's
+            try:
+                return bool(path) and os.path.samefile(path, exe)
+            except OSError:
+                return False
+
         deadline = time.monotonic() + 15
         while time.monotonic() < deadline:
             for process in psutil.process_iter(["exe"]):
-                if process.info["exe"] and Path(process.info["exe"]) == exe:
+                if same(process.info["exe"]):
                     process.kill()
                     # Before the test's folder is deleted, which Windows refuses while the exe runs
                     process.wait(10)
