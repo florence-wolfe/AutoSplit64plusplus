@@ -1,3 +1,4 @@
+import inspect
 import unittest
 from unittest import mock
 
@@ -201,6 +202,45 @@ class MainWindowTest(unittest.TestCase):
         on_quit.assert_called()
         close_output.assert_called()
         self.assertFalse(self.app.isVisible())
+
+
+class MenuFromFileTest(unittest.TestCase):
+    """ Open Route -> From File in the main window's menu, whose file dialog the menu closes for """
+
+    def setUp(self):
+        with mock.patch("autosplit64.gui.updates.Updates.check"):
+            self.app = App()
+        self.addCleanup(close_window, self.app)
+
+    def test_menu_outlives_its_entry_opening_the_file_dialog(self):
+        QtCore.QMetaObject.invokeMethod(qml(self.app.view, "menuButton"), "clicked")
+        objects = lambda: self.app.view.rootObject().findChildren(QtCore.QObject)
+        wait_until(lambda: any(o.metaObject().className().startswith("QQuickMenu") and o.property("opened") for o in objects()))
+        from_file = next(o for o in objects() if o.property("text") == "From File" and o.property("key") is not None)
+
+        # Whether the entry was deleted while its trigger still ran
+        deleted = []
+        from_file.destroyed.connect(lambda: deleted.append(
+            any(frame.function == "trigger" and frame.filename.endswith("app.py") for frame in inspect.stack())))
+
+        def file_dialog(*args):
+            # A modal window takes the focus from the menu, which closes it, but not in the tests' offscreen platform
+            for menu in objects():
+                if menu.metaObject().className().startswith("Menu_QMLTYPE") and menu.property("opened"):
+                    QtCore.QMetaObject.invokeMethod(menu, "close")
+            # Like the file dialog, it has its own event loop, in which the closed menu deletes itself
+            dialog = QtWidgets.QDialog(self.app)
+            QtCore.QTimer.singleShot(500, dialog.reject)
+            dialog.exec()
+            return "", ""
+
+        with mock.patch.object(QtWidgets.QFileDialog, "getOpenFileName", side_effect=file_dialog) as dialog:
+            QtCore.QMetaObject.invokeMethod(from_file, "triggered")
+            wait_until(lambda: dialog.called and deleted, timeout=3)
+
+        dialog.assert_called_once()
+        # Deleted while its trigger runs, Qt crashes once the dialog returns to it, which ends AutoSplit64++ on Windows
+        self.assertEqual(deleted, [False])
 
 
 class DragTest(unittest.TestCase):

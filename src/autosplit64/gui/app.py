@@ -102,7 +102,10 @@ class Main(QtCore.QObject):
         if isinstance(action, str):
             self._set_general(action, not config.get("general", action))
         else:
-            action()
+            # Once the menu entry's handler has returned: a modal dialog, e.g. From File's, runs an event loop, in
+            # which the menu, closed by the dialog taking the focus, deletes its entries, and Qt aborts on deleting
+            # the one whose handler is running
+            QtCore.QTimer.singleShot(0, action)
 
 
 class App(QtWidgets.QMainWindow):
