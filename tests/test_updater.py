@@ -1,4 +1,5 @@
 import hashlib
+import os
 import shutil
 import subprocess
 import sys
@@ -164,6 +165,50 @@ class WindowsInstallTest(InstallTestCase):
         self.assertEqual((install / "routes" / "16_lblj.as64").read_text(), "shipped route")
         self.assertEqual((install / "templates" / "generated_reset_one.jpg").read_text(), "my template")
         self.assertEqual((install / "templates" / "default_reset_one.jpg").read_text(), "default")
+
+    def old_app_and_update(self):
+        """ An installed app and an update for it: (the app's folder, the update's zip) """
+        install = self.dir / "AutoSplit64++"
+        for path, text in [("AutoSplit64++.exe", "old exe"), ("libraries/old.dll", "old"), ("resources/old.png", "old"),
+                           ("config.ini", "settings")]:
+            self.write(install / path, text)
+        zip_path = self.dir / "update.zip"
+        with zipfile.ZipFile(zip_path, "w") as archive:
+            for path, text in [("AutoSplit64++.exe", "new exe"), ("libraries/new.dll", "new"), ("resources/new.png", "new")]:
+                archive.writestr(f"AutoSplit64++/{path}", text)
+        return install, zip_path
+
+    def test_file_in_use_leaves_the_app_as_it_was(self):
+        # e.g. another AutoSplit64++ from the same folder, or antivirus scanning it, which once left half the app deleted
+        install, zip_path = self.old_app_and_update()
+        # Past libraries, which the update replaced first, before it failed on this
+        with open(install / "resources" / "old.png"):
+            process = updater.install_on_exit(zip_path, relaunch=False, pid=self.running_process(), install_path=install)
+            process.wait(60)
+
+        log = process.log_path.read_text()
+        self.assertEqual(process.returncode, 1, log)
+        self.assertIn("Install failed", log)
+        self.assertEqual((install / "AutoSplit64++.exe").read_text(), "old exe")
+        self.assertEqual(sorted(p.name for p in (install / "libraries").iterdir()), ["old.dll"])
+        self.assertEqual(sorted(p.name for p in (install / "resources").iterdir()), ["old.png"])
+        self.assertEqual(sorted(p.name for p in install.iterdir()), ["AutoSplit64++.exe", "config.ini", "libraries", "resources"])
+
+    def test_waits_for_another_instance_from_the_same_folder(self):
+        install, zip_path = self.old_app_and_update()
+        # Another AutoSplit64++ running for a while, which is Windows' ping as the app's exe
+        shutil.copy(Path(os.environ["SystemRoot"]) / "System32" / "PING.EXE", install / "AutoSplit64++.exe")
+        running = subprocess.Popen([install / "AutoSplit64++.exe", "-n", "15", "127.0.0.1"], stdout=subprocess.DEVNULL)
+        self.addCleanup(running.wait)
+
+        process = updater.install_on_exit(zip_path, relaunch=False, pid=self.running_process(), install_path=install)
+        process.wait(60)
+
+        log = process.log_path.read_text()
+        self.assertIsNotNone(running.poll(), "The update didn't wait for the other instance")
+        self.assertEqual((install / "AutoSplit64++.exe").read_text(), "new exe", log)
+        self.assertEqual(sorted(p.name for p in (install / "libraries").iterdir()), ["new.dll"])
+        self.assertFalse(list(install.glob("*.old*")))
 
 
 if __name__ == "__main__":

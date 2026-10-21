@@ -117,18 +117,38 @@ if [ "$AS64_RELAUNCH" = 1 ]; then open "$AS64_APP"; fi
 _WINDOWS_INSTALL = r"""
 param([int]$AppPid, [string]$Zip, [string]$InstallDir, [string]$Work, [int]$Relaunch)
 $ErrorActionPreference = "Stop"
+# The app's files moved aside, as (where it was, where it is now), to put back if the update fails
+$aside = New-Object System.Collections.ArrayList
 try {
     Wait-Process -Id $AppPid -ErrorAction SilentlyContinue
+    # Any other AutoSplit64++ from this folder keeps its files open, which the update can't replace
+    $deadline = (Get-Date).AddSeconds(60)
+    $prefix = (Resolve-Path $InstallDir).Path.TrimEnd("\") + "\"
+    while (Get-Process | Where-Object { $_.Path -and $_.Path.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase) }) {
+        if ((Get-Date) -gt $deadline) { throw "AutoSplit64++ is still running from $InstallDir" }
+        Start-Sleep 1
+    }
     $staging = Join-Path $Work "update"
     if (Test-Path $staging) { Remove-Item $staging -Recurse -Force }
     Expand-Archive -Path $Zip -DestinationPath $staging -Force
     $new = Get-ChildItem $staging -Directory | Select-Object -First 1
 
+    # Moved aside before anything is replaced: Windows refuses to move a folder while a file in it is open, which
+    # then stops the update with the app as it was, instead of half of it deleted
+    $names = @("libraries", "resources", "obs-plugin") + @(Get-ChildItem $new.FullName -File | ForEach-Object Name)
+    foreach ($name in $names) {
+        $target = Join-Path $InstallDir $name
+        if (-not (Test-Path $target)) { continue }
+        $old = "$target.old"
+        if (Test-Path $old) { Remove-Item $old -Recurse -Force -ErrorAction SilentlyContinue }
+        if (Test-Path $old) { $old = "$target.old-$(Get-Date -Format yyyyMMddHHmmss)" }
+        # A rename, which Move-Item isn't always: it copies a folder it can't rename, and fails partway
+        if (Test-Path $target -PathType Container) { [IO.Directory]::Move($target, $old) } else { [IO.File]::Move($target, $old) }
+        [void]$aside.Add(@($target, $old))
+    }
     foreach ($name in "libraries", "resources", "obs-plugin") {
         $source = Join-Path $new.FullName $name
-        $target = Join-Path $InstallDir $name
-        if (Test-Path $target) { Remove-Item $target -Recurse -Force }
-        if (Test-Path $source) { Copy-Item $source $target -Recurse }
+        if (Test-Path $source) { Copy-Item $source (Join-Path $InstallDir $name) -Recurse }
     }
     Get-ChildItem $new.FullName -File | Copy-Item -Destination $InstallDir -Force
 
@@ -144,6 +164,10 @@ try {
         }
     }
 
+    # The app as it was, unless something still has a file of it open, e.g. antivirus, which a later update removes
+    foreach ($moved in $aside) { Remove-Item $moved[1] -Recurse -Force -ErrorAction SilentlyContinue }
+    $aside.Clear()
+
     if ($Relaunch) {
         $exe = Get-ChildItem $InstallDir -Filter "*.exe" | Select-Object -First 1
         Start-Process $exe.FullName -WorkingDirectory $InstallDir
@@ -151,6 +175,19 @@ try {
 }
 catch {
     "Install failed: $($_ | Out-String)"
+    # Put the app back as it was, newest first, over whatever of the update was copied
+    for ($i = $aside.Count - 1; $i -ge 0; $i--) {
+        $target, $old = $aside[$i]
+        try {
+            if (Test-Path $target) { Remove-Item $target -Recurse -Force }
+            if (Test-Path $old -PathType Container) { [IO.Directory]::Move($old, $target) } else { [IO.File]::Move($old, $target) }
+        }
+        catch { "Couldn't put back ${target}: $($_ | Out-String)" }
+    }
+    if ($Relaunch) {
+        $exe = Get-ChildItem $InstallDir -Filter "*.exe" | Select-Object -First 1
+        if ($exe) { Start-Process $exe.FullName -WorkingDirectory $InstallDir }
+    }
     exit 1
 }
 """
