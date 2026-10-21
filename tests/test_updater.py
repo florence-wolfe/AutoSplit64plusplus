@@ -230,6 +230,28 @@ class WindowsInstallTest(InstallTestCase):
         self.assertIn("resources", text)
         self.assertIn(str(process.log_path), text)
 
+    def test_failing_after_copying_the_update_leaves_the_app_as_it_was(self):
+        install, zip_path = self.old_app_and_update()
+        # Its files outside the folders, which then fail to copy, after the update's folders were
+        (install / "AutoSplit64++.exe").unlink()
+        (install / "config.ini").unlink()
+        user = f"{os.environ['USERDOMAIN']}\\{os.environ['USERNAME']}"
+        subprocess.run(["icacls", install, "/deny", f"{user}:(WD)"], check=True, capture_output=True)
+        self.addCleanup(subprocess.run, ["icacls", install, "/remove:d", user], capture_output=True)
+
+        process = updater.install_on_exit(zip_path, relaunch=False, pid=self.running_process(), install_path=install,
+                                          notice=self.dir / "notice.txt")
+        process.wait(60)
+
+        log = process.log_path.read_text()
+        self.assertEqual(process.returncode, 1, log)
+        # Copying the exe, after the update's folders
+        self.assertIn("AutoSplit64++.exe", log.split("Install failed")[1].split("\n\n")[0])
+        self.assertEqual(sorted(p.name for p in (install / "libraries").iterdir()), ["old.dll"], log)
+        self.assertEqual(sorted(p.name for p in (install / "resources").iterdir()), ["old.png"], log)
+        self.assertEqual(sorted(p.name for p in install.iterdir()), ["libraries", "resources"], log)
+        self.assertTrue((self.dir / "notice.txt").exists())
+
     def test_waits_for_another_instance_from_the_same_folder(self):
         install, zip_path = self.old_app_and_update()
         # Another AutoSplit64++ running for a while, which is Windows' ping as the app's exe
