@@ -116,7 +116,8 @@ class CaptureLostTest(unittest.TestCase):
         b._in_game = True
         b._make_predictions = False
         b._count_xcams = False
-        b._processor_switch = mock.Mock()
+        # No process asks for a look at a time
+        b._processor_switch = mock.Mock(look_at=mock.Mock(return_value=None))
         b.logger = mock.Mock()
         b.validity_check = mock.Mock(return_value=True)
         b._start_listener = mock.Mock()
