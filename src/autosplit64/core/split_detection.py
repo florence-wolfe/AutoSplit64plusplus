@@ -43,6 +43,10 @@ LIVES_SURE, LIVES_LOOKS = 0.9, 3
 # Seconds a capture lost in a run, e.g. by the capture software restarting, is looked for before reporting it, and
 # between looks
 CAPTURE_RECOVERY_TIME, CAPTURE_RETRY_INTERVAL = 300, 1
+# Seconds a star count model failing to predict in a run is reloaded for before reporting it, and between reloads
+MODEL_RECOVERY_TIME, MODEL_RELOAD_INTERVAL = 300, 1
+# The prediction while the model fails, which matches no star count and no threshold, for the processes
+NO_PREDICTION = PredictionInfo(-1, 0.0)
 # Settings' names for the connection and operation modes
 CONNECTION_MODES = ["Named Pipe", "TCP", "LiveSplit One"]
 OPERATION_MODES = ["Probability", "X-Cam"]
@@ -77,10 +81,9 @@ class SplitDetection(Thread):
         self._game_capture = GameCapture(config.get("game", "use_obs"), config.get("game", "vc_fix"), config.get("game", "process_name"), config.get("game", "game_region"), version, config.get("game", "capture_device") if config.get("game", "capture_source") == "device" else None)
 
         # Initialise Prediction Model
-        if config.get("model", "legacy"):
-            self._model = Model(MODEL_PATH_LEGACY, MODEL_WIDTH, MODEL_HEIGHT, True)
-        else:
-            self._model = Model(MODEL_PATH, MODEL_WIDTH, MODEL_HEIGHT, False)
+        self._model = self._load_model()
+        # When the model started failing to predict, while it's reloaded, and when it last was
+        self._model_failing_since = self._model_reloaded_at = None
 
         # Main Loop Toggle
         self._running = False
@@ -211,6 +214,38 @@ class SplitDetection(Thread):
             return False
 
         return True
+
+    @staticmethod
+    def _load_model():
+        if config.get("model", "legacy"):
+            return Model(MODEL_PATH_LEGACY, MODEL_WIDTH, MODEL_HEIGHT, True)
+        return Model(MODEL_PATH, MODEL_WIDTH, MODEL_HEIGHT, False)
+
+    def _predict(self, image):
+        """
+        The model's prediction for image, at the model's size. A model failing in a run is reloaded, keeping what was
+        counted, and reported only once it fails for MODEL_RECOVERY_TIME. None while it fails.
+        """
+        try:
+            prediction = self._model.predict(image)
+        except Exception as e:
+            now = time.perf_counter()
+            if self._model_failing_since is None:
+                log.warning("Model prediction failed, reloading the model: %s", e)
+                self._model_failing_since = now
+            elif now - self._model_failing_since >= MODEL_RECOVERY_TIME:
+                self._error_occurred(f"Model prediction failed: {e}")
+                return None
+            if self._model_reloaded_at is None or now - self._model_reloaded_at >= MODEL_RELOAD_INTERVAL:
+                self._model.close()
+                self._model = self._load_model()
+                self._model_reloaded_at = now
+            return None
+
+        if self._model_failing_since is not None:
+            log.info("Model predicts again after %.0f s", time.perf_counter() - self._model_failing_since)
+            self._model_failing_since = None
+        return prediction
 
     def _check_capture_size(self):
         """ Report a capture whose size changed since its regions were configured """
@@ -430,13 +465,12 @@ class SplitDetection(Thread):
                 convert_to_cv2(self._game_capture.get_region(STAR_REGION)), 
                 (self._model.width, self._model.height)
             )
-            try:
-                self.prediction_info = self._model.predict(resized_image)
-            except Exception as e:
-                self._error_occurred(f"Model prediction failed: {str(e)}")
-                return
+            prediction_info = self._predict(resized_image)
         except cv2.error:
             self._error_occurred("An error occurred while processing the frame")
+            return
+        self.prediction_info = prediction_info or NO_PREDICTION
+        if prediction_info is None:
             return
 
         total_predictions = len(self._predictions)
@@ -470,13 +504,12 @@ class SplitDetection(Thread):
                 convert_to_cv2(self._game_capture.get_region(STAR_REGION)), 
                 (self._model.width, self._model.height)
             )
-            try:
-                self.prediction_info = self._model.predict(resized_image)
-            except Exception as e:
-                self._error_occurred(f"Model prediction failed: {str(e)}")
-                return
+            prediction_info = self._predict(resized_image)
         except cv2.error:
             self._error_occurred("An error occurred while processing the frame")
+            return
+        self.prediction_info = prediction_info or NO_PREDICTION
+        if prediction_info is None:
             return
 
         total_predictions = len(self._predictions)
@@ -557,7 +590,7 @@ class SplitDetection(Thread):
         if not self._lives_trusted or not self.has(detection_model.DEATHS):
             return
         reading = self._read_lives()
-        if reading.probability < LIVES_SURE or reading.prediction > 120:
+        if reading is None or reading.probability < LIVES_SURE or reading.prediction > 120:
             self._lives_readings = []
             return
         self._lives_readings = (self._lives_readings + [reading.prediction])[-LIVES_LOOKS:]
@@ -567,7 +600,7 @@ class SplitDetection(Thread):
 
     def _read_lives(self):
         region = convert_to_cv2(self._game_capture.get_region(LIVES_REGION))
-        return self._model.predict(cv2.resize(region, (self._model.width, self._model.height)))
+        return self._predict(cv2.resize(region, (self._model.width, self._model.height)))
 
     def _lives_changed(self, lives):
         """

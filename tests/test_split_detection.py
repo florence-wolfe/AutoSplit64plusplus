@@ -21,6 +21,7 @@ def make_base(star_counts=(1, 2, 3, 4, 5, 6), current=3):
     b._current_split = b._route.splits[current]
     b._lives_trusted = True
     b._capture_lost_at = None
+    b._model_failing_since = b._model_reloaded_at = None
     b.forget_lives()
     return b
 
@@ -462,14 +463,35 @@ class ProbabilityModeTest(unittest.TestCase):
             counts.append(self.base.star_count)
         return counts
 
-    def test_failed_prediction_is_reported(self):
+    def test_failing_model_is_reloaded(self):
+        self.base._error_occurred = mock.Mock()
         self.base._model.predict.side_effect = RuntimeError("Invalid input")
-        for analyze in (self.base._analyze_star_count_probability_mode, self.base._analyze_star_count_confirmation_mode):
-            with self.subTest(analyze.__name__):
-                self.base._error_occurred = mock.Mock()
-                analyze()
-                self.base._error_occurred.assert_called_once_with("Model prediction failed: Invalid input")
-                self.assertEqual(self.base.star_count, 5)
+        working = mock.Mock(width=67, height=40, predict=mock.Mock(return_value=PredictionInfo(6, 0.9)))
+        with mock.patch.object(split_detection, "Model", return_value=working), \
+             self.assertLogs("detection", "INFO") as logs:
+            self.base._analyze_star_count_probability_mode()
+            # Nothing for the processes to act on while it fails
+            self.assertEqual(self.base.prediction_info, split_detection.NO_PREDICTION)
+            self.base._analyze_star_count_probability_mode()
+            self.base._analyze_star_count_probability_mode()
+        self.base._error_occurred.assert_not_called()
+        self.assertIs(self.base._model, working)
+        # The failed look isn't counted, the two after it count the next star
+        self.assertEqual(self.base.star_count, 6)
+        log = "\n".join(logs.output)
+        self.assertIn("reloading the model: Invalid input", log)
+        self.assertIn("predicts again", log)
+
+    def test_failing_model_is_reported_once_failing_too_long(self):
+        self.base._error_occurred = mock.Mock()
+        self.base._model.predict.side_effect = RuntimeError("Invalid input")
+        still_failing = mock.Mock(width=67, height=40, predict=mock.Mock(side_effect=RuntimeError("Invalid input")))
+        with mock.patch.object(split_detection, "Model", return_value=still_failing), \
+             mock.patch.object(split_detection, "MODEL_RECOVERY_TIME", 0), self.assertLogs("detection"):
+            self.base._analyze_star_count_probability_mode()
+            self.base._analyze_star_count_confirmation_mode()
+        self.base._error_occurred.assert_called_once_with("Model prediction failed: Invalid input")
+        self.assertEqual(self.base.star_count, 5)
 
     def test_the_second_prediction_of_the_next_star_counts_it(self):
         # On the frame of the second prediction, not one frame later
@@ -803,6 +825,13 @@ class LivesReadingTest(unittest.TestCase):
     def test_the_same_lives_again_change_nothing(self):
         self.read((4, 0.95), (4, 0.99), (4, 0.97), (4, 0.95))
         self.base._lives_changed.assert_called_once_with(4)
+
+    def test_a_failed_reading_starts_again(self):
+        # The model failing, which is reloaded
+        self.readings = [PredictionInfo(4, 0.95), PredictionInfo(4, 0.99), None, PredictionInfo(4, 0.97)]
+        for _ in range(4):
+            self.base.analyze_lives()
+        self.base._lives_changed.assert_not_called()
 
     def test_no_reading_once_they_arent_lives(self):
         self.base._lives_trusted = False
