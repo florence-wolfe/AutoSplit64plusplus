@@ -73,15 +73,13 @@ class RunTest(unittest.TestCase):
         b = make_base()
         b._route, b._current_split = None, None
         b._processor_switch = mock.Mock()
-        b.logger = mock.Mock()
         # A failing check reports the error, which also stops split detection
         b.validity_check = mock.Mock(return_value=False)
         b.stop = mock.Mock()
 
-        with mock.patch.object(split_detection.livesplit, "connect"):
+        with mock.patch.object(split_detection.livesplit, "connect"), self.assertNoLogs("detection", "ERROR"):
             b.run()
 
-        b.logger.error.assert_not_called()
         b.stop.assert_not_called()
 
     def test_lost_livesplit_connection_is_reported_once(self):
@@ -94,7 +92,6 @@ class RunTest(unittest.TestCase):
         b.analyze_fade_status = mock.Mock()
         # The process would split, which fails too
         b._processor_switch = mock.Mock(execute=mock.Mock(side_effect=ConnectionAbortedError))
-        b.logger = mock.Mock()
         b.validity_check = mock.Mock(return_value=True)
         b._start_listener = mock.Mock()
         b._error_listener = mock.Mock()
@@ -108,6 +105,30 @@ class RunTest(unittest.TestCase):
         b._error_listener.assert_called_once_with("LiveSplit connection lost")
         b.stop.assert_called()
 
+    def test_unexpected_error_is_reported(self):
+        # Ending the run, which is told rather than leaving split detection seeming to run
+        b = make_base()
+        b._game_capture = mock.Mock()
+        b._in_game = True
+        b._make_predictions = False
+        b._count_xcams = False
+        b.analyze_fade_status = mock.Mock()
+        b._processor_switch = mock.Mock(look_at=mock.Mock(side_effect=RuntimeError("a bug")))
+        b.validity_check = mock.Mock(return_value=True)
+        b._start_listener = mock.Mock()
+        b._error_listener = mock.Mock()
+        b.stop = mock.Mock(side_effect=lambda: setattr(b, "_running", False))
+        b.fps = 30
+
+        with mock.patch.object(split_detection.livesplit, "connect"), \
+             mock.patch.object(split_detection.livesplit, "split_index", return_value=3), \
+             self.assertLogs("detection", "ERROR") as logs:
+            b.run()
+
+        b._error_listener.assert_called_once_with("a bug")
+        b.stop.assert_called()
+        self.assertIsNotNone(logs.records[0].exc_info)
+
 
 class CaptureLostTest(unittest.TestCase):
     """ A capture lost in a run, e.g. the capture software restarting, is found again, with what was counted kept """
@@ -119,7 +140,6 @@ class CaptureLostTest(unittest.TestCase):
         b._count_xcams = False
         # No process asks for a look at a time
         b._processor_switch = mock.Mock(look_at=mock.Mock(return_value=None))
-        b.logger = mock.Mock()
         b.validity_check = mock.Mock(return_value=True)
         b._start_listener = mock.Mock()
         b._error_listener = mock.Mock()

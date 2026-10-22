@@ -178,8 +178,6 @@ class SplitDetection(Thread):
         except AttributeError:
             pass
 
-        self.logger = logging.getLogger(".log")
-
         # Whether what the HUD shows where the lives are is lives, which it isn't in Usamune
         self._lives_trusted = True
         self.forget_lives()
@@ -346,8 +344,9 @@ class SplitDetection(Thread):
                 except ValueError:
                     pass
                 
-        except Exception:
-            self.logger.error("Fatal Error", exc_info=True)
+        except Exception as e:
+            log.exception("Split detection ended on an unexpected error")
+            self._error_occurred(str(e))
 
     def _sync_split_index(self, ls_index):
         """ Follow the timer's split index. False means the timer didn't answer this time. """
@@ -816,7 +815,7 @@ class SplitDetection(Thread):
         self._error_listener = listener
 
     def _error_occurred(self, error):
-        log.warning("Error: %s", error)
+        log.error("Error: %s", error)
         try:
             self._error_listener(error)
         except AttributeError:
