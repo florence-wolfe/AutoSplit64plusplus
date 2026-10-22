@@ -33,7 +33,9 @@ class UpdatesTestCase(unittest.TestCase):
         for patcher in [mock.patch.object(app_module.config, "get", side_effect=lambda section, key=None:
                                           self.check_on_launch if (section, key) == ("general", "update_check") else real_get(section, key)),
                         mock.patch.object(app_module.constants, "VERSION", "0.4.0"),
-                        mock.patch.object(QtWidgets.QMessageBox, "information")]:
+                        mock.patch.object(QtWidgets.QMessageBox, "information"),
+                        # Until the window is closed, which installs an update left for when the app quits
+                        mock.patch.object(updater, "install_on_exit")]:
             patcher.start()
             self.addCleanup(patcher.stop)
         self.check_on_launch = False
