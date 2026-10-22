@@ -41,6 +41,14 @@ MANIFEST
 # Custom
 config.ini
 config.ini.broken
+AutoSplit64++.update-failed.txt
+# Signing keys and certificates, e.g. made for the release workflow's secrets
+*.p12
+*.pfx
+*.pem
+*.key
+*.cer
+*.keychain-db
 .DS_Store
 src/autosplit64/gui/_version.py
 .master_version
