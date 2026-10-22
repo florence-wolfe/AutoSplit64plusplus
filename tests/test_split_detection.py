@@ -20,6 +20,7 @@ def make_base(star_counts=(1, 2, 3, 4, 5, 6), current=3):
     b._route = SimpleNamespace(title="Route", splits=splits, initial_star=0, version="JP", timing="RTA")
     b._current_split = b._route.splits[current]
     b._lives_trusted = True
+    b._capture_lost_at = None
     b.forget_lives()
     return b
 
@@ -105,6 +106,73 @@ class RunTest(unittest.TestCase):
 
         b._error_listener.assert_called_once_with("LiveSplit connection lost")
         b.stop.assert_called()
+
+
+class CaptureLostTest(unittest.TestCase):
+    """ A capture lost in a run, e.g. the capture software restarting, is found again, with what was counted kept """
+
+    def setUp(self):
+        b = self.base = make_base()
+        b._in_game = True
+        b._make_predictions = False
+        b._count_xcams = False
+        b._processor_switch = mock.Mock()
+        b.logger = mock.Mock()
+        b.validity_check = mock.Mock(return_value=True)
+        b._start_listener = mock.Mock()
+        b._error_listener = mock.Mock()
+        b.stop = mock.Mock(side_effect=lambda: setattr(b, "_running", False))
+        b.fps = 30
+        size = split_detection.config.get("game", "capture_size")
+        b._game_capture = mock.Mock(get_capture_size=mock.Mock(return_value=list(size)))
+        for patcher in [mock.patch.object(split_detection.livesplit, "connect"),
+                        mock.patch.object(split_detection.livesplit, "split_index", return_value=3),
+                        mock.patch.object(split_detection.time, "sleep")]:
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def run_with_captures(self, *captures):
+        """ Run split detection with the capture failing or working at each look """
+        self.base._game_capture.capture.side_effect = list(captures) + [None] * 5
+        self.analyzed = []
+        # The run ends once two looks were processed
+        def analyze():
+            self.analyzed.append(1)
+            self.base._running = len(self.analyzed) < 2
+        self.base.analyze_fade_status = analyze
+        self.base.run()
+
+    def test_found_again(self):
+        star_count = self.base.star_count = 5
+        with self.assertLogs("detection", "INFO") as logs:
+            self.run_with_captures(None, Exception("Failed to capture"), Exception("Failed to capture"), None)
+        self.base._error_listener.assert_not_called()
+        self.assertEqual(self.base._game_capture.reconnect.call_count, 2)
+        self.assertEqual(len(self.analyzed), 2)
+        self.assertEqual(self.base.star_count, star_count)
+        log = "\n".join(logs.output)
+        self.assertIn("Lost the game capture", log)
+        self.assertIn("Failed to capture", log)
+        self.assertIn("Got the game capture back", log)
+
+    def test_frames_while_lost_arent_processed(self):
+        self.run_with_captures(Exception("Failed to capture"), None)
+        # The look that failed isn't processed, the ones after it are
+        self.assertEqual(self.base._processor_switch.execute.call_count, 2)
+
+    def test_reported_once_lost_too_long(self):
+        with mock.patch.object(split_detection, "CAPTURE_RECOVERY_TIME", 0):
+            self.run_with_captures(Exception("Failed to capture"), Exception("Still failing"))
+        self.base._error_listener.assert_called_once_with("Still failing")
+        self.base.stop.assert_called()
+
+    def test_found_again_at_another_size(self):
+        # The capture regions would be off
+        self.base._game_capture.get_capture_size.return_value = [1, 1]
+        self.run_with_captures(Exception("Failed to capture"), None)
+        message = self.base._error_listener.call_args.args[0]
+        self.assertIn("dimensions have changed", message)
+        self.base.stop.assert_called()
 
 
 class GameVersionTest(unittest.TestCase):

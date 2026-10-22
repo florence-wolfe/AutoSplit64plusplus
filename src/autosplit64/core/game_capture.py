@@ -131,6 +131,17 @@ class GameCapture(object):
                 raise Exception("Could not find configured capture source.\n\nMake sure it's running and visible, "
                                 "or set up what to capture in Configure Capture.")
 
+    def reconnect(self):
+        """ Find the capture source again, e.g. after the capture software restarted or the capture card was replugged """
+        if self._use_obs:
+            self._shmem.close_shmem()
+        elif self._device:
+            # A replugged device's old session sends nothing
+            capture_device.stop()
+        else:
+            self._hwnd = capture_window.get_hwnd_from_list(self._process_name, capture_window.get_visible_processes())
+        self.is_valid()
+
     def capture(self) -> None:
         if self._use_obs:
             self._window_image = self._shmem.capture()

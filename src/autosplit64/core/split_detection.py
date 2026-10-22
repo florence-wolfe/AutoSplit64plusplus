@@ -40,6 +40,9 @@ GAME_FRAME = 0.9 / 30
 MIN_LOOKING = 1
 # The lives count once the star count model is this sure of the same number this many looks in a row
 LIVES_SURE, LIVES_LOOKS = 0.9, 3
+# Seconds a capture lost in a run, e.g. by the capture software restarting, is looked for before reporting it, and
+# between looks
+CAPTURE_RECOVERY_TIME, CAPTURE_RETRY_INTERVAL = 300, 1
 # Settings' names for the connection and operation modes
 CONNECTION_MODES = ["Named Pipe", "TCP", "LiveSplit One"]
 OPERATION_MODES = ["Probability", "X-Cam"]
@@ -81,6 +84,8 @@ class SplitDetection(Thread):
 
         # Main Loop Toggle
         self._running = False
+        # When the game capture was lost, while it's being looked for again
+        self._capture_lost_at = None
 
         # What the detection model does
         self._features = detection_model.FEATURES[detection_model.get()]
@@ -194,10 +199,7 @@ class SplitDetection(Thread):
             self._error_occurred(str(e))
             return False
 
-        current_capture_size = self._game_capture.get_capture_size()
-
-        if current_capture_size[0] != config.get("game", "capture_size")[0] or current_capture_size[1] != config.get("game", "capture_size")[1]:
-            self._error_occurred("Capture windows dimensions have changed since last configuring coordinates. Please reconfigure capture coordinates and generate reset templates.")
+        if not self._check_capture_size():
             return False
 
         if not self._route:
@@ -208,6 +210,41 @@ class SplitDetection(Thread):
             self._error_occurred("Unable to load prediction model " + (MODEL_PATH_LEGACY if config.get("model", "legacy") else MODEL_PATH))
             return False
 
+        return True
+
+    def _check_capture_size(self):
+        """ Report a capture whose size changed since its regions were configured """
+        current_capture_size = self._game_capture.get_capture_size()
+
+        if current_capture_size[0] != config.get("game", "capture_size")[0] or current_capture_size[1] != config.get("game", "capture_size")[1]:
+            self._error_occurred("Capture windows dimensions have changed since last configuring coordinates. Please reconfigure capture coordinates and generate reset templates.")
+            return False
+        return True
+
+    def _capture(self):
+        """
+        Capture the game. A capture lost in a run is looked for again, keeping what was counted, and reported only
+        once it's lost for CAPTURE_RECOVERY_TIME. False while it's lost.
+        """
+        try:
+            if self._capture_lost_at is not None:
+                self._game_capture.reconnect()
+            self._game_capture.capture()
+        except Exception as e:
+            now = time.perf_counter()
+            if self._capture_lost_at is None:
+                log.warning("Lost the game capture, looking for it again: %s", e)
+                self._capture_lost_at = now
+            elif now - self._capture_lost_at >= CAPTURE_RECOVERY_TIME:
+                self._error_occurred(str(e))
+                return False
+            time.sleep(CAPTURE_RETRY_INTERVAL)
+            return False
+
+        if self._capture_lost_at is not None:
+            log.info("Got the game capture back after %.0f s", time.perf_counter() - self._capture_lost_at)
+            self._capture_lost_at = None
+            return self._check_capture_size()
         return True
 
     def stop(self):
@@ -238,9 +275,9 @@ class SplitDetection(Thread):
             
             while self._running:
                 self.current_time = time.perf_counter()
+                if not self._capture():
+                    continue
                 try:
-                    self._game_capture.capture()
-
                     self._sync_split_index(livesplit.split_index(self._ls_socket))
 
                     self.analyze_fade_status()

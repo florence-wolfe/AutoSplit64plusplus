@@ -24,7 +24,7 @@ _DEVICE_TYPES = [
     AV.AVCaptureDeviceTypeContinuityCamera,
 ]
 
-# The session of the device currently being captured: (unique id, session, output)
+# The session of the device currently being captured: (unique id, session, output, device)
 _active = None
 
 
@@ -96,7 +96,7 @@ def _start_session(unique_id):
     session.addOutput_(video_output)
     session.startRunning()
 
-    _active = (unique_id, session, output)
+    _active = (unique_id, session, output, device)
     return output
 
 
@@ -112,6 +112,9 @@ def capture(unique_id):
     """ Returns the latest frame of the device as a BGR image """
     if _active is not None and _active[0] == unique_id:
         output = _active[2]
+        # Its last frame stays, so a device that was unplugged would show it for good
+        if not _active[3].isConnected():
+            raise Exception("The video device was disconnected\n\nMake sure it is connected!")
     else:
         output = _start_session(unique_id)
 

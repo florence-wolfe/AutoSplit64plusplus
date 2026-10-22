@@ -110,6 +110,53 @@ class StartWithoutScreenRecordingTest(unittest.TestCase):
             capture.is_valid()
         self.assertIn("Emulator", logs.output[0])
 
+class ReconnectTest(unittest.TestCase):
+    """ Finding the capture source again, after it was lost in a run """
+
+    def capture(self, use_obs=False, device=None):
+        capture = GameCapture.__new__(GameCapture)
+        capture._use_obs, capture._device, capture._process_name, capture._hwnd = use_obs, device, "Emulator", 1
+        return capture
+
+    def window(self, found):
+        window = game_capture.capture_window
+        for name, value in [("get_visible_processes", mock.Mock(return_value=[])),
+                            ("get_hwnd_from_list", mock.Mock(return_value=found)),
+                            ("has_permission_quietly", mock.Mock(return_value=True))]:
+            patcher = mock.patch.object(window, name, value, create=True)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def test_window_is_found_again(self):
+        # The capture software was restarted, so its window is another one
+        self.window(found=2)
+        capture = self.capture()
+        capture.reconnect()
+        self.assertEqual(capture._hwnd, 2)
+        game_capture.capture_window.get_hwnd_from_list.assert_called_once_with("Emulator", [])
+
+    def test_window_that_isnt_back(self):
+        self.window(found=None)
+        with self.assertRaisesRegex(Exception, "Could not find configured capture source"):
+            self.capture().reconnect()
+
+    def test_obs_plugin_is_opened_again(self):
+        capture = self.capture(use_obs=True)
+        capture._shmem = mock.Mock()
+        capture.reconnect()
+        self.assertEqual([call[0] for call in capture._shmem.method_calls], ["close_shmem", "open_shmem"])
+
+    @unittest.skipUnless(sys.platform == "darwin", "macOS video devices")
+    def test_device_session_is_started_again(self):
+        # The capture card was plugged in again: its old session sends nothing
+        device = game_capture.capture_device
+        with mock.patch.object(device, "stop") as stop, \
+             mock.patch.object(device, "has_permission", return_value=True), \
+             mock.patch.object(device, "get_devices", return_value=[("card", "Capture Card")]):
+            self.capture(device="card").reconnect()
+        stop.assert_called_once()
+
+
 if __name__ == "__main__":
     unittest.main()
 
