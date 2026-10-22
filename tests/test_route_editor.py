@@ -68,6 +68,12 @@ class RouteEditorTest(unittest.TestCase):
         self.assertEqual(self.save(), expected)
         self.assertEqual(self.saved[0][1], self.path)
 
+    def test_unreadable_route_is_told(self):
+        with mock.patch.object(route_loader, "load", side_effect=PermissionError("Permission denied")):
+            self.editor.load_route()
+        self.editor.display_error_message.assert_called_once_with(
+            "Couldn't read the route file: Permission denied", "Invalid route: route.as64")
+
     def test_shows_the_route(self):
         self.editor.load_route()
         self.assertEqual(self.details(), ("16 LBLJ", "16 Star", "0", "US", "RTA"))

@@ -300,17 +300,15 @@ class RouteEditor(QtWidgets.QMainWindow):
             if route_error:
                 self.display_error_message(route_error, "Route Error")
 
-        except FileNotFoundError:
-            route = None
-            self.display_error_message("Route file not found.", "Invalid route: {}".format(path.basename(_route_path)))
         except KeyError:
             route = None
             self.display_error_message("Invalid or missing Key", "Invalid route: {}".format(path.basename(_route_path)))
         except JSONDecodeError:
             route = None
             self.display_error_message("Invalid JSON formatting", "Invalid route: {}".format(path.basename(_route_path)))
-        except PermissionError:
+        except OSError as e:
             route = None
+            self.display_error_message(f"Couldn't read the route file: {e.strerror or e}", "Invalid route: {}".format(path.basename(_route_path)))
 
         if route:
             self.route = route
