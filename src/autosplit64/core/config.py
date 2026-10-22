@@ -1,5 +1,6 @@
 import json
 import copy
+import os
 import sys
 
 from . import migrations
@@ -100,17 +101,28 @@ def flush_rollback():
 
 
 def load_config(choose=None):
-    """ Loads the settings, brought to this release's: see migrations.migrate for choose """
+    """
+    Loads the settings, brought to this release's: see migrations.migrate for choose.
+    Settings that can't be read are kept aside for the defaults: where they're kept is returned, for the app to tell.
+    """
     global _config
     try:
         with open(_CONFIG_FILE_NAME) as file:
             data = json.load(file)
-            _config = data
     except FileNotFoundError:
         generate_config()
-        return
+        return None
+    except ValueError:
+        data = None
+    if not isinstance(data, dict):
+        kept = _CONFIG_FILE_NAME + ".broken"
+        os.replace(_CONFIG_FILE_NAME, kept)
+        generate_config()
+        return kept
+    _config = data
     if migrations.migrate(_config, choose):
         save_config()
+    return None
 
 
 def peek(section, key):

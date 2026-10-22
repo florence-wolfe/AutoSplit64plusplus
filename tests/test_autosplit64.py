@@ -117,6 +117,16 @@ class ErrorMessageTest(unittest.TestCase):
             main.tell_about_failed_update()
         main.QtWidgets.QMessageBox.warning.assert_not_called()
 
+    def test_unreadable_settings(self):
+        main.tell_about_unreadable_settings("config.ini.broken")
+        message = main.QtWidgets.QMessageBox.warning.call_args.args[2]
+        self.assertIn("default settings", message)
+        self.assertIn(str(Path("config.ini.broken").absolute()), message)
+
+    def test_readable_settings(self):
+        main.tell_about_unreadable_settings(None)
+        main.QtWidgets.QMessageBox.warning.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

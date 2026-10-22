@@ -221,6 +221,16 @@ def tell_about_previous_crash():
             "Please send it with a bug report before starting AutoSplit64++ again, which replaces it.")
 
 
+def tell_about_unreadable_settings(kept):
+    """ Settings that couldn't be read, which config.load_config kept aside in kept for the defaults """
+    if kept:
+        logging.getLogger(".log").warning("Couldn't read the settings, kept them in %s", kept)
+        QtWidgets.QMessageBox.warning(
+            None, "AutoSplit64++",
+            f"Your settings couldn't be read, so AutoSplit64++ started with the default settings. "
+            f"What couldn't be read is in {Path(kept).absolute()}.")
+
+
 def tell_about_failed_update():
     """ Why the last update couldn't be installed, which its install script left, after it reopened this version """
     notice = updater.take_failed_update_notice()
@@ -244,7 +254,7 @@ def main():
 
     qt_app.setStyle("Fusion")
     # Before anything reads the settings, so an update can ask about changing them
-    config.load_config(settings_changes_dialog.choose)
+    unreadable_settings = config.load_config(settings_changes_dialog.choose)
     theme.apply(config.get("general", "theme"))
 
     # Add font to database
@@ -254,6 +264,7 @@ def main():
     autosplit64 = AutoSplit64(qt_app)
     tell_about_previous_crash()
     tell_about_failed_update()
+    tell_about_unreadable_settings(unreadable_settings)
 
     # Exit
     sys.exit(qt_app.exec())

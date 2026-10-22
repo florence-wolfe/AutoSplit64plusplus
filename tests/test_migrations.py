@@ -136,6 +136,22 @@ class LoadConfigTest(unittest.TestCase):
         config.load_config()
         self.assertEqual([record["version"] for record in self.saved()[migrations.KEY]], ["0.6.0"])
 
+    def test_unreadable_settings_are_kept_aside_for_the_defaults(self):
+        # e.g. cut short by a crash while saving
+        for text in ('{"general": {"theme": "Da', "[]"):
+            with self.subTest(text):
+                with open(self.path, "w") as file:
+                    file.write(text)
+                kept = config.load_config()
+                with open(kept) as file:
+                    self.assertEqual(file.read(), text)
+                self.assertEqual(config.get("thresholds", "reset_threshold"), 0.3)
+                self.assertEqual([record["version"] for record in self.saved()[migrations.KEY]], ["0.6.0"])
+
+    def test_nothing_kept_aside_for_readable_settings(self):
+        config.load_config()
+        self.assertIsNone(config.load_config())
+
     def test_leaves_up_to_date_settings_alone(self):
         with open(self.path, "w") as file:
             json.dump(migrated(OLD, "0.6.0"), file, indent=1)
