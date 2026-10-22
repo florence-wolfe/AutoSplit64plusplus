@@ -1,3 +1,4 @@
+import logging
 import sys
 
 from PyQt6 import QtCore, QtGui, QtQuick, QtWidgets
@@ -329,5 +330,5 @@ class CaptureEditor(QtWidgets.QDialog):
             # Refresh the capture
             self.refresh_preview()
             
-        except Exception as e:
-            print(f"Auto region detection failed: {str(e)}")
+        except Exception:
+            logging.getLogger(".log").warning("Auto region detection failed", exc_info=True)

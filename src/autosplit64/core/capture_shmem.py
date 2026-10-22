@@ -1,7 +1,7 @@
+import logging
 import mmap
 import ctypes
 import numpy as np
-import time
 
 # Constants
 FILE_MAP_READ = 0x0004
@@ -29,7 +29,7 @@ class SharedMemoryCapture(object):
         # Read initial header to set up first mapping
         self._update_dimensions()
         self.shmem = mmap.mmap(-1, self.shmem_size, tagname=SHMEM_NAME, access=mmap.ACCESS_READ)
-        print("Shared memory opened")
+        logging.getLogger(".log").info("Shared memory opened")
         return True
 
     def close_shmem(self):
@@ -44,7 +44,7 @@ class SharedMemoryCapture(object):
         if self.shmem_handle:
             ctypes.windll.kernel32.CloseHandle(self.shmem_handle)
             self.shmem_handle = None
-            print("Shared memory closed")
+            logging.getLogger(".log").info("Shared memory closed")
 
     def _update_dimensions(self):
         """Read header and update dimensions"""
@@ -107,49 +107,9 @@ class SharedMemoryCapture(object):
             frame = np.frombuffer(data, dtype=np.uint8, offset=16)
             expected_size = self.height * self.width * 4
             if len(frame) != expected_size:
-                print(f"Width: {self.width}, Height: {self.height}, Linesize: {self.linesize}")
-                raise Exception(f"Data size mismatch: got {len(frame)}, expected {expected_size}")
+                raise Exception(f"Data size mismatch: got {len(frame)}, expected {expected_size} for "
+                                f"{self.width}x{self.height}, linesize {self.linesize}")
             
             return frame.reshape(self.height, self.width, 4)[:,:,:3]
         except Exception as e:
             raise Exception(f"Failed to capture frame: {str(e)}")
-
-def test_capture():
-    """Test function to demonstrate shared memory capture with OpenCV visualization"""
-    import cv2
-    
-    # Initialize capture
-    cap = SharedMemoryCapture()
-    try:
-        cap.open_shmem()
-        width, height = cap.get_capture_size()
-        print(f"Capture size: {width}x{height}")
-        
-        cv2.namedWindow("Capture Test", cv2.WINDOW_NORMAL)
-        frame = None
-        
-        while True:
-            key = cv2.waitKey(1) & 0xFF
-            
-            # Capture new frame when 'w' is pressed
-            if key == ord('w'):
-                start_time = time.time()  # Start timing
-                frame = cap.capture()
-                end_time = time.time()  # End timing
-                elapsed_time = (end_time - start_time) * 1000  # Convert to milliseconds
-                print(f"New frame captured in {elapsed_time:.2f} ms")
-            
-            # Display the last captured frame if available
-            if frame is not None:
-                cv2.imshow("Capture Test", frame)
-            
-            # Break if 'q' is pressed
-            if key == ord('q'):
-                break
-                
-    finally:
-        cv2.destroyAllWindows()
-        cap.close_shmem()
-
-if __name__ == "__main__":
-    test_capture()
