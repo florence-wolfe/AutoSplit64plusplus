@@ -462,6 +462,15 @@ class ProbabilityModeTest(unittest.TestCase):
             counts.append(self.base.star_count)
         return counts
 
+    def test_failed_prediction_is_reported(self):
+        self.base._model.predict.side_effect = RuntimeError("Invalid input")
+        for analyze in (self.base._analyze_star_count_probability_mode, self.base._analyze_star_count_confirmation_mode):
+            with self.subTest(analyze.__name__):
+                self.base._error_occurred = mock.Mock()
+                analyze()
+                self.base._error_occurred.assert_called_once_with("Model prediction failed: Invalid input")
+                self.assertEqual(self.base.star_count, 5)
+
     def test_the_second_prediction_of_the_next_star_counts_it(self):
         # On the frame of the second prediction, not one frame later
         self.assertEqual(self.star_counts(*[PredictionInfo(6, 0.9)] * 3), [5, 6, 6])

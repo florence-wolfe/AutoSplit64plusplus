@@ -60,26 +60,22 @@ class Model(object):
             return False
 
     def predict(self, image) -> PredictionInfo:
-        try:
-            # Preprocess image
-            np_img = convert_to_np(image)
-                
-            # Run prediction
-            model_output = self.model.run([self.output_name], {self.input_name: np_img})[0]
+        # Preprocess image
+        np_img = convert_to_np(image)
             
-            if self.legacy:
-                # Legacy model output. Legacy models already output softmax probabilities
-                prediction = np.argmax(model_output)
-                probability = np.max(model_output)
-            else:            
-                probabilities = softmax(model_output[0])
-                prediction = np.argmax(probabilities)
-                probability = np.max(probabilities)
+        # Run prediction
+        model_output = self.model.run([self.output_name], {self.input_name: np_img})[0]
+        
+        if self.legacy:
+            # Legacy model output. Legacy models already output softmax probabilities
+            prediction = np.argmax(model_output)
+            probability = np.max(model_output)
+        else:            
+            probabilities = softmax(model_output[0])
+            prediction = np.argmax(probabilities)
+            probability = np.max(probabilities)
 
-            return PredictionInfo(prediction, probability)
-        except Exception as e:
-            logging.error(f"Prediction failed: {str(e)}")
-            return PredictionInfo(0, 0.0)
+        return PredictionInfo(prediction, probability)
 
     def close(self):
         if self.model:

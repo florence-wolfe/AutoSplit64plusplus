@@ -432,7 +432,7 @@ class SplitDetection(Thread):
             )
             try:
                 self.prediction_info = self._model.predict(resized_image)
-            except AttributeError as e:
+            except Exception as e:
                 self._error_occurred(f"Model prediction failed: {str(e)}")
                 return
         except cv2.error:
@@ -472,7 +472,7 @@ class SplitDetection(Thread):
             )
             try:
                 self.prediction_info = self._model.predict(resized_image)
-            except AttributeError as e:
+            except Exception as e:
                 self._error_occurred(f"Model prediction failed: {str(e)}")
                 return
         except cv2.error:
