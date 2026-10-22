@@ -384,7 +384,7 @@
 928.267 Running Processor
 928.267 Running ProcessGrandStarSplit
 931.767 Split: split 12 of 12, BitS (needs 16 stars, fadeout -1, fade-in -1), star count 16, fadeouts 1, fade-ins 0
-931.767 Grand Star grabbed
+931.767 Grand Star grabbed, yellow 0.711% -> 0.000%
 931.800 Timer ended the run
 931.800 Running Processor
 931.800 Running ProcessWait
