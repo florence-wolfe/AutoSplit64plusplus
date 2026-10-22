@@ -45,9 +45,9 @@ class Model(object):
             # Enable memory pattern optimization
             self.model.disable_fallback()
             
-        except Exception as e:
+        except Exception:
             self.model = None
-            logging.error(f"Failed to load model: {str(e)}")
+            logging.getLogger(".log").exception("Failed to load model %s", model_path)
 
         self.width = int(width)
         self.height = int(height)
@@ -84,5 +84,5 @@ class Model(object):
                 del self.model._sess
                 del self.model
                 self.model = None
-            except:
+            except Exception:
                 pass
