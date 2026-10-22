@@ -42,19 +42,38 @@ ThemedPane {
                 SettingsPage {
                     title: "General"
                     Heading { text: "Startup" }
-                    Label { text: "Always on top" }
+                    SettingLabel { text: "Always on top"; tip: "Keep AutoSplit64++'s window above other windows" }
                     SettingSwitch { section: "general"; key: "on_top" }
-                    Label { text: "Check for updates" }
+                    SettingLabel { text: "Check for updates"; tip: "Look for a new version of AutoSplit64++ when it opens" }
                     SettingSwitch { section: "general"; key: "update_check" }
-                    Label { text: "Autostart" }
+                    SettingLabel { text: "Autostart"; tip: "Start split detection when AutoSplit64++ opens, trying for up to 5 minutes" }
                     SettingSwitch { section: "general"; key: "auto_start" }
 
                     Heading { text: "Detection" }
-                    Label { text: "Operation mode" }
+                    SettingLabel {
+                        objectName: "operationModeLabel"
+                        text: "Operation mode"
+                        tip: "How a collected star is counted:"
+                             + "<ul><li><b>Probability</b> (the default): a star counts when the star-count model reads "
+                             + "one more star on two looks in a row. One look has to be as sure as the Probability "
+                             + "threshold and the other as sure as the Confirmation threshold.</li>"
+                             + "<li><b>X-Cam</b>: a star only counts when the model reads one more within 1 s of seeing "
+                             + "the camera icon's red X, as Mario collects a star. One look only has to be as sure as "
+                             + "the Confirmation threshold.</li></ul>"
+                             + "So X-Cam mode is stricter about <i>when</i> a star can count, but not about how sure "
+                             + "the reading has to be. Most people should leave it on Probability."
+                    }
                     SettingCombo { section: "general"; key: "operation_mode"; model: ["Probability", "X-Cam"] }
-                    Label { text: "Allow mid-run starts" }
+                    SettingLabel {
+                        text: "Allow mid-run starts"
+                        tip: "Pick up a run when the star count shows any star from the previous split's to the current "
+                             + "split's, not only the expected one, e.g. when detection starts mid-run"
+                    }
                     SettingSwitch { section: "general"; key: "mid_run_start_enabled" }
-                    Label { text: "Override game version" }
+                    SettingLabel {
+                        text: "Override game version"
+                        tip: "Read the star count and lives where this version's HUD shows them, instead of where the route's version does"
+                    }
                     RowLayout {
                         SettingSwitch { id: overrideVersion; section: "game"; key: "override_version" }
                         ValueCombo {
@@ -65,7 +84,7 @@ ThemedPane {
                     }
 
                     Heading { text: "Appearance" }
-                    Label { text: "Theme" }
+                    SettingLabel { text: "Theme"; tip: "The colours of AutoSplit64++'s windows" }
                     ValueCombo {
                         objectName: "theme"
                         section: "general"; key: "theme"; fallback: "default"
@@ -74,7 +93,7 @@ ThemedPane {
                         // Shown right away, but only kept when the settings are applied
                         onActivated: settings.show_theme(currentValue)
                     }
-                    Label { text: "Style" }
+                    SettingLabel { text: "Style"; tip: "The look of AutoSplit64++'s buttons, fields and other controls" }
                     ValueCombo {
                         id: style
                         objectName: "style"
@@ -103,7 +122,11 @@ ThemedPane {
 
                 SettingsPage {
                     title: "Connection"
-                    Label { text: "Connection mode" }
+                    SettingLabel {
+                        text: "Connection mode"
+                        tip: "How splits reach LiveSplit. Named Pipe needs nothing started, TCP needs LiveSplit's server "
+                             + "started, and LiveSplit One connects to AutoSplit64++ itself."
+                    }
                     SettingCombo {
                         id: mode
                         objectName: "mode"
@@ -112,13 +135,26 @@ ThemedPane {
                         Layout.preferredWidth: 200
                     }
                     // Only the selected mode's settings
-                    Label { text: "LiveSplit pipe host"; visible: mode.currentIndex === 0 }
+                    SettingLabel {
+                        text: "LiveSplit pipe host"; visible: mode.currentIndex === 0
+                        tip: "The computer LiveSplit runs on, by name: . for this one"
+                    }
                     SettingField { objectName: "pipeHost"; section: "connection"; key: "ls_pipe_host"; visible: mode.currentIndex === 0 }
-                    Label { text: "LiveSplit TCP host"; visible: mode.currentIndex === 1 }
+                    SettingLabel {
+                        text: "LiveSplit TCP host"; visible: mode.currentIndex === 1
+                        tip: "The address of the computer LiveSplit's server runs on: localhost for this one"
+                    }
                     SettingField { objectName: "tcpHost"; section: "connection"; key: "ls_host"; visible: mode.currentIndex === 1 }
-                    Label { text: "LiveSplit TCP port"; visible: mode.currentIndex === 1 }
+                    SettingLabel {
+                        text: "LiveSplit TCP port"; visible: mode.currentIndex === 1
+                        tip: "The port of LiveSplit's server, as set in LiveSplit's settings: 16834 unless changed"
+                    }
                     WholeField { objectName: "tcpPort"; section: "connection"; key: "ls_port"; visible: mode.currentIndex === 1 }
-                    Label { text: "LiveSplit One port"; visible: mode.currentIndex === 2 }
+                    SettingLabel {
+                        text: "LiveSplit One port"; visible: mode.currentIndex === 2
+                        tip: "The port AutoSplit64++ waits for LiveSplit One on: in LiveSplit One, Settings > Connect to "
+                             + "Server, ws://localhost:<port>"
+                    }
                     WholeField { objectName: "lsoPort"; section: "connection"; key: "lso_port"; visible: mode.currentIndex === 2 }
                 }
 
@@ -126,39 +162,85 @@ ThemedPane {
                     title: "Thresholds"
                     columns: 4
                     Heading { text: "Prediction"; Layout.columnSpan: 4 }
-                    Label { text: "Probability" }
+                    SettingLabel {
+                        text: "Probability"
+                        tip: "How sure, from 0 to 1, the star count model must be of what it reads: of one more star "
+                             + "to count it (with Confirmation), of the star count to start a run, and of a star "
+                             + "count to skip to"
+                    }
                     FractionField { section: "thresholds"; key: "probability_threshold" }
-                    Label { text: "Reset" }
+                    SettingLabel {
+                        text: "Reset"
+                        tip: "How unlike the reset templates, from 0 (identical) to 1, the screen's centre can be "
+                             + "and still be a console reset. Higher spots more resets, and mistakes more for one."
+                    }
                     FractionField { section: "thresholds"; key: "reset_threshold" }
-                    Label { text: "Confirmation" }
+                    SettingLabel {
+                        text: "Confirmation"
+                        tip: "How sure, from 0 to 1, the star count model must be of one more star on the look "
+                             + "before or after the one as sure as Probability, or in X-Cam mode, on one look"
+                    }
                     FractionField { section: "thresholds"; key: "confirmation_threshold"; Layout.columnSpan: 3 }
 
                     Heading { text: "Fades"; Layout.columnSpan: 4 }
-                    Label { text: "Black" }
+                    SettingLabel {
+                        text: "Black"
+                        tip: "The brightness, from 0 to 1, below which a pixel is black: a fadeout is when 90% of "
+                             + "the star count's and lives' pixels are"
+                    }
                     FractionField { section: "thresholds"; key: "black_threshold" }
-                    Label { text: "White" }
+                    SettingLabel {
+                        text: "White"
+                        tip: "The brightness, from 0 to 1, above which a pixel is white: a fade to white is when 99% "
+                             + "of the star count's and lives' pixels are"
+                    }
                     FractionField { section: "thresholds"; key: "white_threshold" }
 
                     Heading { text: "X-Cam"; Layout.columnSpan: 4 }
-                    Label { text: "B-G threshold" }
+                    SettingLabel {
+                        text: "B-G threshold"
+                        tip: "A pixel whose green and blue differ by more than this, from 0 to 255, isn't the camera "
+                             + "icon's red X, if its green is above B-G activation"
+                    }
                     WholeField { section: "thresholds"; key: "xcam_bg_threshold" }
-                    Label { text: "R-G threshold" }
+                    SettingLabel {
+                        text: "R-G threshold"
+                        tip: "A pixel whose red and green differ by less than this, from 0 to 255, isn't the camera "
+                             + "icon's red X, if its green is above R-G activation"
+                    }
                     WholeField { section: "thresholds"; key: "xcam_rg_threshold" }
-                    Label { text: "B-G activation" }
+                    SettingLabel {
+                        text: "B-G activation"
+                        tip: "The green, from 0 to 255, above which B-G threshold applies to a pixel"
+                    }
                     WholeField { section: "thresholds"; key: "xcam_bg_activation" }
-                    Label { text: "R-G activation" }
+                    SettingLabel {
+                        text: "R-G activation"
+                        tip: "The green, from 0 to 255, above which R-G threshold applies to a pixel"
+                    }
                     WholeField { section: "thresholds"; key: "xcam_rg_activation" }
-                    Label { text: "Pixel threshold" }
+                    SettingLabel {
+                        text: "Pixel threshold"
+                        tip: "The share, from 0 to 1, of the camera icon's pixels that must be its red X for the X-Cam "
+                             + "to show, as when Mario collects a star"
+                    }
                     FractionField { section: "thresholds"; key: "xcam_pixel_threshold"; Layout.columnSpan: 3 }
 
                     Heading { text: "Undo"; Layout.columnSpan: 4 }
-                    Label { text: "Undo threshold" }
+                    SettingLabel {
+                        text: "Undo threshold"
+                        tip: "Seconds: a console reset this soon after a split undoes that split, unless in SRL mode"
+                    }
                     FractionField { section: "thresholds"; key: "undo_threshold"; Layout.columnSpan: 3 }
                 }
 
                 SettingsPage {
                     title: "Colour Thresholds"
-                    Label { text: "Split type" }
+                    SettingLabel {
+                        text: "Split type"
+                        tip: "Whose colours to edit. A pixel is one of them when its red, green and blue are each "
+                             + "from the lower bound's to the upper bound's, from 0 to 255."
+                    }
                     CompactCombo {
                         id: splitType
                         Layout.preferredWidth: 200
@@ -170,20 +252,50 @@ ThemedPane {
                         Layout.columnSpan: 2
                         Layout.topMargin: 12
                         ColumnLayout {
-                            ColourField { section: "split_xcam"; key: "lower_bound"; label: "Lower bound" }
-                            ColourField { section: "split_xcam"; key: "upper_bound"; label: "Upper bound" }
+                            ColourField {
+                                section: "split_xcam"; key: "lower_bound"; label: "Lower bound"
+                                tip: "The darkest colours of the camera icon's red X, shown as Mario collects a star"
+                            }
+                            ColourField {
+                                section: "split_xcam"; key: "upper_bound"; label: "Upper bound"
+                                tip: "The brightest colours of the camera icon's red X, shown as Mario collects a star"
+                            }
                         }
                         ColumnLayout {
-                            ColourField { section: "split_ddd_enter"; key: "portal_lower_bound"; label: "Portal lower bound" }
-                            ColourField { section: "split_ddd_enter"; key: "portal_upper_bound"; label: "Portal upper bound" }
-                            ColourField { section: "split_ddd_enter"; key: "hat_lower_bound"; label: "Hat lower bound" }
-                            ColourField { section: "split_ddd_enter"; key: "hat_upper_bound"; label: "Hat upper bound" }
+                            ColourField {
+                                section: "split_ddd_enter"; key: "portal_lower_bound"; label: "Portal lower bound"
+                                tip: "The darkest colours of the DDD painting's portal: once it shows, the split waits for Mario's hat to go"
+                            }
+                            ColourField {
+                                section: "split_ddd_enter"; key: "portal_upper_bound"; label: "Portal upper bound"
+                                tip: "The brightest colours of the DDD painting's portal: once it shows, the split waits for Mario's hat to go"
+                            }
+                            ColourField {
+                                section: "split_ddd_enter"; key: "hat_lower_bound"; label: "Hat lower bound"
+                                tip: "The darkest colours of Mario's hat: it splits on the first frame without them"
+                            }
+                            ColourField {
+                                section: "split_ddd_enter"; key: "hat_upper_bound"; label: "Hat upper bound"
+                                tip: "The brightest colours of Mario's hat: it splits on the first frame without them"
+                            }
                         }
                         ColumnLayout {
-                            ColourField { section: "split_final_star"; key: "stage_lower_bound"; label: "Stage lower bound" }
-                            ColourField { section: "split_final_star"; key: "stage_upper_bound"; label: "Stage upper bound" }
-                            ColourField { section: "split_final_star"; key: "star_lower_bound"; label: "Star lower bound" }
-                            ColourField { section: "split_final_star"; key: "star_upper_bound"; label: "Star upper bound" }
+                            ColourField {
+                                section: "split_final_star"; key: "stage_lower_bound"; label: "Stage lower bound"
+                                tip: "The darkest colours of Bowser's last stage: once it shows, the Grand Star is looked for"
+                            }
+                            ColourField {
+                                section: "split_final_star"; key: "stage_upper_bound"; label: "Stage upper bound"
+                                tip: "The brightest colours of Bowser's last stage: once it shows, the Grand Star is looked for"
+                            }
+                            ColourField {
+                                section: "split_final_star"; key: "star_lower_bound"; label: "Star lower bound"
+                                tip: "The darkest colours of the Grand Star's yellow"
+                            }
+                            ColourField {
+                                section: "split_final_star"; key: "star_upper_bound"; label: "Star upper bound"
+                                tip: "The brightest colours of the Grand Star's yellow"
+                            }
                         }
                     }
                 }
@@ -191,40 +303,81 @@ ThemedPane {
                 SettingsPage {
                     title: "Error Correction"
                     Heading { text: "Undo" }
-                    Label { text: "Processing length" }
+                    SettingLabel {
+                        text: "Processing length"
+                        tip: "How many of the star count model's latest reads are kept, to tell if a star was miscounted"
+                    }
                     WholeField { section: "error"; key: "processing_length" }
-                    Label { text: "Undo minimum length" }
+                    SettingLabel {
+                        text: "Undo minimum length"
+                        tip: "How many of those reads must be of one star fewer before the star count can go back down"
+                    }
                     WholeField { section: "error"; key: "minimum_undo_count" }
-                    Label { text: "Undo average threshold" }
+                    SettingLabel {
+                        text: "Undo average threshold"
+                        tip: "How sure on average, from 0 to 1, those reads of one star fewer must be to take the star "
+                             + "back, and undo its split if it split"
+                    }
                     FractionField { section: "error"; key: "undo_threshold" }
 
                     Heading { text: "Star skips" }
-                    Label { text: "Star skip enabled" }
+                    SettingLabel {
+                        text: "Star skip enabled"
+                        tip: "Let the star count jump straight to what the model keeps reading, up to the next "
+                             + "split's star, e.g. after it missed a star"
+                    }
                     SettingSwitch { section: "error"; key: "star_skip" }
-                    Label { text: "Max star skip" }
+                    SettingLabel { text: "Max star skip"; tip: "The most stars the star count can jump by, up or down" }
                     WholeField { section: "error"; key: "max_star_skip" }
-                    Label { text: "Consecutive predictions" }
+                    SettingLabel {
+                        text: "Consecutive predictions"
+                        tip: "How many reads in a row must agree on a star count, each as sure as the Probability "
+                             + "threshold, before it's jumped to"
+                    }
                     WholeField { section: "error"; key: "minimum_consecutive_prediction" }
                 }
 
                 SettingsPage {
                     title: "Advanced"
                     Heading { text: "Frames" }
-                    Label { text: "File select offset" }
+                    SettingLabel {
+                        objectName: "fileSelectOffsetLabel"
+                        text: "File select offset"
+                        tip: "For routes timed from File Select: frames, at 30 fps, added to the 1.2 s wait between "
+                             + "choosing the file and the split. Negative splits sooner."
+                    }
                     SettingSpinBox { section: "advanced"; key: "file_select_frame_offset"; from: -35 }
-                    Label { text: "Reset frame one" }
+                    SettingLabel {
+                        text: "Reset frame one"
+                        tip: "A picture of the screen's centre as the console resets, to spot resets by. Generate "
+                             + "Reset Templates makes it from your capture."
+                    }
                     PathField { section: "advanced"; key: "reset_frame_one"; title: "Select Reset Frame One" }
-                    Label { text: "Reset frame two" }
+                    SettingLabel {
+                        text: "Reset frame two"
+                        tip: "Another picture of the screen's centre as the console resets, to spot resets by. "
+                             + "Generate Reset Templates makes it from your capture."
+                    }
                     PathField { section: "advanced"; key: "reset_frame_two"; title: "Select Reset Frame Two" }
 
                     Heading { text: "Frame rates" }
-                    Label { text: "Star frame rate" }
+                    SettingLabel {
+                        text: "Star frame rate"
+                        tip: "How many times a second the star count is read in a level. Higher counts stars sooner, "
+                             + "with more CPU."
+                    }
                     RateField { section: "advanced"; key: "star_process_frame_rate" }
-                    Label { text: "Fadeout frame rate" }
+                    SettingLabel {
+                        text: "Fadeout frame rate"
+                        tip: "How many times a second the screen is looked at during a fadeout, to split and spot resets"
+                    }
                     RateField { section: "advanced"; key: "fadeout_process_frame_rate" }
 
                     Heading { text: "Model" }
-                    Label { text: "Detection model" }
+                    SettingLabel {
+                        text: "Detection model"
+                        tip: "What reads the star count and finds the final split. What each does is shown below it."
+                    }
                     ValueCombo {
                         id: detectionModel
                         objectName: "detectionModel"
@@ -285,6 +438,27 @@ ThemedPane {
                 columnSpacing: 24
                 rowSpacing: 4
             }
+        }
+    }
+
+    // A setting's name, with what the setting does shown on hover
+    component SettingLabel: RowLayout {
+        id: label
+        property alias text: name.text
+        required property string tip
+        spacing: 6
+        Label { id: name }
+        Label { text: "ⓘ"; opacity: 0.5 }
+        HoverHandler { id: hover }
+        // Its own, not the shared ToolTip.toolTip: rich text, whose lists indent, no wider than a paragraph.
+        // Coloured like ToolTips.qml's.
+        ToolTip {
+            visible: hover.hovered
+            text: label.tip
+            width: Math.min(implicitWidth, 460)
+            palette.toolTipBase: root.M.Material.tooltipColor
+            palette.toolTipText: "white"
+            Component.onCompleted: contentItem.textFormat = Text.RichText
         }
     }
 
@@ -394,6 +568,7 @@ ThemedPane {
         required property string section
         required property string key
         required property string label
+        required property string tip
         spacing: 8
 
         function save() {
@@ -401,7 +576,7 @@ ThemedPane {
                 settings.set(section, key, [Number(blue.text), Number(green.text), Number(red.text)])
         }
 
-        Label { text: field.label; Layout.preferredWidth: 150 }
+        SettingLabel { text: field.label; tip: field.tip; Layout.preferredWidth: 170 }
         ChannelField { id: red; placeholderText: "R"; onTextEdited: field.save() }
         ChannelField { id: green; placeholderText: "G"; onTextEdited: field.save() }
         ChannelField { id: blue; placeholderText: "B"; onTextEdited: field.save() }

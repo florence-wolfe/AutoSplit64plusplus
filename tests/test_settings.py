@@ -3,6 +3,7 @@ import unittest
 from unittest import mock
 
 from PyQt6 import QtCore, QtWidgets
+from PyQt6.QtTest import QTest
 
 from autosplit64.core import config
 from autosplit64.gui import theme
@@ -37,6 +38,42 @@ class ConnectionSettingsTest(unittest.TestCase):
         self.assertEqual(self.shown_fields("Named Pipe"), ["pipe host"])
         self.assertEqual(self.shown_fields("TCP"), ["TCP host", "TCP port"])
         self.assertEqual(self.shown_fields("LiveSplit One"), ["LiveSplit One port"])
+
+
+class SettingTipsTest(unittest.TestCase):
+    """ Every setting's name has a tooltip: SettingsDialog.qml doesn't load without one """
+
+    def shown_tip(self, dialog):
+        """ The text of the tooltip shown, if one is: popups' items are in the window's overlay, made for the first one """
+        popups = [item for child in dialog.view.quickWindow().contentItem().findChildren(QtCore.QObject)
+                  if child.metaObject().className() == "QQuickOverlay" for item in child.childItems()]
+        return next((item.parent().property("text") for item in popups
+                     if item.isVisible() and "ToolTip" in item.parent().metaObject().className()), None)
+
+    def hover(self, page, name):
+        """ The tooltip shown once the mouse is over the setting's name, on the settings page at index page """
+        # Other tests' windows, deleted later, are still showing where this one will: the mouse would go to them
+        QtWidgets.QApplication.sendPostedEvents(None, QtCore.QEvent.Type.DeferredDelete)
+        dialog = SettingsDialog()
+        self.addCleanup(qt.close_window, dialog)
+        dialog.show()
+        qml(dialog, "nav").setProperty("currentIndex", page)
+        label = qml(dialog, name)
+        # Laid out on the page, before which the mouse can't be over it
+        qt.wait_until(lambda: label.isVisible() and label.width() > 0)
+
+        QTest.mouseMove(dialog.view, label.mapToScene(QtCore.QPointF(label.width() / 2, label.height() / 2)).toPoint())
+        # Its own: the mouse may have been over another setting's name when the dialog showed
+        qt.wait_until(lambda: self.shown_tip(dialog) == label.property("tip"))
+        return self.shown_tip(dialog)
+
+    def test_hovering_a_settings_name_says_what_it_does(self):
+        self.assertIn("1.2 s wait between choosing the file and the split", self.hover(5, "fileSelectOffsetLabel"))
+
+    def test_operation_modes_are_listed(self):
+        tip = self.hover(0, "operationModeLabel")
+        self.assertIn("<li><b>Probability</b> (the default)", tip)
+        self.assertIn("<li><b>X-Cam</b>", tip)
 
 
 class SettingsDialogTest(unittest.TestCase):
