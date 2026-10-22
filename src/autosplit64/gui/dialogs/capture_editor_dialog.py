@@ -230,8 +230,9 @@ class CaptureEditor(QtWidgets.QDialog):
                 config.set_key("game", "capture_size", capture_device.get_capture_size(self._devices[values["device"]][0]))
             else:
                 config.set_key("game", "capture_size", capture_window.get_capture_size(self._process_list[values["process"]][1]))
-        except:
-            pass
+        except Exception:
+            # Split detection then tells the capture's size changed
+            logging.getLogger(".log").warning("Couldn't get the capture's size to save", exc_info=True)
 
         config.set_key("game", "vc_fix", values["vcFix"])
 
@@ -280,7 +281,7 @@ class CaptureEditor(QtWidgets.QDialog):
     def closeEvent(self, e):
         try:
             self.shmem_capture.close_shmem()
-        except:
+        except Exception:
             pass  # Ignore any errors during close
         capture_window.stop()
         if sys.platform == "darwin":

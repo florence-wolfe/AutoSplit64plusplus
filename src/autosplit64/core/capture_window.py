@@ -104,7 +104,7 @@ def capture(hwnd, client_area=True):
     except Exception as e:
         # Ger the window title for debugging
         title = win32gui.GetWindowText(hwnd)
-        raise Exception(f"Failed to capture \"{title}\"\n\nMake sure the window is not minimized!")
+        raise Exception(f"Failed to capture \"{title}\"\n\nMake sure the window is not minimized!") from e
     
     return image
 

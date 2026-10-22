@@ -85,7 +85,7 @@ class SharedMemoryCapture(object):
         try:
             self._update_dimensions()
         except Exception as e:
-            raise Exception(f"Failed to update dimensions: {str(e)}")
+            raise Exception(f"Failed to update dimensions: {str(e)}") from e
         
         if not self.shmem:
             raise Exception("Shared memory not initialized")
@@ -112,4 +112,4 @@ class SharedMemoryCapture(object):
             
             return frame.reshape(self.height, self.width, 4)[:,:,:3]
         except Exception as e:
-            raise Exception(f"Failed to capture frame: {str(e)}")
+            raise Exception(f"Failed to capture frame: {str(e)}") from e

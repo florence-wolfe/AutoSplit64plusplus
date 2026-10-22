@@ -116,7 +116,7 @@ class GameCapture(object):
             try:
                 self._shmem.open_shmem()
             except Exception as e:
-                raise Exception(str(e))    
+                raise Exception(str(e)) from e
         elif self._device:
             if not capture_device.has_permission():
                 raise Exception("AutoSplit64++ needs the Camera permission to capture the video device.\n\nOpen Configure Capture to allow it.")

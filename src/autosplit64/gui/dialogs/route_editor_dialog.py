@@ -514,7 +514,7 @@ class RouteEditor(QtWidgets.QMainWindow):
             if star_count == "" and i != len(segments) - 1:
                 try:
                     star_count = self.splits.rows[-1][STAR_COUNT]
-                except:
+                except IndexError:
                     star_count = "0"
 
             self._insert_row(title=name,
