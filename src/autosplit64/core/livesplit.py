@@ -16,12 +16,12 @@ _connect_failed = False
 
 
 def connect():
-    """ Connect to LiveSplit, returning the connection or False """
+    """ Connect to LiveSplit, returning the connection or None """
     global _connected, _connect_failed
     ls_socket = _connect()
     if config.get("connection", "ls_connection_type") in (0, 1):
-        _connected = ls_socket is not False
-        _connect_failed = ls_socket is False
+        _connected = ls_socket is not None
+        _connect_failed = ls_socket is None
     return ls_socket
 
 
@@ -62,7 +62,7 @@ def _connect() -> object:
             win32pipe.SetNamedPipeHandleState(ls_socket, win32pipe.PIPE_READMODE_BYTE, None, None)
             return ls_socket
         except pywintypes.error:
-            return False
+            return None
     # Check if connection type is TCP (1 indicates TCP)
     elif ls_connection_type == 1:
         try:
@@ -72,22 +72,22 @@ def _connect() -> object:
             ls_socket.connect((config.get("connection", "ls_host"), config.get("connection", "ls_port")))
             return ls_socket
         except OSError:
-            return False
+            return None
     # Check if connection type is LiveSplit One (2 indicates LiveSplit One)
     elif ls_connection_type == 2:
         try:
             ls_server = livesplit_one.get_server(config.get("connection", "lso_port"))
         except OSError:
-            return False
-        return ls_server if ls_server.connected() else False
+            return None
+        return ls_server if ls_server.connected() else None
     else:
-        return False
+        return None
 
 
 def disconnect(ls_socket) -> None:
     global _connected
     # Check if connection even exists
-    if ls_socket is False:
+    if ls_socket is None:
         return
     # Keep the LiveSplit One server running so it stays connected between runs
     if isinstance(ls_socket, livesplit_one.LiveSplitOneServer):
@@ -106,7 +106,7 @@ def _lost():
 
 def check_connection(ls_socket) -> bool:
     # Check if connection has been established
-    if (ls_socket == False):
+    if ls_socket is None:
         return False
     # Check if communication is possible and response is received
     try:

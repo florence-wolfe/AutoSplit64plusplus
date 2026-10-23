@@ -16,7 +16,12 @@ class TcpTest(unittest.TestCase):
             port = probe.getsockname()[1]
         settings = {("connection", "ls_connection_type"): 1, ("connection", "ls_host"): "127.0.0.1", ("connection", "ls_port"): port}
         with mock.patch.object(config, "get", side_effect=lambda section, key=None: settings[(section, key)]):
-            self.assertIs(livesplit.connect(), False)
+            self.assertIsNone(livesplit.connect())
+
+    def test_no_connection(self):
+        # What split detection has before it connects, or when connecting failed
+        livesplit.disconnect(None)
+        self.assertIs(livesplit.check_connection(None), False)
 
     def split_index_answering(self, answer):
         ours, timer = socket.socketpair()
