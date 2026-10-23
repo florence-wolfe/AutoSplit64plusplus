@@ -118,6 +118,24 @@ class LiveSplitOneServerTest(unittest.TestCase):
         client.state = {"state": "Running", "index": 1}
         self.assertEqual(self.server.split_index(), 1)
 
+    def test_unreadable_messages_are_ignored(self):
+        # Not JSON objects, which ended the connection or raised in split detection
+        client = self.connect_client({"state": "Running", "index": 3})
+        with self.assertLogs(".log", "WARNING") as logs:
+            for message in ("not json", "[1, 2]", "7"):
+                client.ws.send(message)
+            self.assertEqual(self.server.split_index(), 3)
+        self.assertTrue(self.server.connected())
+        self.assertEqual(len(logs.output), 3)
+        self.assertIn("not json", logs.output[0])
+
+    def test_unreadable_state_is_no_split_index(self):
+        for state in ({"index": 3}, "Running", {"state": "Running"}):
+            with self.subTest(state=state):
+                client = self.connect_client(state)
+                with self.assertLogs(".log", "WARNING"):
+                    self.assertIs(self.server.split_index(), False)
+
     def test_reconnect_replaces_client(self):
         first = self.connect_client({"state": "Running", "index": 1})
         self.connect_client({"state": "Running", "index": 2})

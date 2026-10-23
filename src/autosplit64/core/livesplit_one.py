@@ -104,7 +104,13 @@ class LiveSplitOneServer:
                     self._client = None
 
     def _on_message(self, message):
-        data = json.loads(message)
+        try:
+            data = json.loads(message)
+        except ValueError:
+            data = None
+        if not isinstance(data, dict):
+            logging.getLogger(".log").warning("Ignored a message from LiveSplit One that couldn't be read: %.200r", message)
+            return
         # Events are informational and not responses to a command
         if "event" in data:
             return
@@ -152,6 +158,10 @@ class LiveSplitOneServer:
 
         state = self._state
         if state is None:
+            return False
+        if not isinstance(state, dict) or state.get("state") not in ("NotRunning", "Running", "Paused", "Ended") or \
+                (state["state"] in ("Running", "Paused") and not isinstance(state.get("index"), int)):
+            logging.getLogger(".log").warning("LiveSplit One's state couldn't be read: %.200r", state)
             return False
         if state["state"] == "NotRunning":
             self._last_index = -1
