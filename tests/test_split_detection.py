@@ -77,10 +77,15 @@ class RunTest(unittest.TestCase):
         # A failing check reports the error, which also stops split detection
         b.validity_check = mock.Mock(return_value=False)
         b.stop = mock.Mock()
+        b._start_listener = mock.Mock()
+        # Ends the loop, if the run went on to it
+        b._capture = mock.Mock(side_effect=lambda: setattr(b, "_running", False))
 
         with mock.patch.object(split_detection.livesplit, "connect"), self.assertNoLogs("detection", "ERROR"):
             b.run()
 
+        b._capture.assert_not_called()
+        b._start_listener.assert_not_called()
         b.stop.assert_not_called()
 
     def test_lost_livesplit_connection_is_reported_once(self):
@@ -156,11 +161,12 @@ class CaptureLostTest(unittest.TestCase):
 
     def run_with_captures(self, *captures):
         """ Run split detection with the capture failing or working at each look """
-        self.base._game_capture.capture.side_effect = list(captures) + [None] * 5
+        capture = self.base._game_capture.capture
+        capture.side_effect = list(captures) + [None] * 5
+        # Which looks were processed, counting from 1; the run ends once two were
         self.analyzed = []
-        # The run ends once two looks were processed
         def analyze():
-            self.analyzed.append(1)
+            self.analyzed.append(capture.call_count)
             self.base._running = len(self.analyzed) < 2
         self.base.analyze_fade_status = analyze
         self.base.run()
@@ -170,8 +176,8 @@ class CaptureLostTest(unittest.TestCase):
         with self.assertLogs("detection", "INFO") as logs:
             self.run_with_captures(None, Exception("Failed to capture"), Exception("Failed to capture"), None)
         self.base._error_listener.assert_not_called()
-        self.assertEqual(self.base._game_capture.reconnect.call_count, 2)
-        self.assertEqual(len(self.analyzed), 2)
+        self.base._game_capture.reconnect.assert_called()
+        self.assertEqual(self.analyzed, [1, 4])
         self.assertEqual(self.base.star_count, star_count)
         log = "\n".join(logs.output)
         self.assertIn("Lost the game capture", log)
@@ -181,7 +187,7 @@ class CaptureLostTest(unittest.TestCase):
     def test_frames_while_lost_arent_processed(self):
         self.run_with_captures(Exception("Failed to capture"), None)
         # The look that failed isn't processed, the ones after it are
-        self.assertEqual(self.base._processor_switch.execute.call_count, 2)
+        self.assertEqual(self.analyzed, [2, 3])
 
     def test_reported_once_lost_too_long(self):
         with mock.patch.object(split_detection, "CAPTURE_RECOVERY_TIME", 0):
