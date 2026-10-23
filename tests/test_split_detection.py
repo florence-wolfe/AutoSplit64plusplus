@@ -8,6 +8,7 @@ from autosplit64.core import split_detection
 from autosplit64.core.split_detection import SplitDetection
 from autosplit64.core.constants import INITIAL_STATE
 from autosplit64.core.model import PredictionInfo
+from tests.settings import patch_settings
 
 
 def make_base(star_counts=(1, 2, 3, 4, 5, 6), current=3):
@@ -201,10 +202,9 @@ class GameVersionTest(unittest.TestCase):
     """ The version the capture regions are laid out for """
 
     def version_for(self, route, override=False):
-        real_get = split_detection.config.get
         settings = {("game", "override_version"): override, ("game", "version"): "US", ("route", "path"): "routes/missing.as64"}
         with mock.patch.object(split_detection.config, "load_config"), \
-             mock.patch.object(split_detection.config, "get", side_effect=lambda section, key=None: settings.get((section, key), real_get(section, key))), \
+             patch_settings(settings, real=True), \
              mock.patch.object(split_detection, "load_route", return_value=route), \
              mock.patch.object(split_detection, "Model"), \
              mock.patch.object(split_detection, "GameCapture") as game_capture:
@@ -226,11 +226,10 @@ class LookingBetweenLooksTest(unittest.TestCase):
     """ Looking at a frame between looks changes when splits happen, by a frame, so only the AS64++ model does it """
 
     def looks_between(self, model):
-        real_get = split_detection.config.get
         settings = {("route", "path"): "routes/missing.as64", ("model", "detection"): model,
                     ("model", "legacy"): model == "legacy"}
         with mock.patch.object(split_detection.config, "load_config"), \
-             mock.patch.object(split_detection.config, "get", side_effect=lambda section, key=None: settings.get((section, key), real_get(section, key))), \
+             patch_settings(settings, real=True), \
              mock.patch.object(split_detection, "Model"), \
              mock.patch.object(split_detection, "GameCapture") as game_capture:
             game_capture.return_value.get_region_rect.return_value = [0, 0, 10, 10]
@@ -247,9 +246,8 @@ class StateTest(unittest.TestCase):
 
     def setUp(self):
         route = SimpleNamespace(version="JP", splits=[SimpleNamespace(star_count=1)], initial_star=0)
-        real_get = split_detection.config.get
         for patcher in [mock.patch.object(split_detection.config, "load_config"),
-                        mock.patch.object(split_detection.config, "get", side_effect=lambda section, key=None: "routes/missing.as64" if section == "route" else real_get(section, key)),
+                        patch_settings({("route", "path"): "routes/missing.as64"}, real=True),
                         mock.patch.object(split_detection, "load_route", return_value=route), mock.patch.object(split_detection, "Model"),
                         mock.patch.object(split_detection, "GameCapture")]:
             patcher.start()
@@ -392,7 +390,7 @@ class DetectionLogTest(unittest.TestCase):
                     ("game", "capture_device"): "", ("game", "game_region"): [1, 2, 3, 4], ("game", "capture_size"): [5, 6],
                     ("game", "vc_fix"): False, ("connection", "ls_connection_type"): 1, ("general", "srl_mode"): False,
                     ("general", "operation_mode"): 0}
-        with mock.patch.object(split_detection.config, "get", side_effect=lambda section, key=None: settings[(section, key)]):
+        with patch_settings(settings):
             setup = self.base._setup()
         for part in ("16 Star", "JP", "RTA", "3 splits", "Emulator", "[1, 2, 3, 4]", "[5, 6]", "TCP", "Probability"):
             self.assertIn(part, setup)

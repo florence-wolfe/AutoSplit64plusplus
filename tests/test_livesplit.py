@@ -5,7 +5,8 @@ import sys
 import unittest
 from unittest import mock
 
-from autosplit64.core import config, livesplit
+from autosplit64.core import livesplit
+from tests.settings import patch_settings
 
 
 class TcpTest(unittest.TestCase):
@@ -15,7 +16,7 @@ class TcpTest(unittest.TestCase):
             probe.bind(("127.0.0.1", 0))
             port = probe.getsockname()[1]
         settings = {("connection", "ls_connection_type"): 1, ("connection", "ls_host"): "127.0.0.1", ("connection", "ls_port"): port}
-        with mock.patch.object(config, "get", side_effect=lambda section, key=None: settings[(section, key)]):
+        with patch_settings(settings):
             self.assertIsNone(livesplit.connect())
 
     def test_no_connection(self):
@@ -62,7 +63,7 @@ class LostConnectionTest(unittest.TestCase):
         self.addCleanup(timer.close)
         settings = {("connection", "ls_connection_type"): 1, ("connection", "ls_host"): "127.0.0.1",
                     ("connection", "ls_port"): timer.getsockname()[1]}
-        for patcher in [mock.patch.object(config, "get", side_effect=lambda section, key=None: settings[(section, key)]),
+        for patcher in [patch_settings(settings),
                         mock.patch.object(livesplit, "_connected", False), mock.patch.object(livesplit, "_connect_failed", False)]:
             patcher.start()
             self.addCleanup(patcher.stop)
@@ -117,7 +118,7 @@ class ClientStatusTest(unittest.TestCase):
     def setUp(self):
         self.settings = {("connection", "ls_connection_type"): 1, ("connection", "ls_host"): "localhost",
                          ("connection", "ls_port"): 16834, ("connection", "ls_pipe_host"): "."}
-        for patcher in [mock.patch.object(config, "get", side_effect=lambda section, key=None: self.settings[(section, key)]),
+        for patcher in [patch_settings(self.settings),
                         mock.patch.object(livesplit, "_connected", False), mock.patch.object(livesplit, "_connect_failed", False)]:
             patcher.start()
             self.addCleanup(patcher.stop)

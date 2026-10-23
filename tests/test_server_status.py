@@ -3,16 +3,15 @@ from unittest import mock
 
 from PyQt6 import QtWidgets
 
-from autosplit64.core import config, livesplit
+from autosplit64.core import livesplit
 from autosplit64.gui.server_status import ServerStatus
 import tests.qt  # noqa: F401, for its QApplication
+from tests.settings import patch_settings
 
 
 class ClientModesTest(unittest.TestCase):
     def status(self, mode, status):
-        real_get = config.get
-        for patcher in [mock.patch.object(config, "get", side_effect=lambda section, key=None:
-                                          mode if (section, key) == ("connection", "ls_connection_type") else real_get(section, key)),
+        for patcher in [patch_settings({("connection", "ls_connection_type"): mode}, real=True),
                         mock.patch.object(livesplit, "client_status", return_value=status)]:
             patcher.start()
             self.addCleanup(patcher.stop)

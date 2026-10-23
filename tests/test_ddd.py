@@ -6,9 +6,9 @@ from unittest import mock
 import numpy as np
 
 from autosplit64.core.constants import FADEOUT_PARTIAL, NO_FADE
-from autosplit64.core import config
 from autosplit64.processes.ddd import ProcessDDDSplit, ProcessDDDSplitX
 from tests.processes import ProcessTestCase
+from tests.settings import patch_settings
 
 SETTINGS = {
     ("split_ddd_enter", "hat_lower_bound"): [0, 0, 80],
@@ -25,7 +25,7 @@ class DDDSplitTest(unittest.TestCase):
     def setUp(self):
         self.split = mock.Mock()
         self.detection = SimpleNamespace(split=self.split, fade_status=NO_FADE, get_region=mock.Mock(), fps=0)
-        patcher = mock.patch.object(config, "get", side_effect=lambda section, key=None: SETTINGS[(section, key)])
+        patcher = patch_settings(SETTINGS)
         patcher.start()
         self.addCleanup(patcher.stop)
         self.process = ProcessDDDSplit(self.detection)

@@ -7,6 +7,7 @@ from PyQt6.QtTest import QTest
 
 from autosplit64.gui.app import App
 from tests.qt import close_window, qml, wait_until
+from tests.settings import patch_settings
 
 
 class StartButtonTest(unittest.TestCase):
@@ -150,11 +151,9 @@ class MainWindowTest(unittest.TestCase):
         return bool(self.app.windowFlags() & QtCore.Qt.WindowType.WindowStaysOnTopHint)
 
     def test_always_on_top_follows_the_setting(self):
-        from autosplit64.core import config
-        get = config.get
         for on_top in (True, False):
             # Applying settings starts the LiveSplit One server in its connection mode, the default on macOS
-            with self.subTest(on_top), mock.patch.object(config, "get", lambda section, key=None: on_top if key == "on_top" else get(section, key)), \
+            with self.subTest(on_top), patch_settings({("general", "on_top"): on_top}, real=True), \
                     mock.patch("autosplit64.gui.app.livesplit.connect"), mock.patch("autosplit64.gui.app.livesplit_one.stop_server"):
                 self.app.settings_updated()
                 self.assertIs(self.on_top(), on_top)

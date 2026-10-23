@@ -7,6 +7,7 @@ from unittest import mock
 
 from autosplit64 import main
 from autosplit64.core import config
+from tests.settings import patch_settings
 
 ROUTE = Path(__file__).parent.parent / "routes" / "16_lblj.as64"
 
@@ -17,9 +18,7 @@ class RouteTimingTest(unittest.TestCase):
         self.addCleanup(shutil.rmtree, directory)
         path = directory / "route.as64"
         path.write_bytes(content)
-        real_get = config.get
-        with mock.patch.object(config, "get", side_effect=lambda section, key=None:
-                               str(path) if (section, key) == ("route", "path") else real_get(section, key)):
+        with patch_settings({("route", "path"): str(path)}, real=True):
             return main.route_timing()
 
     def test_valid_route(self):

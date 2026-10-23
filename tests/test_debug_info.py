@@ -12,6 +12,7 @@ import numpy as np
 
 from autosplit64.core import config, debug_info, logs
 from autosplit64.core.constants import GAME_REGION, STAR_REGION
+from tests.settings import patch_settings
 
 
 class SaveTest(unittest.TestCase):
@@ -33,7 +34,7 @@ class SaveTest(unittest.TestCase):
             Path(f"templates/reset_{name}.jpg").write_bytes(b"jpeg")
         self.settings = {("route", "path"): "routes/16 star.as64", ("advanced", "reset_frame_one"): "templates/reset_one.jpg",
                          ("advanced", "reset_frame_two"): "templates/reset_two.jpg"}
-        patcher = mock.patch.object(config, "get", side_effect=lambda section, key=None: self.settings[(section, key)])
+        patcher = patch_settings(self.settings)
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -89,9 +90,7 @@ class FakeCapture:
 
 class CaptureFrameTest(unittest.TestCase):
     def setUp(self):
-        real_get = config.get
-        patcher = mock.patch.object(config, "get", side_effect=lambda section, key=None:
-                                    "" if (section, key) == ("route", "path") else real_get(section, key))
+        patcher = patch_settings({("route", "path"): ""}, real=True)
         patcher.start()
         self.addCleanup(patcher.stop)
 

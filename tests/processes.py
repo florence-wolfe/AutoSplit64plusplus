@@ -5,9 +5,10 @@ from unittest import mock
 
 import numpy as np
 
-from autosplit64.core import config, detection_model
+from autosplit64.core import detection_model
 from autosplit64.core.constants import NO_FADE, SPLIT_NORMAL
 from autosplit64.core.model import PredictionInfo
+from tests.settings import patch_settings
 
 SETTINGS = {
     ("general", "mid_run_start_enabled"): True,
@@ -53,7 +54,7 @@ class ProcessTestCase(unittest.TestCase):
             route=SimpleNamespace(splits=splits, initial_star=0), fadein_count=0, fadeout_count=0,
             current_time=100.0, last_split=0.0, start_on_reset=True, fps=0.0, reset_logo_shown=False,
             xcam_count=0, in_xcam=False, collection_time=0.0, **functions)
-        patcher = mock.patch.object(config, "get", side_effect=lambda section, key=None: SETTINGS[(section, key)])
+        patcher = patch_settings(SETTINGS)
         patcher.start()
         self.addCleanup(patcher.stop)
 
