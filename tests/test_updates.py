@@ -10,22 +10,12 @@ from PyQt6.QtTest import QTest
 from autosplit64.core import updater
 from autosplit64.gui import app as app_module, updates
 from autosplit64.gui.app import App
-from tests.qt import close_window, qml
+from tests.qt import answering, close_window, qml
 
 _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
 RELEASE = updater.Release("0.5.0", "AutoSplit64plusplus-v0.5.0-macos-arm64.zip", "https://example.com/app.zip",
                           "https://example.com/SHA256SUMS", "https://example.com/release")
-
-
-def answering(choice, record=None):
-    """ Answer message boxes by clicking the button with the given text """
-    def exec_(box):
-        if record is not None:
-            record.append({b.text(): b.isEnabled() for b in box.buttons()})
-        next(b for b in box.buttons() if b.text() == choice).click()
-        return 0
-    return mock.patch.object(QtWidgets.QMessageBox, "exec", exec_)
 
 
 class UpdatesTestCase(unittest.TestCase):

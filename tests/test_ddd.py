@@ -8,7 +8,7 @@ import numpy as np
 from autosplit64.core.constants import FADEOUT_PARTIAL, NO_FADE
 from autosplit64.core import config
 from autosplit64.processes.ddd import ProcessDDDSplit, ProcessDDDSplitX
-from tests.test_standard_processes import ProcessTestCase
+from tests.processes import ProcessTestCase
 
 SETTINGS = {
     ("split_ddd_enter", "hat_lower_bound"): [0, 0, 80],

@@ -4,7 +4,7 @@ from unittest import mock
 
 from autosplit64.core.constants import FADEOUT_PARTIAL
 from autosplit64.processes import final
-from tests.test_standard_processes import SETTINGS, ClockTestCase
+from tests.processes import SETTINGS, ClockTestCase
 
 FINAL_SETTINGS = {("split_final_star", "star_lower_bound"): [0, 0, 0], ("split_final_star", "star_upper_bound"): [0, 0, 0]}
 

@@ -5,7 +5,7 @@ import numpy as np
 
 from autosplit64.core.constants import FADEOUT_PARTIAL
 from autosplit64.processes.xcam import ProcessXCam, ProcessXCamStartUpSegment
-from tests.test_standard_processes import ProcessTestCase
+from tests.processes import ProcessTestCase
 
 # The red of the X-Cam's camera symbol, and a frame without it (BGR)
 XCAM = np.full((20, 20, 3), (0, 0, 150), np.uint8)

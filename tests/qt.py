@@ -1,4 +1,5 @@
 import time
+from unittest import mock
 
 from PyQt6 import QtCore, QtWidgets, sip
 
@@ -34,3 +35,13 @@ def wait_until(condition, timeout=2):
     while not condition() and time.monotonic() < deadline:
         QtWidgets.QApplication.processEvents()
         time.sleep(0.01)
+
+
+def answering(choice, record=None):
+    """ Answer message boxes by clicking the button with the given text """
+    def exec_(box):
+        if record is not None:
+            record.append({b.text(): b.isEnabled() for b in box.buttons()})
+        next(b for b in box.buttons() if b.text() == choice).click()
+        return 0
+    return mock.patch.object(QtWidgets.QMessageBox, "exec", exec_)

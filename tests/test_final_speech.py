@@ -6,7 +6,7 @@ import numpy as np
 
 from autosplit64.core.constants import FADEOUT_PARTIAL, GAME_REGION, NO_HUD_REGION
 from autosplit64.processes import final_speech
-from tests.test_standard_processes import SETTINGS, ClockTestCase
+from tests.processes import SETTINGS, ClockTestCase
 
 # Grand Star yellow, in BGR
 YELLOW = (0, 255, 255)
