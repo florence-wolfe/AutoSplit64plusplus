@@ -7,6 +7,15 @@ def is_black(image, threshold=0.1, percent_threshold=0.9):
     return np.sum(img_1d < threshold) > len(img_1d) * percent_threshold
 
 
+def colour_shown(image, lower, upper, threshold):
+    """
+    Whether image shows the colour between lower and upper, BGR: whether only what's that colour in it isn't black by
+    is_black's percent threshold, where the colour's own dark channels count as black too
+    """
+    mask = cv2.inRange(image, np.array(lower, dtype="uint8"), np.array(upper, dtype="uint8"))
+    return not is_black(cv2.bitwise_and(image, image, mask=mask), 0.1, threshold)
+
+
 def is_white(image, threshold=0.8):
     img_1d = convert_to_np([image]).flatten()
     return np.sum(img_1d > threshold) > len(img_1d) * 0.99

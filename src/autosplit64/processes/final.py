@@ -1,13 +1,10 @@
 import logging
 import time
 
-import cv2
-import numpy as np
-
 from autosplit64.core.constants import FADEOUT_COMPLETE, FADEOUT_PARTIAL, NO_HUD_REGION
 
 from autosplit64.core import config
-from autosplit64.core.image_utils import is_black
+from autosplit64.core.image_utils import colour_shown
 from autosplit64.core.processing import Process, Signal
 
 # What split detection does and why, in the session log
@@ -28,13 +25,7 @@ class ProcessFindFinalStage(Process):
         if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
 
-        lower = np.array(self.bowser_lower_bound, dtype="uint8")
-        upper = np.array(self.bowser_upper_bound, dtype="uint8")
-
-        star_mask = cv2.inRange(no_hud, lower, upper)
-        output = cv2.bitwise_and(no_hud, no_hud, mask=star_mask)
-
-        if not is_black(output, 0.1, 0.9):
+        if colour_shown(no_hud, self.bowser_lower_bound, self.bowser_upper_bound, 0.9):
             return self.signals["ENTERED"]
         else:
             return self.signals["LOOP"]
@@ -94,15 +85,7 @@ class ProcessFindFinalStar(Process):
         super().on_transition()
 
     def _star_visible(self, threshold=0.999):
-        no_hud = self.core.get_region(NO_HUD_REGION)
-
-        lower = np.array(self.star_lower_bound, dtype="uint8")
-        upper = np.array(self.star_upper_bound, dtype="uint8")
-
-        star_mask = cv2.inRange(no_hud, lower, upper)
-        output = cv2.bitwise_and(no_hud, no_hud, mask=star_mask)
-
-        return not is_black(output, 0.1, threshold)
+        return colour_shown(self.core.get_region(NO_HUD_REGION), self.star_lower_bound, self.star_upper_bound, threshold)
 
 
 class ProcessFinalStarSplit(Process):
@@ -130,12 +113,4 @@ class ProcessFinalStarSplit(Process):
         super().on_transition()
 
     def _star_visible(self, threshold=0.999):
-        no_hud = self.core.get_region(NO_HUD_REGION)
-
-        lower = np.array(self.star_lower_bound, dtype="uint8")
-        upper = np.array(self.star_upper_bound, dtype="uint8")
-
-        star_mask = cv2.inRange(no_hud, lower, upper)
-        output = cv2.bitwise_and(no_hud, no_hud, mask=star_mask)
-
-        return not is_black(output, 0.1, threshold)
+        return colour_shown(self.core.get_region(NO_HUD_REGION), self.star_lower_bound, self.star_upper_bound, threshold)

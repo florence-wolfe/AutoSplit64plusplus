@@ -1,10 +1,8 @@
-import cv2
-import numpy as np
 import time
 
 from autosplit64.core.constants import FADEIN_COMPLETE, FADEIN_PARTIAL, FADEOUT_COMPLETE, FADEOUT_PARTIAL, XCAM_REGION
 
-from autosplit64.core.image_utils import is_black
+from autosplit64.core.image_utils import colour_shown
 from autosplit64.core.processing import Process
 
 
@@ -55,14 +53,7 @@ class ProcessXCamStartUpSegment(Process):
         if self.core.fadeout_count == 1:
             self.core.fps = 29.97
             self.core.enable_predictions(not self._predictions)
-            xcam = self.core.get_region(XCAM_REGION)
-            lower = np.array(self.lower_bound, dtype="uint8")
-            upper = np.array(self.upper_bound, dtype="uint8")
-
-            mask = cv2.inRange(xcam, lower, upper)
-            output = cv2.bitwise_and(xcam, xcam, mask=mask)
-
-            if not is_black(output, 0.1, 0.7):
+            if colour_shown(self.core.get_region(XCAM_REGION), self.lower_bound, self.upper_bound, 0.7):
                 self.core.split()
                 self.core.fps = 10
                 self.core.fadeout_count = 0

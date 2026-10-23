@@ -11,7 +11,7 @@ import numpy as np
 
 from autosplit64.core import config
 from autosplit64.core.constants import FADEOUT_COMPLETE, FADEOUT_PARTIAL, GAME_REGION, NO_HUD_REGION
-from autosplit64.core.image_utils import is_black
+from autosplit64.core.image_utils import colour_shown
 from autosplit64.core.processing import Process
 
 # What split detection does and why, in the session log
@@ -51,21 +51,20 @@ def speech_shown(game):
             and text.any(axis=0).mean() >= SPEECH_SPREAD[0] and text.any(axis=1).mean() >= SPEECH_SPREAD[1])
 
 
-def _star_mask(no_hud):
-    lower = np.array(config.get("split_final_star", "star_lower_bound"), dtype="uint8")
-    upper = np.array(config.get("split_final_star", "star_upper_bound"), dtype="uint8")
-    return cv2.inRange(no_hud, lower, upper)
+def _star_bounds():
+    """ The Grand Star's yellow, from lower to upper """
+    return config.get("split_final_star", "star_lower_bound"), config.get("split_final_star", "star_upper_bound")
 
 
 def star_visible(core, threshold):
     """ Whether there's Grand Star yellow in more of the region than threshold allows """
-    no_hud = core.get_region(NO_HUD_REGION)
-    return not is_black(cv2.bitwise_and(no_hud, no_hud, mask=_star_mask(no_hud)), 0.1, threshold)
+    return colour_shown(core.get_region(NO_HUD_REGION), *_star_bounds(), threshold)
 
 
 def star_yellow(core):
     """ How much of the region is Grand Star yellow """
-    star_mask = _star_mask(core.get_region(NO_HUD_REGION))
+    lower, upper = _star_bounds()
+    star_mask = cv2.inRange(core.get_region(NO_HUD_REGION), np.array(lower, dtype="uint8"), np.array(upper, dtype="uint8"))
     return cv2.countNonZero(star_mask) / star_mask.size
 
 

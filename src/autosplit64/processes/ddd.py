@@ -4,7 +4,7 @@ import numpy as np
 from autosplit64.core.constants import FADEOUT_COMPLETE, FADEOUT_PARTIAL, GAME_REGION, NO_HUD_REGION
 
 from autosplit64.core import config
-from autosplit64.core.image_utils import is_black
+from autosplit64.core.image_utils import colour_shown
 from autosplit64.core.processing import Process, Signal
 
 
@@ -22,13 +22,7 @@ class ProcessFindDDDPortal(Process):
         if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
             return self.signals["FADEOUT"]
 
-        lower = np.array(self.portal_lower_bound, dtype="uint8")
-        upper = np.array(self.portal_upper_bound, dtype="uint8")
-
-        portal_mask = cv2.inRange(no_hud, lower, upper)
-        output = cv2.bitwise_and(no_hud, no_hud, mask=portal_mask)
-
-        if not is_black(output, 0.1, 0.99):
+        if colour_shown(no_hud, self.portal_lower_bound, self.portal_upper_bound, 0.99):
             return self.signals["FOUND"]
         else:
             return self.signals["LOOP"]
