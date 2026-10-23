@@ -13,7 +13,7 @@ from ..constants import (
 
 from autosplit64.core import resource_utils, config, livesplit, livesplit_one, logs
 from autosplit64.core.constants import INITIAL_STATE, SPLIT_FADE_ONLY, SPLIT_FINAL, SPLIT_MIPS, SPLIT_MIPS_X, SPLIT_XCAM
-from autosplit64.gui.qml_view import qml_view
+from autosplit64.gui.qml_view import Values, qml_view
 
 # The connection to LiveSplit, as the dot in the main window shows it
 LIVESPLIT_STATES = {"connected": "LiveSplit connected", "waiting": "waiting for LiveSplit One",
@@ -103,13 +103,12 @@ def describe(status, livesplit):
             needs, counted)
 
 
-class Debug(QtCore.QObject):
+class Debug(Values):
     """
     What DebugDialog.qml shows, in values: what split detection is doing, its fields, whether Advanced is
     shown, the update rate and whether there's a previous log. line() is each new event, after lines, and
     its other signals are the QML's changes and clicks.
     """
-    changed = QtCore.pyqtSignal()
     line = QtCore.pyqtSignal(str)
     advanced_toggled = QtCore.pyqtSignal(bool)
     update_rate_changed = QtCore.pyqtSignal(int)
@@ -118,22 +117,13 @@ class Debug(QtCore.QObject):
     save_info = QtCore.pyqtSignal()
 
     def __init__(self, lines):
-        super().__init__()
+        super().__init__({"status": "", "split": "", "needs": "", "counted": "", "fields": {}, "advanced": False,
+                         "updateRate": 1, "oldLog": False})
         self._lines = lines
-        self._values = {"status": "", "split": "", "needs": "", "counted": "", "fields": {}, "advanced": False,
-                        "updateRate": 1, "oldLog": False}
-
-    @QtCore.pyqtProperty("QVariantMap", notify=changed)
-    def values(self):
-        return self._values
 
     @QtCore.pyqtProperty("QVariantList", constant=True)
     def lines(self):
         return self._lines
-
-    def update(self, **values):
-        self._values.update(values)
-        self.changed.emit()
 
 
 class DebugDialog(QtWidgets.QDialog):

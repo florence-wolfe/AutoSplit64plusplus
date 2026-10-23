@@ -12,7 +12,7 @@ if sys.platform == "darwin":
 else:
     from autosplit64.core import capture_window_win as capture_window
 from autosplit64.core import resource_utils
-from ..qml_view import qml_view
+from ..qml_view import Values, qml_view
 from ..constants import (
     ICON_PATH,
     PLACEHOLDER_PATH,
@@ -32,13 +32,12 @@ class Preview(QtQuick.QQuickImageProvider):
         return self.image, self.image.size()
 
 
-class Capture(QtCore.QObject):
+class Capture(Values):
     """
     What CaptureEditor.qml shows, in values: the capture's source, its permission, the processes and devices
     and the chosen ones, whether to use OBS and the VC fix, the game region, and the capture's version.
     choose(key, value) and set_region() are the QML's changes, and its other signals the buttons' clicks.
     """
-    changed = QtCore.pyqtSignal()
     chosen = QtCore.pyqtSignal(str)
     capture_screen = QtCore.pyqtSignal()
     auto_detect = QtCore.pyqtSignal()
@@ -48,19 +47,10 @@ class Capture(QtCore.QObject):
     open_settings = QtCore.pyqtSignal()
 
     def __init__(self):
-        super().__init__()
-        self._values = {"mac": sys.platform == "darwin", "obs": sys.platform == "win32", "source": "window",
-                        "permissionMissing": False, "permissionText": "", "allowText": "", "useObs": False,
-                        "processes": [], "process": 0, "devices": [], "device": 0, "vcFix": False,
-                        "region": [0, 0, 50, 50], "preview": 0}
-
-    @QtCore.pyqtProperty("QVariantMap", notify=changed)
-    def values(self):
-        return self._values
-
-    def update(self, **values):
-        self._values.update(values)
-        self.changed.emit()
+        super().__init__({"mac": sys.platform == "darwin", "obs": sys.platform == "win32", "source": "window",
+                         "permissionMissing": False, "permissionText": "", "allowText": "", "useObs": False,
+                         "processes": [], "process": 0, "devices": [], "device": 0, "vcFix": False,
+                         "region": [0, 0, 50, 50], "preview": 0})
 
     @QtCore.pyqtSlot(str, "QVariant")
     def choose(self, key, value):

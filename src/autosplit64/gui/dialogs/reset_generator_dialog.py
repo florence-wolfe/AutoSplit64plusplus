@@ -8,7 +8,7 @@ import cv2
 from ..constants import (
     ICON_PATH
 )
-from ..qml_view import qml_view
+from ..qml_view import Values, qml_view
 from autosplit64.core import resource_utils
 
 from autosplit64.core.game_capture import GameCapture
@@ -26,30 +26,20 @@ def image_url(path, version):
     return QtCore.QUrl.fromLocalFile(os.path.abspath(path)).toString() + f"?{version}"
 
 
-class Templates(QtCore.QObject):
+class Templates(Values):
     """
     What ResetGeneratorDialog.qml shows, in values: the generate button's status, whether it's busy, whether
     frames were generated, the frame chosen for each template, and the images shown. Its other signals are
     the QML's clicks, and failed() shows an error.
     """
-    changed = QtCore.pyqtSignal()
     generate = QtCore.pyqtSignal()
     apply = QtCore.pyqtSignal()
     cancel = QtCore.pyqtSignal()
     failed = QtCore.pyqtSignal(str)
 
     def __init__(self):
-        super().__init__()
-        self._values = {"status": "Generate", "busy": False, "generated": False, "chosen": [2, 3], "shown": ["", ""]}
+        super().__init__({"status": "Generate", "busy": False, "generated": False, "chosen": [2, 3], "shown": ["", ""]})
         self._version = 0
-
-    @QtCore.pyqtProperty("QVariantMap", notify=changed)
-    def values(self):
-        return self._values
-
-    def update(self, **values):
-        self._values.update(values)
-        self.changed.emit()
 
     def show_images(self, paths):
         # A new version each time: the generated frames are written to the same files

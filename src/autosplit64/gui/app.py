@@ -10,7 +10,7 @@ from autosplit64.core.resource_utils import base_path, absolute_path, rel_to_abs
 from . import constants
 from . import theme
 from .dialogs import AboutDialog, CaptureEditor, SettingsDialog, RouteEditor, ResetGeneratorDialog, DebugDialog
-from .qml_view import qml_window
+from .qml_view import Values, qml_window
 from .server_status import ServerStatus
 from .tip_window import TipWindow
 from .updates import Updates, UpdateBadge
@@ -27,13 +27,12 @@ def _url(path):
     return QtCore.QUrl.fromLocalFile(base_path(path)).toString()
 
 
-class Main(QtCore.QObject):
+class Main(Values):
     """
     What MainWindow.qml shows, in values: the route's splits, the current one, the star counts, the start
     button's state, the connection's status, the version and the theme's colors for them. Its other signals
     are the window's clicks and drags, and menu() and trigger() are its menu.
     """
-    changed = QtCore.pyqtSignal()
     start_clicked = QtCore.pyqtSignal()
     restart = QtCore.pyqtSignal()
     version_clicked = QtCore.pyqtSignal()
@@ -47,23 +46,14 @@ class Main(QtCore.QObject):
         menu_items() are the menu's entries, see App._menu_items(), set_general(key, checked) sets a checkbox's
         setting, copy_status() copies the address, and screen_top() is where the window's screen's free space starts
         """
-        super().__init__()
+        super().__init__({"splits": [], "current": 0, "starCount": "-", "splitStar": "-", "start": "start",
+                         "statusColor": "gray", "statusTip": "", "version": "", "update": False, "versionTip": "",
+                         "muted": "gray", "green": "green"})
         self._menu_items = menu_items
         self._set_general = set_general
         self._copy_status = copy_status
         self._screen_top = screen_top
         self._actions = {}
-        self._values = {"splits": [], "current": 0, "starCount": "-", "splitStar": "-", "start": "start",
-                        "statusColor": "gray", "statusTip": "", "version": "", "update": False, "versionTip": "",
-                        "muted": "gray", "green": "green"}
-
-    @QtCore.pyqtProperty("QVariantMap", notify=changed)
-    def values(self):
-        return self._values
-
-    def update(self, **values):
-        self._values.update(values)
-        self.changed.emit()
 
     @QtCore.pyqtSlot(result=str)
     def copy_status(self):

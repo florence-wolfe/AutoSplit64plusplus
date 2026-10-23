@@ -57,3 +57,20 @@ def qml_window(parent, name, **context):
     _load(view, name, context, {})
     _fill(parent, QtWidgets.QWidget.createWindowContainer(view, parent))
     return view
+
+
+class Values(QtCore.QObject):
+    """ What a window's QML shows, in values, which shows them again whenever update() changes them """
+    changed = QtCore.pyqtSignal()
+
+    def __init__(self, values):
+        super().__init__()
+        self._values = values
+
+    @QtCore.pyqtProperty("QVariantMap", notify=changed)
+    def values(self):
+        return self._values
+
+    def update(self, **values):
+        self._values.update(values)
+        self.changed.emit()

@@ -11,7 +11,7 @@ from PyQt6.QtGui import QIcon
 from autosplit64.core import resource_utils
 from autosplit64.core import route_loader, config
 from autosplit64.core.route import Route, Split
-from autosplit64.gui.qml_view import qml_view
+from autosplit64.gui.qml_view import Values, qml_view
 from autosplit64.gui.constants import (
     ICON_PATH
 )
@@ -122,12 +122,11 @@ class Splits(QtCore.QAbstractListModel):
         self.icon_clicked.emit(row)
 
 
-class Editor(QtCore.QObject):
+class Editor(Values):
     """
     The route's details for RouteEditor.qml, in values: its title, category, initial star, version and timing.
     Its other signals are the QML's clicks, and failed() shows an error.
     """
-    changed = QtCore.pyqtSignal()
     failed = QtCore.pyqtSignal(str, str)
     new = QtCore.pyqtSignal()
     open = QtCore.pyqtSignal()
@@ -142,16 +141,7 @@ class Editor(QtCore.QObject):
     cancel = QtCore.pyqtSignal()
 
     def __init__(self):
-        super().__init__()
-        self._values = {"title": "", "category": "", "initialStar": "", "version": "JP", "timing": TIMING_RTA}
-
-    @QtCore.pyqtProperty("QVariantMap", notify=changed)
-    def values(self):
-        return self._values
-
-    def update(self, **values):
-        self._values.update(values)
-        self.changed.emit()
+        super().__init__({"title": "", "category": "", "initialStar": "", "version": "JP", "timing": TIMING_RTA})
 
     @QtCore.pyqtSlot(str, str)
     def set(self, key, text):
