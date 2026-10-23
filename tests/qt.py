@@ -32,6 +32,14 @@ def qml(view, name):
     return next((item for item in objects if item.objectName() == name), None)
 
 
+def run_queued():
+    """
+    Run what's queued for the GUI thread now: signals emitted on other threads, and 0 ms timers, which Qt queues the
+    same way. Unlike waiting a while, it doesn't depend on how fast the machine is.
+    """
+    QtWidgets.QApplication.sendPostedEvents()
+
+
 def wait_until(condition, timeout=2):
     """ Process events until condition() is true, e.g. once a QML transition ended, or timeout seconds passed """
     deadline = time.monotonic() + timeout

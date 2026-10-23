@@ -2,11 +2,9 @@ import threading
 import unittest
 from unittest import mock
 
-from PyQt6.QtTest import QTest
-
 from autosplit64 import main
 from autosplit64.gui.app import App
-from tests.qt import close_window
+from tests.qt import close_window, run_queued
 
 
 class ListenerThreadTest(unittest.TestCase):
@@ -28,14 +26,14 @@ class ListenerThreadTest(unittest.TestCase):
         self.autosplit64 = main.AutoSplit64()
         self.addCleanup(close_window, self.autosplit64.app)
         # Only record what the listeners cause
-        QTest.qWait(50)
+        run_queued()
         self.calls.clear()
 
     def call_from_detection_thread(self, function, *args):
         thread = threading.Thread(target=function, args=args)
         thread.start()
         thread.join()
-        QTest.qWait(50)
+        run_queued()
 
     def assert_on_gui_thread(self, names):
         self.assertEqual([name for name, _ in self.calls], names)

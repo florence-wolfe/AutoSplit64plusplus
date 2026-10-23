@@ -4,11 +4,10 @@ from pathlib import Path
 from unittest import mock
 
 from PyQt6 import QtWidgets
-from PyQt6.QtTest import QTest
 
 from autosplit64.core import app_location, config
 from autosplit64.gui.app import App
-from tests.qt import answering, close_window
+from tests.qt import answering, close_window, run_queued
 
 DOWNLOADED = Path("/private/var/folders/xy/T/AppTranslocation/1234/d/AutoSplit64++.app")
 
@@ -38,7 +37,7 @@ class MovePromptTest(unittest.TestCase):
             self.addCleanup(patcher.stop)
         app = App()
         self.addCleanup(close_window, app)
-        QTest.qWait(50)
+        run_queued()
         return app, texts
 
     def test_move(self):
@@ -72,7 +71,7 @@ class MovePromptTest(unittest.TestCase):
         with mock.patch.object(QtWidgets.QMessageBox, "exec") as exec_:
             app = App()
             self.addCleanup(close_window, app)
-            QTest.qWait(50)
+            run_queued()
         exec_.assert_not_called()
 
     def test_no_prompt_elsewhere(self):
