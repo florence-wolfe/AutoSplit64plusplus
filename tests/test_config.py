@@ -26,6 +26,41 @@ class SetKeyTest(unittest.TestCase):
         self.assertEqual(config.get("new_section", "key"), "value")
 
 
+class RollbackTest(unittest.TestCase):
+    """ What Configure Capture's Cancel and closing it go back to: the settings as they were when it opened """
+
+    def setUp(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        for patcher in [mock.patch.object(config, "_config", {"game": {"vc_fix": False, "game_region": [0, 0, 4, 3]}}),
+                        mock.patch.object(config, "_rollback", None),
+                        mock.patch.object(config, "_CONFIG_FILE_NAME", os.path.join(directory.name, "config.ini"))]:
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        config.create_rollback()
+
+    def test_rollback_undoes_changes(self):
+        config.set_key("game", "vc_fix", True)
+        config.get("game", "game_region").append(5)
+        config.set_key("general", "on_top", True)
+        config.rollback()
+        self.assertEqual(config._config, {"game": {"vc_fix": False, "game_region": [0, 0, 4, 3]}})
+
+    def test_saved_changes_are_kept(self):
+        # Apply saves, then closes, which rolls back
+        config.set_key("game", "vc_fix", True)
+        config.save_config()
+        config.rollback()
+        self.assertIs(config.get("game", "vc_fix"), True)
+
+    def test_rolling_back_twice(self):
+        config.set_key("game", "vc_fix", True)
+        config.rollback()
+        config.set_key("game", "vc_fix", True)
+        config.rollback()
+        self.assertIs(config.get("game", "vc_fix"), False)
+
+
 
 class DefaultConnectionModeTest(unittest.TestCase):
     """ Named pipes only exist on Windows, and LiveSplit desktop only runs there """

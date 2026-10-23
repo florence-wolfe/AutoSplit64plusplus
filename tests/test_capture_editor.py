@@ -97,6 +97,14 @@ class GameRegionTest(CaptureEditorTest):
                          ([30, 40, 320, 240], "Emulator", "window", [640, 480], True, False))
         config.save_config.assert_called_once()
 
+    def test_cancel_keeps_the_settings_as_they_were(self):
+        editor, _ = self.editor()
+        editor.capture.set_region(30, 40, 320, 240)
+        config.set_key("game", "vc_fix", True)
+        editor.cancel_clicked()
+        self.assertEqual(config.get("game", "game_region"), [10, 20, 300, 200])
+        self.assertIsNone(config.get("game").get("vc_fix"))
+
     def test_auto_detect_finds_the_game_inside_black_borders(self):
         frame = np.zeros((480, 640, 3), np.uint8)
         frame[40:440, 60:580] = 200
