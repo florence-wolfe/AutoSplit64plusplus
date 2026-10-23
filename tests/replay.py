@@ -459,9 +459,13 @@ def download(recording):
         downloader.download([recording.url])
 
 
+def recordings():
+    """ Every recording, without irises.json, which labels the irises in some of them """
+    return [Recording.load(path.stem) for path in sorted(RECORDINGS.glob("*.json")) if path.name != "irises.json"]
+
+
 if __name__ == "__main__":
-    for path in sorted(RECORDINGS.glob("*.json")):
-        recording = Recording.load(path.stem)
+    for recording in recordings():
         if recording.available():
             print(f"{recording.name}: already downloaded")
         else:
