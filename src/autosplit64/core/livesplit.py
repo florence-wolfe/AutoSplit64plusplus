@@ -25,13 +25,18 @@ def connect():
     return ls_socket
 
 
+def _pipe_path():
+    """ LiveSplit's named pipe on the configured host """
+    return "\\\\" + config.get("connection", "ls_pipe_host") + "\\pipe\\LiveSplit"
+
+
 def client_status():
     """ (state, address, error) of the connection to LiveSplit in TCP or named pipe mode, with state "connected", "stopped" or "error" """
     if config.get("connection", "ls_connection_type") == 1:
         address = f"{config.get('connection', 'ls_host')}:{config.get('connection', 'ls_port')}"
         hint = "Is LiveSplit's server started?"
     else:
-        address = "\\\\" + config.get("connection", "ls_pipe_host") + "\\pipe\\LiveSplit"
+        address = _pipe_path()
         hint = "Is LiveSplit running?"
         if sys.platform != "win32":
             return "error", address, "Named pipes are only available on Windows"
@@ -50,11 +55,9 @@ def _connect() -> object:
 
     # Check if connection type is named pipe (0 indicates named pipe)
     if ls_connection_type == 0 and sys.platform == "win32":
-        # Get named pipe host from config. Name is always LiveSplit
-        ls_pipe_path = "\\\\" + config.get("connection", "ls_pipe_host") + "\\pipe\\LiveSplit"
         try:
             # Connect to named pipe
-            ls_socket = win32file.CreateFile(ls_pipe_path, win32file.GENERIC_READ | win32file.GENERIC_WRITE, 0, None, win32file.OPEN_EXISTING, 0, None )
+            ls_socket = win32file.CreateFile(_pipe_path(), win32file.GENERIC_READ | win32file.GENERIC_WRITE, 0, None, win32file.OPEN_EXISTING, 0, None )
             # Set the pipe to byte mode
             win32pipe.SetNamedPipeHandleState(ls_socket, win32pipe.PIPE_READMODE_BYTE, None, None)
             return ls_socket
@@ -153,15 +156,10 @@ def undo(ls_socket) -> None:
 def split_index(ls_socket):
     if isinstance(ls_socket, livesplit_one.LiveSplitOneServer):
         return ls_socket.split_index()
+    send(ls_socket, "getsplitindex\r\n")
     # Check if connection type is pipe or socket
     # If it is a socket:
     if isinstance(ls_socket, socket.socket):
-        # Send the command to the socket
-        try:
-            ls_socket.send("getsplitindex\r\n".encode('utf-8'))
-        except OSError:
-            raise _lost()
-        
         # Wait for response
         readable = select.select([ls_socket], [], [], 0.5)
         if readable[0]:
@@ -180,11 +178,6 @@ def split_index(ls_socket):
             return False
     # If it is a pipe:
     else:
-        # Send the command to the pipe
-        try:
-            win32file.WriteFile(ls_socket, "getsplitindex\r\n".encode('utf-8'))
-        except pywintypes.error:
-            raise _lost()
         # Get current time
         start_time = time.time()
         # Set timeout to 0.5 seconds
