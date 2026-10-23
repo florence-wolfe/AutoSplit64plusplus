@@ -18,6 +18,8 @@ from Foundation import NSBundle, NSObject
 
 from .capture_window_mac import bgr_frame
 
+log = logging.getLogger(".log")
+
 _DEVICE_TYPES = [
     AV.AVCaptureDeviceTypeExternal,  # Capture cards and virtual cameras like OBS
     AV.AVCaptureDeviceTypeBuiltInWideAngleCamera,
@@ -64,7 +66,7 @@ def request_permission():
     if getattr(sys, "frozen", False) and bundle_id:
         reset = subprocess.run(["tccutil", "reset", "Camera", bundle_id], capture_output=True, text=True)
         if reset.returncode != 0:
-            logging.getLogger(".log").warning("Resetting the Camera permission failed: %s", reset.stderr.strip())
+            log.warning("Resetting the Camera permission failed: %s", reset.stderr.strip())
             open_permission_settings()
             return
     AV.AVCaptureDevice.requestAccessForMediaType_completionHandler_(AV.AVMediaTypeVideo, lambda granted: None)

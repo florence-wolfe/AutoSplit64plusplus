@@ -17,6 +17,8 @@ from pathlib import Path
 
 import requests
 
+log = logging.getLogger(".log")
+
 # The asset of each platform, as named by .github/workflows/release.yml
 ASSET_SUFFIXES = {"darwin": "-macos-arm64.zip", "win32": "-windows-x64.zip"}
 CHECKSUMS = "SHA256SUMS"
@@ -248,7 +250,7 @@ def install_on_exit(zip_path, relaunch, pid=None, install_path=None, notice=None
     work = tempfile.mkdtemp(prefix="as64-update-")
     # Nobody sees the script run, so log all its output, including errors starting it
     log_path = Path(work) / "install.log"
-    log = open(log_path, "w")
+    script_output = open(log_path, "w")
 
     if sys.platform == "darwin":
         # This app is <name>.app/Contents/MacOS/<name>
@@ -257,7 +259,7 @@ def install_on_exit(zip_path, relaunch, pid=None, install_path=None, notice=None
         script.write_text(_MACOS_INSTALL)
         env = dict(os.environ, AS64_PID=str(pid), AS64_ZIP=str(zip_path), AS64_APP=str(install_path),
                    AS64_WORK=work, AS64_RELAUNCH="1" if relaunch else "0", AS64_NOTICE=str(notice))
-        process = subprocess.Popen(["/bin/sh", str(script)], env=env, start_new_session=True, stdout=log, stderr=subprocess.STDOUT)
+        process = subprocess.Popen(["/bin/sh", str(script)], env=env, start_new_session=True, stdout=script_output, stderr=subprocess.STDOUT)
 
     elif sys.platform == "win32":
         install_path = install_path or Path(sys.executable).parent
@@ -267,14 +269,14 @@ def install_on_exit(zip_path, relaunch, pid=None, install_path=None, notice=None
             ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script),
              "-AppPid", str(pid), "-Zip", str(zip_path), "-InstallDir", str(install_path), "-Work", work,
              "-Relaunch", "1" if relaunch else "0", "-Notice", str(notice)],
-            stdout=log, stderr=subprocess.STDOUT,
+            stdout=script_output, stderr=subprocess.STDOUT,
             creationflags=subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP)
     else:
-        log.close()
+        script_output.close()
         raise UpdateError(f"Updates can't be installed on {sys.platform}")
 
     # The script has its own handle on the log
-    log.close()
+    script_output.close()
     process.log_path = log_path
-    logging.getLogger(".log").info("Installing the update after AutoSplit64++ quits, logging to %s", process.log_path)
+    log.info("Installing the update after AutoSplit64++ quits, logging to %s", process.log_path)
     return process

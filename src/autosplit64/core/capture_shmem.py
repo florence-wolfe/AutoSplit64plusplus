@@ -3,6 +3,8 @@ import mmap
 import ctypes
 import numpy as np
 
+log = logging.getLogger(".log")
+
 # Constants
 FILE_MAP_READ = 0x0004
 PAGE_READWRITE = 0x04
@@ -29,7 +31,7 @@ class SharedMemoryCapture:
         # Read initial header to set up first mapping
         self._update_dimensions()
         self.shmem = mmap.mmap(-1, self.shmem_size, tagname=SHMEM_NAME, access=mmap.ACCESS_READ)
-        logging.getLogger(".log").info("Shared memory opened")
+        log.info("Shared memory opened")
         return True
 
     def close_shmem(self):
@@ -44,7 +46,7 @@ class SharedMemoryCapture:
         if self.shmem_handle:
             ctypes.windll.kernel32.CloseHandle(self.shmem_handle)
             self.shmem_handle = None
-            logging.getLogger(".log").info("Shared memory closed")
+            log.info("Shared memory closed")
 
     def _update_dimensions(self):
         """Read header and update dimensions"""

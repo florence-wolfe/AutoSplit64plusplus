@@ -269,7 +269,7 @@ class ProcessorSwitch:
         except Exception as e:
             # Keep splitting, but log bugs in the processes, once rather than every frame
             if repr(e) != self._last_error:
-                logging.getLogger(".log").exception("Split processor %s failed", self._current_processor)
+                log.exception("Split processor %s failed", self._current_processor)
             self._last_error = repr(e)
 
     def look_now(self):

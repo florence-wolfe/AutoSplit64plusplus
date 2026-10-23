@@ -14,6 +14,8 @@ from collections import deque
 from websockets.exceptions import ConnectionClosed
 from websockets.sync.server import serve
 
+log = logging.getLogger(".log")
+
 # LiveSplit Server commands used by livesplit.py -> server protocol commands
 _COMMANDS = {
     "startorsplit": {"command": "splitOrStart"},
@@ -109,7 +111,7 @@ class LiveSplitOneServer:
         except ValueError:
             data = None
         if not isinstance(data, dict):
-            logging.getLogger(".log").warning("Ignored a message from LiveSplit One that couldn't be read: %.200r", message)
+            log.warning("Ignored a message from LiveSplit One that couldn't be read: %.200r", message)
             return
         # Events are informational and not responses to a command
         if "event" in data:
@@ -122,7 +124,7 @@ class LiveSplitOneServer:
                 self._state = data.get("success")
                 self._state_received.set()
             elif "error" in data:
-                logging.getLogger(".log").warning("LiveSplit One error: %s", data["error"])
+                log.warning("LiveSplit One error: %s", data["error"])
 
     def _send(self, command, kind):
         """ Must be called with the lock held so _pending matches send order """
@@ -161,7 +163,7 @@ class LiveSplitOneServer:
             return False
         if not isinstance(state, dict) or state.get("state") not in ("NotRunning", "Running", "Paused", "Ended") or \
                 (state["state"] in ("Running", "Paused") and not isinstance(state.get("index"), int)):
-            logging.getLogger(".log").warning("LiveSplit One's state couldn't be read: %.200r", state)
+            log.warning("LiveSplit One's state couldn't be read: %.200r", state)
             return False
         if state["state"] == "NotRunning":
             self._last_index = -1

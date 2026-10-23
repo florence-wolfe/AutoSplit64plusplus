@@ -13,6 +13,8 @@ default there.
 """
 import logging
 
+log = logging.getLogger(".log")
+
 KEY = "_migrations"
 
 MIGRATIONS = [
@@ -84,7 +86,7 @@ def migrate(data, choose=None):
         record = applied.pop()
         for step in record["down"]:
             _apply(data, step)
-        logging.getLogger(".log").info("Undid the settings changes of %s", record["version"])
+        log.info("Undid the settings changes of %s", record["version"])
         changed = True
 
     offered = offers(data)
@@ -95,7 +97,7 @@ def migrate(data, choose=None):
             if ("reason" not in step or any(step is a for a in accepted)) and _apply(data, step):
                 down.insert(0, _inverse(step))
         applied.append({"version": version, "down": down})
-        logging.getLogger(".log").info("Applied the settings changes of %s", version)
+        log.info("Applied the settings changes of %s", version)
         changed = True
 
     return changed

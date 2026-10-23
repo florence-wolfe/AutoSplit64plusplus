@@ -13,6 +13,8 @@ from windows_capture import WindowsCapture
 
 from . import capture_window
 
+log = logging.getLogger(".log")
+
 get_visible_processes = capture_window.get_visible_processes
 get_hwnd_from_list = capture_window.get_hwnd_from_list
 get_capture_size = capture_window.get_capture_size
@@ -65,7 +67,7 @@ def capture(hwnd, client_area=True):
         try:
             _active = _Stream(hwnd)
         except Exception:
-            logging.getLogger(".log").warning("Windows.Graphics.Capture is unavailable, using PrintWindow", exc_info=True)
+            log.warning("Windows.Graphics.Capture is unavailable, using PrintWindow", exc_info=True)
             _unavailable = True
             return capture_window.capture(hwnd, client_area)
 

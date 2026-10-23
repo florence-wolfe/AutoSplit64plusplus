@@ -13,6 +13,8 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 from autosplit64.core import updater
 from . import constants
 
+log = logging.getLogger(".log")
+
 
 class UpdateBadge(QtCore.QObject):
     """
@@ -78,7 +80,7 @@ class Updates(QtCore.QObject):
         try:
             self._checked.emit(updater.newer_release(constants.GITHUB_REPO, constants.VERSION), asked)
         except Exception as e:
-            logging.getLogger(".log").warning("Update check failed", exc_info=True)
+            log.warning("Update check failed", exc_info=True)
             self._check_failed.emit(str(e), asked)
 
     def _on_checked(self, release, asked):
@@ -139,7 +141,7 @@ class Updates(QtCore.QObject):
             path = updater.download(self._release, directory, self._progress.emit)
             self._downloaded.emit(path)
         except Exception as e:
-            logging.getLogger(".log").warning("Update download failed", exc_info=True)
+            log.warning("Update download failed", exc_info=True)
             shutil.rmtree(directory, ignore_errors=True)
             self._download_failed.emit(str(e))
 

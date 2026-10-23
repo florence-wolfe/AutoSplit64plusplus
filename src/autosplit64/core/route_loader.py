@@ -28,6 +28,8 @@ from .constants import (
     TIMING_FILE_SELECT
 )
 
+log = logging.getLogger(".log")
+
 
 def load(file_path):
     """
@@ -52,7 +54,7 @@ def load_or_none(file_path):
     try:
         return load(file_path)
     except (ValueError, KeyError, TypeError, OSError):
-        logging.getLogger(".log").warning("Could not load route %s", file_path, exc_info=True)
+        log.warning("Could not load route %s", file_path, exc_info=True)
         return None
 
 

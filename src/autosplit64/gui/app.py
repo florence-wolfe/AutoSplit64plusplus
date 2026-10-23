@@ -15,6 +15,8 @@ from .server_status import ServerStatus
 from .tip_window import TipWindow
 from .updates import Updates, UpdateBadge
 
+log = logging.getLogger(".log")
+
 
 def _window_flags(on_top):
     flags = QtCore.Qt.WindowType.Window
@@ -203,7 +205,7 @@ class App(QtWidgets.QMainWindow):
         try:
             moved = app_location.move_to(app, app_location.applications_folder())
         except Exception as e:
-            logging.getLogger(".log").warning("Moving to Applications failed", exc_info=True)
+            log.warning("Moving to Applications failed", exc_info=True)
             QtWidgets.QMessageBox.warning(self, "Move to Applications", f"Couldn't move AutoSplit64++:\n\n{e}")
             return
         app_location.reopen_after_exit(moved)

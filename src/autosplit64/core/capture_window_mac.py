@@ -19,6 +19,8 @@ import ScreenCaptureKit as SCK
 from CoreMedia import CMSampleBufferGetImageBuffer, CMTimeMake
 from Foundation import NSBundle, NSObject
 
+log = logging.getLogger(".log")
+
 _TIMEOUT = 5
 _MINIMUM_WINDOW_SIZE = 100
 
@@ -90,7 +92,7 @@ def _shareable_content():
     content, error = _wait(lambda handler: SCK.SCShareableContent.getShareableContentExcludingDesktopWindows_onScreenWindowsOnly_completionHandler_(True, True, handler))
     # Log each new refusal once, as this is called repeatedly while waiting for the permission
     if error is not None and error.localizedDescription() != _last_error:
-        logging.getLogger(".log").warning("ScreenCaptureKit refused (preflight %s): %s", Quartz.CGPreflightScreenCaptureAccess(), error.localizedDescription())
+        log.warning("ScreenCaptureKit refused (preflight %s): %s", Quartz.CGPreflightScreenCaptureAccess(), error.localizedDescription())
     _last_error = error.localizedDescription() if error is not None else None
     return content
 
@@ -119,7 +121,7 @@ def request_permission():
     if getattr(sys, "frozen", False) and bundle_id:
         reset = subprocess.run(["tccutil", "reset", "ScreenCapture", bundle_id], capture_output=True, text=True)
         if reset.returncode != 0:
-            logging.getLogger(".log").warning("Resetting the Screen Recording permission failed: %s", reset.stderr.strip())
+            log.warning("Resetting the Screen Recording permission failed: %s", reset.stderr.strip())
             open_permission_settings()
             return
     Quartz.CGRequestScreenCaptureAccess()

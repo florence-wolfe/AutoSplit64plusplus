@@ -41,6 +41,8 @@ from .constants import (
     LIVES_REGION
 )
 
+log = logging.getLogger(".log")
+
 
 # How long the looks at the game are kept for the iris matcher: a death's iris (1.6 s) and the looks before it
 LOOKS_KEPT = 2.4
@@ -127,7 +129,7 @@ class GameCapture:
                 raise Exception("AutoSplit64++ needs the Screen Recording permission to capture the game.\n\n"
                                 "Open Configure Capture to allow it. If you just allowed it, restart AutoSplit64++.")
             if not bool(self._hwnd):
-                logging.getLogger(".log").warning("Could not find the window to capture: %s", self._process_name)
+                log.warning("Could not find the window to capture: %s", self._process_name)
                 raise Exception("Could not find configured capture source.\n\nMake sure it's running and visible, "
                                 "or set up what to capture in Configure Capture.")
 

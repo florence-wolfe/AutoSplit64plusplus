@@ -6,6 +6,8 @@ import onnxruntime as ort
 
 from .image_utils import convert_to_np
 
+log = logging.getLogger(".log")
+
 def softmax(x):
     exp_x = np.exp(x - np.max(x))  # Subtract max for numerical stability
     return exp_x / exp_x.sum()
@@ -47,7 +49,7 @@ class Model:
             
         except Exception:
             self.model = None
-            logging.getLogger(".log").exception("Failed to load model %s", model_path)
+            log.exception("Failed to load model %s", model_path)
 
         self.width = int(width)
         self.height = int(height)

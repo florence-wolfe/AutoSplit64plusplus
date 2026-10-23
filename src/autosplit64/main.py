@@ -45,6 +45,8 @@ from autosplit64.processes.ddd import ProcessDDDSplit, ProcessDDDSplitX, Process
 from autosplit64.processes.final import ProcessFindFinalStage, ProcessFinalStarSplit, ProcessFindFinalStar
 from autosplit64.processes.final_speech import ProcessFindBowserSpeech, ProcessFindGrandStar, ProcessGrandStarSplit
 
+log = logging.getLogger(".log")
+
 def route_timing():
     """ The configured route's timing, or None without a valid route """
     route = load_or_none(config.get("route", "path"))
@@ -214,7 +216,7 @@ def show_error(error):
 def tell_about_previous_crash():
     """ The log of a crash is the old log now, until AutoSplit64++ starts again """
     if logs.previous_session_crashed():
-        logging.getLogger(".log").warning("The previous session crashed, see %s", logs.OLD_LOG_FILE)
+        log.warning("The previous session crashed, see %s", logs.OLD_LOG_FILE)
         QtWidgets.QMessageBox.warning(
             None, "AutoSplit64++",
             f"AutoSplit64++ quit unexpectedly last time. What happened is in {Path(logs.OLD_LOG_FILE).absolute()}. "
@@ -224,7 +226,7 @@ def tell_about_previous_crash():
 def tell_about_unreadable_settings(kept):
     """ Settings that couldn't be read, which config.load_config kept aside in kept for the defaults """
     if kept:
-        logging.getLogger(".log").warning("Couldn't read the settings, kept them in %s", kept)
+        log.warning("Couldn't read the settings, kept them in %s", kept)
         QtWidgets.QMessageBox.warning(
             None, "AutoSplit64++",
             f"Your settings couldn't be read, so AutoSplit64++ started with the default settings. "
@@ -235,7 +237,7 @@ def tell_about_failed_update():
     """ Why the last update couldn't be installed, which its install script left, after it reopened this version """
     notice = updater.take_failed_update_notice()
     if notice:
-        logging.getLogger(".log").warning("The last update failed: %s", notice)
+        log.warning("The last update failed: %s", notice)
         QtWidgets.QMessageBox.warning(
             None, "AutoSplit64++",
             f"The update couldn't be installed, so AutoSplit64++ is still v{VERSION}.\n\n{notice}")

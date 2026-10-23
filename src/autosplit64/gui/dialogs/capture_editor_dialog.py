@@ -18,6 +18,8 @@ from ..constants import (
     PLACEHOLDER_PATH,
 )
 
+log = logging.getLogger(".log")
+
 
 class Preview(QtQuick.QQuickImageProvider):
     """ The capture for CaptureEditor.qml, as image://capture/<version> """
@@ -232,7 +234,7 @@ class CaptureEditor(QtWidgets.QDialog):
                 config.set_key("game", "capture_size", capture_window.get_capture_size(self._process_list[values["process"]][1]))
         except Exception:
             # Split detection then tells the capture's size changed
-            logging.getLogger(".log").warning("Couldn't get the capture's size to save", exc_info=True)
+            log.warning("Couldn't get the capture's size to save", exc_info=True)
 
         config.set_key("game", "vc_fix", values["vcFix"])
 
@@ -332,4 +334,4 @@ class CaptureEditor(QtWidgets.QDialog):
             self.refresh_preview()
             
         except Exception:
-            logging.getLogger(".log").warning("Auto region detection failed", exc_info=True)
+            log.warning("Auto region detection failed", exc_info=True)
