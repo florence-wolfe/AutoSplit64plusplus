@@ -16,6 +16,20 @@ Ranked by what matters most to a runner, then by what makes the rest safer to do
    - Read frames on their own thread (see Heuristics 2). OpenCV releases the GIL, so capture and detection can run on two cores.
    - If Python's own overhead between those calls still shows up in the measurements, rewrite the hot path from capture to perception as a native module (Rust with PyO3, or C++) behind the same interface, and keep the processes and the GUI in Python. The resize already runs in OpenCV's C++, so rewriting the whole app wouldn't make it any faster.
 
+## Upkeep
+
+What's left of the code audit: changes to the app's safety and its dependencies that are riskier than the rest. Ranked by risk to runners against what they protect.
+
+1. **Sign the updates.** The updater checks a download against the release's `SHA256SUMS`, but both come from the same release, so whoever can change the release can change both. Sign `SHA256SUMS` in the release workflow (`.github/workflows/release.yml`), for example with minisign or an Ed25519 key kept in the repository's secrets, and have `core/updater.py` check the signature against a public key built into the app before it trusts any checksum. Keep the key's private half out of the repository, and decide what happens when it has to change, since the apps already out there only know the old public key.
+
+2. **Check where LiveSplit One connects from.** The LiveSplit One server listens on localhost only, but a browser lets any web page open a WebSocket to localhost, so any page the runner has open could connect, read the timer and split, reset or undo. Accept a connection only when its `Origin` is `https://one.livesplit.org` or a localhost one (for a self-hosted LiveSplit One), and test both refusing and accepting one. Ask runners who host LiveSplit One elsewhere before refusing their origin, or allow more origins in the settings.
+
+3. **Upgrade the major dependencies.** Each pin is a major version or more behind: numpy 2.0 to 2.5, onnxruntime 1.20 to 1.31, PyQt6 6.8 to 6.11, psutil 6 to 7, pywin32 308 to 312, and OpenCV 4 to 5, the riskiest since every check uses it. Upgrade one at a time, each in its own commit, and run the unit tests and the replay (`--replay`) after each: a trace that changes is a timing change, so it goes in `detection_model.FEATURES` and the changelog. Build and open the app on both platforms after the PyQt6 and pywin32 upgrades, which the tests don't cover fully.
+
+4. **Share the capture code.** The window capture on Windows, the window capture on macOS, the macOS video devices and the OBS plugin each hold their own frame conversion, size checks and "Failed to capture" handling. Give them one capture class with the platform part in each. It touches every capture source, and the Windows ones can only be tested on Windows, so do it after the Video Device source on Windows (2 above), which adds one more.
+
+5. **Build split detection properly in its tests.** `tests/test_split_detection.py` makes `SplitDetection` with `__new__` and sets its private attributes by hand, so a new attribute breaks the tests in ways that have nothing to do with the change. Give the tests one factory that builds it with stand-in capture, model and LiveSplit, or let `SplitDetection` take those in its constructor.
+
 ## Heuristics
 
 Ways to make split detection's recognition of deaths, game overs, resets, star and key grabs, fadeouts and fade-ins more accurate, ranked by what pays off most, with the cheap and deterministic ones before the learned ones. Today it polls at 6 to 29.97 fps depending on the process, times events when it looks at a frame, not when the frame was captured, and decides from hand-tuned colour and template checks on small regions. Only the iris matcher sees every frame, kept between looks, and it and the lives tell deaths from other fadeouts.
