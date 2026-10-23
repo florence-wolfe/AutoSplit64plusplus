@@ -10,7 +10,7 @@ import cv2
 import numpy as np
 
 from autosplit64.core import config
-from autosplit64.core.constants import FADEOUT_COMPLETE, FADEOUT_PARTIAL, GAME_REGION, NO_HUD_REGION
+from autosplit64.core.constants import DEFAULT_FRAME_RATE, GAME_REGION, NO_HUD_REGION
 from autosplit64.core.image_utils import colour_shown
 from autosplit64.core.processing import Process
 
@@ -84,7 +84,7 @@ class ProcessFindBowserSpeech(Process):
         self._shown_since = None
 
     def execute(self):
-        if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
+        if self.fading_out():
             return self.signals["FADEOUT"]
 
         if self.loop_time() < self.ARENA_SECONDS or not speech_shown(self.core.get_region(GAME_REGION)):
@@ -98,7 +98,7 @@ class ProcessFindBowserSpeech(Process):
         return self.signals["LOOP"]
 
     def on_transition(self):
-        self.core.fps = 29.97
+        self.core.fps = DEFAULT_FRAME_RATE
         self._shown_since = None
         super().on_transition()
 
@@ -116,7 +116,7 @@ class ProcessFindGrandStar(Process):
         self._seen_since = None
 
     def execute(self):
-        if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
+        if self.fading_out():
             return self.signals["FADEOUT"]
 
         if self._seen_since is None:
@@ -134,7 +134,7 @@ class ProcessFindGrandStar(Process):
         return self.signals["LOOP"]
 
     def on_transition(self):
-        self.core.fps = 29.97
+        self.core.fps = DEFAULT_FRAME_RATE
         self._seen_since = None
         super().on_transition()
 
@@ -153,7 +153,7 @@ class ProcessGrandStarSplit(Process):
         self._yellow = None
 
     def execute(self):
-        if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
+        if self.fading_out():
             return self.signals["FADEOUT"]
 
         yellow = star_yellow(self.core)
@@ -167,6 +167,6 @@ class ProcessGrandStarSplit(Process):
         return self.signals["LOOP"]
 
     def on_transition(self):
-        self.core.fps = 29.97
+        self.core.fps = DEFAULT_FRAME_RATE
         self._yellow = None
         super().on_transition()

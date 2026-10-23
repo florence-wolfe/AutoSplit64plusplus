@@ -3,6 +3,8 @@ import json
 import logging
 from pathlib import Path
 
+from .constants import FADEOUT_COMPLETE, FADEOUT_PARTIAL
+
 
 # Processor files, which refer to each other relative to it
 LOGIC_DIR = Path(__file__).resolve().parent.parent / "logic"
@@ -159,6 +161,10 @@ class Process:
     def look_at(self):
         """ When split detection should look next at the latest, for something timed, or None """
         return None
+
+    def fading_out(self):
+        """ Whether the game fades out, which ends most processes with their FADEOUT signal """
+        return self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE)
 
     def loop_time(self):
         return time.perf_counter() - self._transition_time

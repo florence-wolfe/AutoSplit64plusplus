@@ -15,6 +15,7 @@ from autosplit64.core.game_capture import GameCapture
 from autosplit64.core.image_utils import is_black
 from autosplit64.core import config
 from autosplit64.core.constants import (
+    DEFAULT_FRAME_RATE,
     GAME_JP,
     RESET_REGION,
     FADEOUT_REGION
@@ -211,7 +212,7 @@ class ResetGenerator(QtCore.QThread):
                         self._running = False
 
             try:
-                time.sleep((1 / 29.97) - (time.perf_counter() - c_time))
+                time.sleep((1 / DEFAULT_FRAME_RATE) - (time.perf_counter() - c_time))
             except ValueError:
                 pass
 

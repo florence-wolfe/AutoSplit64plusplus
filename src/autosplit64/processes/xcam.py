@@ -1,6 +1,6 @@
 import time
 
-from autosplit64.core.constants import FADEIN_COMPLETE, FADEIN_PARTIAL, FADEOUT_COMPLETE, FADEOUT_PARTIAL, XCAM_REGION
+from autosplit64.core.constants import DEFAULT_FRAME_RATE, FADEIN_COMPLETE, FADEIN_PARTIAL, XCAM_REGION
 
 from autosplit64.core.image_utils import colour_shown
 from autosplit64.core.processing import Process
@@ -13,7 +13,7 @@ class ProcessXCam(Process):
         self.register_signal("FADEIN")
 
     def execute(self):
-        if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
+        if self.fading_out():
             return self.signals["FADEOUT"]
 
         #if self.core.fade_status in (FADEIN_PARTIAL, FADEIN_COMPLETE):
@@ -29,7 +29,7 @@ class ProcessXCam(Process):
         return self.signals["LOOP"]
 
     def on_transition(self):
-        self.core.fps = 29.97
+        self.core.fps = DEFAULT_FRAME_RATE
         self.core.enable_predictions(True)
         self.core.enable_xcam_count(True)
 
@@ -47,11 +47,11 @@ class ProcessXCamStartUpSegment(Process):
         self._predictions = True
 
     def execute(self):
-        if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
+        if self.fading_out():
             return self.signals["FADEOUT"]
 
         if self.core.fadeout_count == 1:
-            self.core.fps = 29.97
+            self.core.fps = DEFAULT_FRAME_RATE
             self.core.enable_predictions(not self._predictions)
             if colour_shown(self.core.get_region(XCAM_REGION), self.lower_bound, self.upper_bound, 0.7):
                 self.core.split()

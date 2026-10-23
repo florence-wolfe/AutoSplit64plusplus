@@ -1,7 +1,7 @@
 import logging
 import time
 
-from autosplit64.core.constants import FADEOUT_COMPLETE, FADEOUT_PARTIAL, NO_HUD_REGION
+from autosplit64.core.constants import DEFAULT_FRAME_RATE, NO_HUD_REGION
 
 from autosplit64.core import config
 from autosplit64.core.image_utils import colour_shown
@@ -22,7 +22,7 @@ class ProcessFindFinalStage(Process):
     def execute(self):
         no_hud = self.core.get_region(NO_HUD_REGION)
 
-        if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
+        if self.fading_out():
             return self.signals["FADEOUT"]
 
         if colour_shown(no_hud, self.bowser_lower_bound, self.bowser_upper_bound, 0.9):
@@ -56,7 +56,7 @@ class ProcessFindFinalStar(Process):
             if time.perf_counter() < self._next_look:
                 return self.signals["LOOP"]
             self._next_look = None
-        if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
+        if self.fading_out():
             return self.signals["FADEOUT"]
         if self._star_visible() and self.loop_time() > 20:
             if self._looping_iteration == len(self._iteration_value):
@@ -78,7 +78,7 @@ class ProcessFindFinalStar(Process):
         return self._next_look
 
     def on_transition(self):
-        self.core.fps = 29.97
+        self.core.fps = DEFAULT_FRAME_RATE
         self._looping_iteration = 0
         self._next_look = None
 
@@ -97,7 +97,7 @@ class ProcessFinalStarSplit(Process):
         self.star_upper_bound = config.get("split_final_star", "star_upper_bound")
 
     def execute(self):
-        if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
+        if self.fading_out():
             return self.signals["FADEOUT"]
 
         if not self._star_visible():
@@ -108,7 +108,7 @@ class ProcessFinalStarSplit(Process):
         return self.signals["LOOP"]
 
     def on_transition(self):
-        self.core.fps = 29.97
+        self.core.fps = DEFAULT_FRAME_RATE
 
         super().on_transition()
 

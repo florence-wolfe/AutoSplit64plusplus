@@ -5,10 +5,9 @@ import cv2
 import numpy as np
 
 from autosplit64.core.constants import (
+    DEFAULT_FRAME_RATE,
     FADEIN_COMPLETE,
     FADEIN_PARTIAL,
-    FADEOUT_COMPLETE,
-    FADEOUT_PARTIAL,
     FADEOUT_REGION,
     RESET_REGION,
     SPLIT_FADE_ONLY,
@@ -32,7 +31,7 @@ class ProcessWait(Process):
         self.register_signal("FADEOUT")
 
     def execute(self):
-        if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
+        if self.fading_out():
             return self.signals["FADEOUT"]
 
         return self.signals["LOOP"]
@@ -90,7 +89,7 @@ class ProcessRunStart(_RunStartProcess):
         self.register_signal("START")
 
     def execute(self):
-        if self.core.fade_status in (FADEOUT_COMPLETE, FADEOUT_PARTIAL):
+        if self.fading_out():
             return self.signals["FADEOUT"]
         if self._in_game_detected():
             self.core.set_in_game(True)
@@ -111,7 +110,7 @@ class ProcessRunStartUpSegment(_RunStartProcess):
         self.register_signal("START")
 
     def execute(self):
-        if self.core.fade_status in (FADEOUT_COMPLETE, FADEOUT_PARTIAL):
+        if self.fading_out():
             return self.signals["FADEOUT"]
         if self._in_game_detected():
             return self.signals["START"]
@@ -131,7 +130,7 @@ class ProcessStarCount(Process):
         self.register_signal("FADEIN")
 
     def execute(self):
-        if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
+        if self.fading_out():
             return self.signals["FADEOUT"]
 
         if self.core.fade_status in (FADEIN_PARTIAL, FADEIN_COMPLETE):
@@ -166,7 +165,7 @@ class ProcessFadein(Process):
             return self.signals["COMPLETE"]
 
     def on_transition(self):
-        self.core.fps = 29.97
+        self.core.fps = DEFAULT_FRAME_RATE
         self.core.enable_predictions(False)
 
         super().on_transition()
@@ -210,7 +209,7 @@ class _FadeoutProcess(Process):
             return self.signals["RESET"]
 
         # If both star count, and life count are still black, reprocess fadeout, otherwise fadeout completed
-        if self.core.fade_status in (FADEOUT_COMPLETE, FADEOUT_PARTIAL):
+        if self.fading_out():
             return self.signals["LOOP"]
         else:
             self.core.enable_predictions(True)
@@ -294,7 +293,7 @@ class ProcessPostFadeout(Process):
         self.register_signal("COMPLETE")
 
     def execute(self):
-        if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
+        if self.fading_out():
             return self.signals["FADEOUT"]
 
         if self.core.fade_status in (FADEIN_PARTIAL, FADEIN_COMPLETE):
@@ -335,7 +334,7 @@ class ProcessFlashCheck(Process):
         self._flash_count = 0
 
     def execute(self):
-        if self.core.fade_status in (FADEOUT_PARTIAL, FADEOUT_COMPLETE):
+        if self.fading_out():
             return self.signals["FADEOUT"]
 
         if self.core.fade_status in (FADEIN_PARTIAL, FADEIN_COMPLETE):
@@ -372,7 +371,7 @@ class ProcessFlashCheck(Process):
             return self.signals["COMPLETE"]
 
     def on_transition(self):
-        self.core.fps = 29.97
+        self.core.fps = DEFAULT_FRAME_RATE
         self.core.enable_predictions(True)
         self._running_total = 0
         self._flash_count = 0
@@ -405,7 +404,7 @@ class ProcessFileSelectSplit(_RunStartProcess):
         self.register_signal("FADEOUT")
         self.register_signal("COMPLETE")
 
-        self._restart_split_delay = 1.2012 + (config.get("advanced", "file_select_frame_offset") / 29.97)
+        self._restart_split_delay = 1.2012 + (config.get("advanced", "file_select_frame_offset") / DEFAULT_FRAME_RATE)
         # When it splits, once File Select's second fade-in showed what it splits after
         self._split_at = None
 
@@ -414,7 +413,7 @@ class ProcessFileSelectSplit(_RunStartProcess):
         if self._split_at is None:
             region = self.core.get_region(FADEOUT_REGION)
 
-            if self.core.fade_status in (FADEOUT_COMPLETE, FADEOUT_PARTIAL):
+            if self.fading_out():
                 return self.signals["FADEOUT"]
             if self._in_game_detected():
                 self.core.set_in_game(True)
@@ -446,6 +445,6 @@ class ProcessFileSelectSplit(_RunStartProcess):
 
     def on_transition(self):
         super().on_transition()
-        self.core.fps = 29.97
+        self.core.fps = DEFAULT_FRAME_RATE
         self.core.enable_fade_count(True)
         self._split_at = None
