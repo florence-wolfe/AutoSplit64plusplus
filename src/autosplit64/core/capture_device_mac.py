@@ -4,9 +4,7 @@ Video device capture for macOS using AVFoundation: capture cards, the OBS Virtua
 Devices are identified by their AVFoundation unique ID. Like window capture, the device is
 streamed and capture() returns the latest frame.
 """
-import logging
 import subprocess
-import sys
 import threading
 
 import AVFoundation as AV
@@ -14,11 +12,9 @@ import objc
 import Quartz
 from CoreMedia import CMSampleBufferGetImageBuffer
 from dispatch import dispatch_queue_create
-from Foundation import NSBundle, NSObject
+from Foundation import NSObject
 
-from .capture_window_mac import bgr_frame
-
-log = logging.getLogger(".log")
+from .capture_window_mac import bgr_frame, forget_permission
 
 _DEVICE_TYPES = [
     AV.AVCaptureDeviceTypeExternal,  # Capture cards and virtual cameras like OBS
@@ -57,19 +53,9 @@ def has_permission():
 
 
 def request_permission():
-    """
-    Show macOS's Camera prompt. Like Screen Recording, macOS only asks once and keeps a grant
-    for one build of an ad-hoc signed app, so forget the earlier decision first.
-    """
-    bundle_id = NSBundle.mainBundle().bundleIdentifier()
-    # Running from source, the permission belongs to the terminal app instead
-    if getattr(sys, "frozen", False) and bundle_id:
-        reset = subprocess.run(["tccutil", "reset", "Camera", bundle_id], capture_output=True, text=True)
-        if reset.returncode != 0:
-            log.warning("Resetting the Camera permission failed: %s", reset.stderr.strip())
-            open_permission_settings()
-            return
-    AV.AVCaptureDevice.requestAccessForMediaType_completionHandler_(AV.AVMediaTypeVideo, lambda granted: None)
+    """ Show macOS's Camera prompt, for this build of the app """
+    if forget_permission("Camera", "Camera", open_permission_settings):
+        AV.AVCaptureDevice.requestAccessForMediaType_completionHandler_(AV.AVMediaTypeVideo, lambda granted: None)
 
 
 def open_permission_settings():

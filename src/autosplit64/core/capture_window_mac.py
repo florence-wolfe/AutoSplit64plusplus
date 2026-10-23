@@ -110,21 +110,27 @@ def has_permission_quietly():
     return Quartz.CGPreflightScreenCaptureAccess()
 
 
-def request_permission():
+def forget_permission(service, name, open_settings):
     """
-    Show macOS's Screen Recording prompt. macOS only shows it once per app, and keeps a grant
-    for one build of an ad-hoc signed app. So forget the earlier decision first, which makes
-    macOS ask again for this build.
+    Forget the app's earlier decision on tccutil's service, e.g. ScreenCapture, called name in the log, so macOS asks
+    again: it only asks once per app, and keeps a grant for one build of an ad-hoc signed app. False when it couldn't,
+    with open_settings() called instead, where the permission can be granted.
     """
     bundle_id = NSBundle.mainBundle().bundleIdentifier()
     # Running from source, the permission belongs to the terminal app instead
     if getattr(sys, "frozen", False) and bundle_id:
-        reset = subprocess.run(["tccutil", "reset", "ScreenCapture", bundle_id], capture_output=True, text=True)
+        reset = subprocess.run(["tccutil", "reset", service, bundle_id], capture_output=True, text=True)
         if reset.returncode != 0:
-            log.warning("Resetting the Screen Recording permission failed: %s", reset.stderr.strip())
-            open_permission_settings()
-            return
-    Quartz.CGRequestScreenCaptureAccess()
+            log.warning("Resetting the %s permission failed: %s", name, reset.stderr.strip())
+            open_settings()
+            return False
+    return True
+
+
+def request_permission():
+    """ Show macOS's Screen Recording prompt, for this build of the app """
+    if forget_permission("ScreenCapture", "Screen Recording", open_permission_settings):
+        Quartz.CGRequestScreenCaptureAccess()
 
 
 def open_permission_settings():
