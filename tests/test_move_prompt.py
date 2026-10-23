@@ -10,8 +10,6 @@ from autosplit64.core import app_location, config
 from autosplit64.gui.app import App
 from tests.qt import answering, close_window
 
-_app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
-
 DOWNLOADED = Path("/private/var/folders/xy/T/AppTranslocation/1234/d/AutoSplit64++.app")
 
 

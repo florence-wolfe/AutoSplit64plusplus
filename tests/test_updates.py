@@ -12,8 +12,6 @@ from autosplit64.gui import app as app_module, updates
 from autosplit64.gui.app import App
 from tests.qt import answering, close_window, qml
 
-_app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
-
 RELEASE = updater.Release("0.5.0", "AutoSplit64plusplus-v0.5.0-macos-arm64.zip", "https://example.com/app.zip",
                           "https://example.com/SHA256SUMS", "https://example.com/release")
 

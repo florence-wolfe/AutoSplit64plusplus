@@ -5,8 +5,7 @@ from PyQt6 import QtWidgets
 
 from autosplit64.core import config, livesplit
 from autosplit64.gui.server_status import ServerStatus
-
-_app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+import tests.qt  # noqa: F401, for its QApplication
 
 
 class ClientModesTest(unittest.TestCase):

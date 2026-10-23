@@ -6,13 +6,11 @@ from unittest import mock
 
 import cv2
 import numpy as np
-from PyQt6 import QtCore, QtWidgets
+from PyQt6 import QtCore
 
 from autosplit64.core import config
 from autosplit64.gui.dialogs.reset_generator_dialog import ResetGenerator, ResetGeneratorDialog
 from tests.qt import qml, wait_until
-
-_app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
 
 class ResetGeneratorDialogTest(unittest.TestCase):

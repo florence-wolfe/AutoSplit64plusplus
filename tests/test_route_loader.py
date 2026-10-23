@@ -7,15 +7,11 @@ from json import JSONDecodeError
 from pathlib import Path
 from unittest import mock
 
-from PyQt6 import QtWidgets
-
 from autosplit64.core import route_loader
 from autosplit64.gui.app import App
 from tests.qt import close_window
 
 ROUTE = Path(__file__).parent.parent / "routes" / "16_lblj.as64"
-
-_app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
 
 class LoadTest(unittest.TestCase):

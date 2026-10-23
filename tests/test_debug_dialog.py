@@ -17,8 +17,6 @@ from autosplit64.gui.dialogs import debug_dialog
 from autosplit64.gui.dialogs.debug_dialog import DebugDialog, describe
 from tests.qt import qml, wait_until
 
-_app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
-
 OUTPUT = {"fade_status": "FADEOUT_PARTIAL", "fadeout_count": 2, "fadein_count": 1, "xcam_percent": 0.123456789,
           "xcam_count": 3, "xcam_status": True, "prediction": 16, "probability": 0.987654321, "execution": 0.0123456,
           "status": None, "livesplit": "LiveSplit connected"}

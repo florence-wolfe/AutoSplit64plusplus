@@ -5,13 +5,11 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from PyQt6 import QtCore, QtWidgets
+from PyQt6 import QtCore
 
 from autosplit64.core import config, route_loader
 from autosplit64.gui.dialogs.route_editor_dialog import RouteEditor
 from tests.qt import qml, wait_until
-
-_app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
 ROUTE = Path(__file__).parent.parent / "routes" / "16_lblj.as64"
 

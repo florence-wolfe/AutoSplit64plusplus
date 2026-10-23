@@ -1,13 +1,11 @@
 import unittest
 from unittest import mock
 
-from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6 import QtCore, QtGui
 from PyQt6.QtTest import QTest
 
 from autosplit64.gui.dialogs.about_dialog import AboutDialog
 from tests.qt import qml
-
-_app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
 
 class AboutTest(unittest.TestCase):

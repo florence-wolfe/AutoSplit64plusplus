@@ -1,13 +1,11 @@
 import unittest
 from unittest import mock
 
-from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6 import QtCore, QtGui
 from PyQt6.QtTest import QTest
 
 from autosplit64.gui.tip_window import GAP, TipWindow
 from tests.qt import close_window, qml_items, wait_until
-
-_app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
 
 class TipWindowTest(unittest.TestCase):

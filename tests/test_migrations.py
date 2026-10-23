@@ -7,13 +7,9 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from PyQt6 import QtWidgets
-
 from autosplit64.core import config, migrations
 from autosplit64.gui.dialogs.settings_changes_dialog import SettingsChangesDialog
 from tests.qt import close_window, qml, qml_items
-
-_app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
 THRESHOLD = {"set": ["thresholds", "reset_threshold"], "from": 0.1, "to": 0.3, "name": "Reset Threshold",
              "reason": "Catches more resets."}

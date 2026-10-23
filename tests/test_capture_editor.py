@@ -9,8 +9,6 @@ from PyQt6.QtTest import QTest
 from autosplit64.core import config
 from tests.qt import qml, wait_until
 
-_app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
-
 
 @unittest.skipUnless(sys.platform == "darwin", "macOS capture sources")
 class CaptureEditorTest(unittest.TestCase):

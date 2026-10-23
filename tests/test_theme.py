@@ -2,21 +2,21 @@ import os
 import unittest
 from unittest import mock
 
-from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6 import QtCore, QtGui
 
 from autosplit64.gui import theme
+from tests.qt import qapp
 
-_app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 Role = QtGui.QPalette.ColorRole
 
 
 class ThemeTest(unittest.TestCase):
     def setUp(self):
-        palette = _app.palette()
-        self.addCleanup(_app.setPalette, palette)
+        palette = qapp.palette()
+        self.addCleanup(qapp.setPalette, palette)
 
     def window_color(self):
-        return _app.palette().color(Role.Window).getRgb()[:3]
+        return qapp.palette().color(Role.Window).getRgb()[:3]
 
     def test_current(self):
         theme.apply("nord")
@@ -25,7 +25,7 @@ class ThemeTest(unittest.TestCase):
     def test_default_theme_is_the_original_palette(self):
         theme.apply(theme.DEFAULT)
         self.assertEqual(self.window_color(), (60, 63, 65))
-        self.assertEqual(_app.palette().color(Role.Highlight).getRgb()[:3], (75, 110, 175))
+        self.assertEqual(qapp.palette().color(Role.Highlight).getRgb()[:3], (75, 110, 175))
 
     def test_themes(self):
         names = theme.themes()
@@ -70,8 +70,8 @@ class StyleTest(unittest.TestCase):
 
 class StatusColorTest(unittest.TestCase):
     def setUp(self):
-        palette = _app.palette()
-        self.addCleanup(_app.setPalette, palette)
+        palette = qapp.palette()
+        self.addCleanup(qapp.setPalette, palette)
 
     def test_themes_status_colors(self):
         import qt_themes
@@ -89,8 +89,8 @@ class ThemedWidgetsTest(unittest.TestCase):
         from unittest import mock
         from autosplit64.gui.app import App
         from tests.qt import close_window
-        palette = _app.palette()
-        self.addCleanup(_app.setPalette, palette)
+        palette = qapp.palette()
+        self.addCleanup(qapp.setPalette, palette)
         theme.apply("dracula")
         with mock.patch("autosplit64.gui.updates.Updates.check"):
             self.window = App()
@@ -98,8 +98,8 @@ class ThemedWidgetsTest(unittest.TestCase):
         self.window.main.update(splits=[{"title": title, "icon": ""} for title in ("A", "B", "C")], current=0)
         # Switched after the window was made
         theme.apply("github_light")
-        _app.processEvents()
-        self.palette = _app.palette()
+        qapp.processEvents()
+        self.palette = qapp.palette()
 
     def pixel(self, x, y):
         """ The color at x, y in the main window's QML """
@@ -141,7 +141,7 @@ class ThemedWidgetsTest(unittest.TestCase):
     def test_update_dot_is_the_themes_green(self):
         self.window.update_badge.show_update("9.9.9")
         theme.apply("dracula")
-        _app.processEvents()
+        qapp.processEvents()
         self.assertEqual(self.window.main.values["green"], theme.status_color("green").name())
         self.assertTrue(self.window.main.values["update"])
 

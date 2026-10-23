@@ -3,6 +3,9 @@ from unittest import mock
 
 from PyQt6 import QtCore, QtWidgets, sip
 
+# The tests' QApplication, which widgets need before they're made, and Qt has only one of
+qapp = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+
 
 def close_window(window):
     """

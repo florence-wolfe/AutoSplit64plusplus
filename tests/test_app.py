@@ -8,8 +8,6 @@ from PyQt6.QtTest import QTest
 from autosplit64.gui.app import App
 from tests.qt import close_window, qml, wait_until
 
-_app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
-
 
 class StartButtonTest(unittest.TestCase):
     def setUp(self):

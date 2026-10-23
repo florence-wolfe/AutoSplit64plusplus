@@ -7,8 +7,6 @@ from PyQt6 import QtCore, QtWidgets
 from autosplit64.gui.qml_view import qml_view
 from tests.qt import qml, wait_until
 
-_app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
-
 # A button with a tooltip, at x
 BUTTON = """
 import QtQuick

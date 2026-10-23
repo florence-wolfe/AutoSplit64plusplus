@@ -2,14 +2,11 @@ import threading
 import unittest
 from unittest import mock
 
-from PyQt6 import QtWidgets
 from PyQt6.QtTest import QTest
 
 from autosplit64 import main
 from autosplit64.gui.app import App
 from tests.qt import close_window
-
-_app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
 
 class ListenerThreadTest(unittest.TestCase):

@@ -10,7 +10,6 @@ from autosplit64.gui import theme
 from autosplit64.gui.dialogs.settings_dialog import SettingsDialog
 from tests import qt
 
-_app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
 
 def qml(dialog, name):
@@ -149,7 +148,7 @@ class SettingsDialogTest(unittest.TestCase):
         dialog = SettingsDialog()
 
         dialog.deleteLater()
-        _app.sendPostedEvents(None, QtCore.QEvent.Type.DeferredDelete)
+        qt.qapp.sendPostedEvents(None, QtCore.QEvent.Type.DeferredDelete)
         self.assertEqual([message for message in messages if "SettingsDialog.qml" in message], [])
 
     def test_showing_again_forgets_unapplied_edits(self):
@@ -173,8 +172,8 @@ class ThemeSettingTest(unittest.TestCase):
     """ Choosing a theme shows it right away, but only Apply keeps it """
 
     def setUp(self):
-        palette = _app.palette()
-        self.addCleanup(_app.setPalette, palette)
+        palette = qt.qapp.palette()
+        self.addCleanup(qt.qapp.setPalette, palette)
         self.settings = copy.deepcopy(SettingsDialogTest.SETTINGS)
         for patcher in [mock.patch.object(config, "_config", self.settings), mock.patch.object(config, "save_config")]:
             patcher.start()
