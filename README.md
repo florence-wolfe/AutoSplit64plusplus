@@ -3,6 +3,9 @@
     <img alt="AS64++" title="AS64++" src="resources/gui/icons/as64plus.png" width="256">
 </p>
 
+> [!NOTE]
+> **AI disclosure:** AutoSplit64++ is developed with the help of AI, mainly Anthropic's Claude through Claude Code, which writes much of its code, tests and documentation. A person directs the work and decides what goes in, and split detection is tested against recorded speedruns.
+
 ## Introduction
 AutoSplit64++ automates splitting for Super Mario 64 speedruns on console. It watches your captured gameplay and controls LiveSplit or LiveSplit One: it splits, undoes and resets the timer for you.
 
