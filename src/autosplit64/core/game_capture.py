@@ -48,7 +48,7 @@ LOOKS_KEPT = 2.4
 FRAME = 1 / 30
 
 
-class GameCapture(object):
+class GameCapture:
     def __init__(self, use_obs, vc_fix, process_name, game_region, version, device=None):
         # Initialize GameCapture
         # The OBS Plugin is only available on Windows

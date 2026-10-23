@@ -1,8 +1,8 @@
+import logging
 from dataclasses import dataclass
 
-import onnxruntime as ort
 import numpy as np
-import logging
+import onnxruntime as ort
 
 from .image_utils import convert_to_np
 
@@ -16,7 +16,7 @@ class PredictionInfo:
     probability: float
 
 
-class Model(object):
+class Model:
     def __init__(self, model_path, width, height, legacy=False):
         try:
             # Configure ONNX Runtime session options

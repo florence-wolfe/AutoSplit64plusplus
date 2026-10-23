@@ -11,7 +11,7 @@ log = logging.getLogger(".log")
 # What split detection does and why, in the session log
 detection_log = logging.getLogger("detection")
 
-class ProcessorGenerator(object):
+class ProcessorGenerator:
     INITIAL_PROCESS = "initial_process"
     INHERIT = "inherit"
     OVERRIDE = "override"
@@ -112,7 +112,7 @@ class ProcessorGenerator(object):
         return data
 
 
-class Signal(object):
+class Signal:
     """
     Object used to define transition relationships between processes
     """
@@ -123,7 +123,7 @@ class Signal(object):
         return self._name
 
 
-class Transition(object):
+class Transition:
     """
     Define state transition behaviour between two processes given a Signal object
     """
@@ -136,7 +136,7 @@ class Transition(object):
         return self.process == process and self.signal == signal
 
 
-class Process(object):
+class Process:
     def __init__(self, core):
         # The split detection the process runs in
         self.core = core
@@ -241,7 +241,7 @@ class Processor(Process):
         return self._current_process.look_at() if self._current_process else None
 
 
-class ProcessorSwitch(object):
+class ProcessorSwitch:
     def __init__(self):
         self._processors = {}
         self._current_processor = ""

@@ -8,7 +8,7 @@ FILE_MAP_READ = 0x0004
 PAGE_READWRITE = 0x04
 SHMEM_NAME = "as64_grabber"
 
-class SharedMemoryCapture(object):
+class SharedMemoryCapture:
     def __init__(self):
         self.shmem_handle = None
         self.shmem = None
@@ -18,10 +18,10 @@ class SharedMemoryCapture(object):
         self.shmem_size = 0
 
     def open_shmem(self):
+        """Open the shared memory connection"""
         # Check if shared memory is already open
         if self.shmem_handle:
             return True
-        """Open the shared memory connection"""
         self.shmem_handle = ctypes.windll.kernel32.OpenFileMappingW(FILE_MAP_READ, False, SHMEM_NAME)
         if not self.shmem_handle:
             raise Exception("Could not find OBS Grabber Plugin!\n\nPlease make sure the plugin is enabled and OBS is running.")

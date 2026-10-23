@@ -208,8 +208,8 @@ class RouteEditor(QtWidgets.QMainWindow):
                              (self.editor.save_as, self.save_as), (self.editor.remove, self.remove_clicked),
                              (self.editor.insert_above, lambda: self._insert_row(self.splits.current)),
                              (self.editor.insert_below, lambda: self._insert_row(self.splits.current + 1)),
-                             (self.editor.move_up, lambda: self.moveCurrentRow(self.UP)),
-                             (self.editor.move_down, lambda: self.moveCurrentRow(self.DOWN)),
+                             (self.editor.move_up, lambda: self.move_current_row(self.UP)),
+                             (self.editor.move_down, lambda: self.move_current_row(self.DOWN)),
                              (self.editor.apply, self.apply_clicked), (self.editor.cancel, self.close)]:
             signal.connect(slot)
         main_widget = QtWidgets.QWidget()
@@ -230,7 +230,7 @@ class RouteEditor(QtWidgets.QMainWindow):
         self.load_route()
         super().show()
 
-    def moveCurrentRow(self, direction=DOWN):
+    def move_current_row(self, direction=DOWN):
         if direction not in (self.DOWN, self.UP):
             return
 

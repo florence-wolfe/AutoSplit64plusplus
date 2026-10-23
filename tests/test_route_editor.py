@@ -109,7 +109,7 @@ class RouteEditorTest(unittest.TestCase):
         self.editor.load_route()
         first, second = self.rows()[:2]
         self.editor.splits.select(0, "only")
-        self.editor.moveCurrentRow(RouteEditor.DOWN)
+        self.editor.move_current_row(RouteEditor.DOWN)
         self.assertEqual(self.rows()[:2], [second, first])
         self.assertEqual(self.editor.splits.selected, {1})
         count = len(self.rows())
@@ -124,7 +124,7 @@ class RouteEditorTest(unittest.TestCase):
         self.editor.splits.select(2, "toggle")
         self.assertEqual(self.editor.splits.selected, {1, 3})
         names = [row[0] for row in self.rows()]
-        self.editor.moveCurrentRow(RouteEditor.UP)
+        self.editor.move_current_row(RouteEditor.UP)
         self.assertEqual([row[0] for row in self.rows()][:4], [names[1], names[0], names[3], names[2]])
         self.assertEqual(self.editor.splits.selected, {0, 2})
 
