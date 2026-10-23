@@ -4,6 +4,7 @@ and installing it with a restart now or when the app quits. The network work run
 which report back through signals, so the dialogs are shown on the GUI thread.
 """
 import logging
+import shutil
 import tempfile
 import threading
 
@@ -133,11 +134,13 @@ class Updates(QtCore.QObject):
         threading.Thread(target=self._download, daemon=True).start()
 
     def _download(self):
+        directory = tempfile.mkdtemp(prefix="as64-download-")
         try:
-            path = updater.download(self._release, tempfile.mkdtemp(prefix="as64-download-"), self._progress.emit)
+            path = updater.download(self._release, directory, self._progress.emit)
             self._downloaded.emit(path)
         except Exception as e:
             logging.getLogger(".log").warning("Update download failed", exc_info=True)
+            shutil.rmtree(directory, ignore_errors=True)
             self._download_failed.emit(str(e))
 
     def _on_progress(self, done, total):

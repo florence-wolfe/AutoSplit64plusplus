@@ -47,14 +47,18 @@ def latest_release(repo):
     """ The latest release of repo with an app for this platform, or None """
     response = requests.get(f"https://api.github.com/repos/{repo}/releases/latest", timeout=10)
     response.raise_for_status()
-    data = response.json()
+    try:
+        data = response.json()
+        assets = {asset["name"]: asset["browser_download_url"] for asset in data["assets"]}
+        tag, page = data["tag_name"], data["html_url"]
+    except (ValueError, KeyError, TypeError) as e:
+        raise UpdateError("GitHub's answer about the latest release couldn't be read.") from e
 
-    assets = {asset["name"]: asset["browser_download_url"] for asset in data["assets"]}
     suffix = ASSET_SUFFIXES.get(sys.platform)
     app = next((name for name in assets if suffix and name.endswith(suffix)), None)
     if app is None or CHECKSUMS not in assets:
         return None
-    return Release(data["tag_name"].removeprefix("v"), app, assets[app], assets[CHECKSUMS], data["html_url"])
+    return Release(tag.removeprefix("v"), app, assets[app], assets[CHECKSUMS], page)
 
 
 def newer_release(repo, current_version):
@@ -69,8 +73,20 @@ def newer_release(repo, current_version):
 
 
 def download(release, directory, progress=None):
-    """ Downloads the release's app into directory and checks it. progress(done, total) is called as it goes. """
+    """
+    Downloads the release's app into directory and checks it. progress(done, total) is called as it goes.
+    Nothing is left of a download that failed.
+    """
     path = Path(directory) / release.asset_name
+    try:
+        _download(release, path, progress)
+    except BaseException:
+        path.unlink(missing_ok=True)
+        raise
+    return path
+
+
+def _download(release, path, progress):
     sha256 = hashlib.sha256()
     with requests.get(release.asset_url, stream=True, timeout=30) as response:
         response.raise_for_status()
@@ -88,10 +104,10 @@ def download(release, directory, progress=None):
     checksums.raise_for_status()
     expected = next((line.split()[0] for line in checksums.text.splitlines()
                      if line.split()[-1:] == [release.asset_name]), None)
+    if expected is None:
+        raise UpdateError(f"{CHECKSUMS} has no checksum for {release.asset_name}.")
     if expected != sha256.hexdigest():
-        path.unlink()
         raise UpdateError(f"The download of {release.asset_name} doesn't match its checksum.")
-    return path
 
 
 # Waits for AutoSplit64++ to quit, then swaps the app for the update, keeping the old one if that fails

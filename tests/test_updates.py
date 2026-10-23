@@ -1,3 +1,4 @@
+import os
 import threading
 import time
 import unittest
@@ -190,6 +191,24 @@ class InstallTest(UpdatesTestCase):
             finish.set()
             self.assertTrue(self.wait_for(lambda: app.updates._install_on_quit))
         self.assertEqual(len(downloads), 1)
+
+    def test_failed_download_is_told_and_leaves_no_folder(self):
+        app = self.open_app()
+        app.updates._release = RELEASE
+        directories = []
+
+        def failing_download(release, directory, progress):
+            directories.append(directory)
+            raise updater.UpdateError("The download of app.zip doesn't match its checksum.")
+
+        with mock.patch.object(updater, "can_install", return_value=True), \
+             mock.patch.object(updater, "download", side_effect=failing_download), \
+             self.assertLogs(".log", "WARNING"):
+            app.update_badge.clicked.emit()
+            self.assertTrue(self.wait_for(lambda: QtWidgets.QMessageBox.information.called))
+        self.assertIn("doesn't match its checksum", QtWidgets.QMessageBox.information.call_args.args[2])
+        self.assertFalse(os.path.exists(directories[0]))
+        self.assertFalse(app.updates._downloading)
 
     def test_no_update_while_splitting(self):
         # In case of an active run, split detection has to be stopped first

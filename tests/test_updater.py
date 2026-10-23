@@ -59,6 +59,14 @@ class NewerReleaseTest(unittest.TestCase):
             self.assertIsNone(updater.newer_release(REPO, "0.4.0-3-gabc1234"))
         get.assert_not_called()
 
+    def test_unreadable_answer(self):
+        # e.g. a proxy's page, or GitHub changing its API; told instead of KeyError: 'assets'
+        for answer in ({"message": "Moved"}, mock.Mock(json=mock.Mock(side_effect=ValueError("Expecting value")))):
+            response = answer if isinstance(answer, mock.Mock) else mock.Mock(json=mock.Mock(return_value=answer))
+            with mock.patch.object(updater.requests, "get", return_value=response), \
+                 self.assertRaisesRegex(updater.UpdateError, "GitHub's answer about the latest release couldn't be read"):
+                updater.newer_release(REPO, "0.4.0")
+
     def test_release_without_app_for_this_platform_or_checksums(self):
         for data in (release_json("v0.5.0", platforms=("windows-x64",)), release_json("v0.5.0", checksums=False)):
             with api_answering(data):
@@ -90,6 +98,46 @@ class DownloadTest(unittest.TestCase):
     def test_checksum_mismatch(self):
         with self.assertRaises(updater.UpdateError):
             self.download("f" * 64)
+        self.assertEqual(list(self.dir.iterdir()), [])
+
+    def test_connection_lost_during_the_download_leaves_nothing(self):
+        def chunks(size):
+            yield self.content[:1000]
+            raise updater.requests.ConnectionError("Connection reset by peer")
+        app = mock.MagicMock(headers={})
+        app.__enter__.return_value = app
+        app.iter_content.side_effect = chunks
+        with mock.patch.object(updater.requests, "get", return_value=app), \
+             self.assertRaisesRegex(updater.requests.ConnectionError, "Connection reset"):
+            updater.download(self.release, self.dir)
+        self.assertEqual(list(self.dir.iterdir()), [])
+
+    def test_checksums_unavailable_leaves_nothing(self):
+        app = mock.MagicMock(headers={})
+        app.__enter__.return_value = app
+        app.iter_content.return_value = [self.content]
+        with mock.patch.object(updater.requests, "get", side_effect=[app, updater.requests.Timeout("Read timed out")]), \
+             self.assertRaises(updater.requests.Timeout):
+            updater.download(self.release, self.dir)
+        self.assertEqual(list(self.dir.iterdir()), [])
+
+    def test_http_error(self):
+        app = mock.MagicMock()
+        app.__enter__.return_value = app
+        app.raise_for_status.side_effect = updater.requests.HTTPError("404 Client Error: Not Found")
+        with mock.patch.object(updater.requests, "get", return_value=app), \
+             self.assertRaisesRegex(updater.requests.HTTPError, "404"):
+            updater.download(self.release, self.dir)
+        self.assertEqual(list(self.dir.iterdir()), [])
+
+    def test_no_checksum_for_the_app(self):
+        app = mock.MagicMock(headers={})
+        app.__enter__.return_value = app
+        app.iter_content.return_value = [self.content]
+        sums = mock.Mock(text=f"{'0' * 64}  other.zip\n")
+        with mock.patch.object(updater.requests, "get", side_effect=[app, sums]), \
+             self.assertRaisesRegex(updater.UpdateError, "SHA256SUMS has no checksum for app.zip"):
+            updater.download(self.release, self.dir)
         self.assertEqual(list(self.dir.iterdir()), [])
 
 
