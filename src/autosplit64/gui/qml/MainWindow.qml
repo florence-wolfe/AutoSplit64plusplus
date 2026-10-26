@@ -177,6 +177,22 @@ ThemedPane {
                                 font.weight: row.current ? Font.DemiBold : Font.Medium
                             }
 
+                            // What kind of split it is, unless it's a normal one
+                            SplitTypeIcon {
+                                id: typeIcon
+                                objectName: "splitType"
+                                visible: ["Fade", "Mips", "Mips-X", "X-Cam", "Final"].indexOf(type) >= 0
+                                type: row.modelData.type || ""
+                                size: 18
+                                color: row.done ? Tokens.muted : Tokens.text
+                                HoverHandler { id: typeHover }
+                                WindowTip {
+                                    text: ({"Fade": "Splits on a fade", "Mips": "Mips", "Mips-X": "Mips, with an X-Cam",
+                                            "X-Cam": "Splits on an X-Cam", "Final": "The final split"})[typeIcon.type] || ""
+                                    shown: typeHover.hovered
+                                }
+                            }
+
                             // Checked off before the star count
                             Item {
                                 Layout.preferredWidth: 16

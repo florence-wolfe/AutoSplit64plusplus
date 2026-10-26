@@ -354,7 +354,7 @@ class App(QtWidgets.QMainWindow):
         self.main.update(current=0, routeTitle=" · ".join(filter(None, [route.category, route.title])), splits=[
             {"title": split.title,
              "icon": QtCore.QUrl.fromLocalFile(rel_to_abs(split.icon_path)).toString() if split.icon_path else "",
-             "star": "" if split.star_count == -1 else str(split.star_count)}
+             "star": "" if split.star_count == -1 else str(split.star_count), "type": split.split_type}
             for split in route.splits])
 
         return True

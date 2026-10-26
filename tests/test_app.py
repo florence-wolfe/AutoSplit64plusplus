@@ -340,6 +340,18 @@ class SplitListTest(unittest.TestCase):
         self.show(["WF", "SSL", "LLL", "HMC"], 2)
         self.assertEqual([item.property("visible") for item in self.items("splitDone")], [True, True, False, False])
 
+    def test_splits_that_arent_normal_have_a_glyph_for_their_type(self):
+        types = ["Normal", "Fade", "Mips", "Mips-X", "X-Cam", "Final"]
+        self.app.main.update(splits=[{"title": t, "icon": "", "star": "1", "type": t} for t in types], current=0)
+        run_queued()
+        self.assertEqual([item.property("visible") for item in self.items("splitType")],
+                         [False, True, True, True, True, True])
+        self.assertEqual([item.property("type") for item in self.items("splitType")], types)
+
+    def test_a_split_without_a_type_has_no_glyph(self):
+        self.show(["WF"], 0)
+        self.assertEqual([item.property("visible") for item in self.items("splitType")], [False])
+
     def test_header_shows_the_route_and_how_many_splits_are_done(self):
         self.show(["WF", "SSL", "LLL", "HMC"], 2)
         self.assertEqual(qml(self.app.view, "routeTitle").property("text"), "16 Star · NoLBLJ 16")
@@ -351,6 +363,7 @@ class SplitListTest(unittest.TestCase):
             self.app.open_route()
         splits = self.app.main.values["splits"]
         self.assertEqual(splits[0]["star"], "6")
+        self.assertEqual((splits[6]["type"], splits[-1]["type"], splits[0]["type"]), ("Mips", "Final", "Normal"))
         self.assertEqual(self.app.main.values["routeTitle"], "16 Star · NoLBLJ 16")
 
     def wheel(self, delta, trackpad=False):
