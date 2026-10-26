@@ -183,9 +183,9 @@ class MainWindowTest(unittest.TestCase):
         restarted.assert_called_once()
 
     def test_status_says_what_it_is_connected_to(self):
-        self.app.main.update(statusLabel="LiveSplit")
+        self.app.main.update(statusLabel="Connected")
         run_queued()
-        self.assertEqual(qml(self.app.view, "statusLabel").property("text"), "LiveSplit")
+        self.assertEqual(qml(self.app.view, "statusLabel").property("text"), "Connected")
 
     def test_status_line_says_what_detection_is_waiting_for(self):
         self.app.main.update(splits=[{"title": t, "icon": ""} for t in ("WF", "SSL")], current=1, start="stop")
