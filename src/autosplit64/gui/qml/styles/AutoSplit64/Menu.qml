@@ -14,6 +14,11 @@ T.Menu {
 
     delegate: MenuItem {}
 
+    // A short fade, as Material's: the menu is still open for a moment as it closes, which the main window counts on
+    // to leave a press that closed it from also moving the window
+    enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 100 } }
+    exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 100 } }
+
     contentItem: ListView {
         implicitHeight: contentHeight
         model: control.contentModel
