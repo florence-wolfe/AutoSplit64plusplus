@@ -353,14 +353,25 @@ class SplitListTest(unittest.TestCase):
         self.assertEqual(splits[0]["star"], "6")
         self.assertEqual(self.app.main.values["routeTitle"], "16 Star · NoLBLJ 16")
 
-    def wheel(self, delta, pixels=False):
-        """ A turn of the mouse wheel (or a trackpad's swipe) over the splits """
+    def wheel(self, delta, trackpad=False):
+        """
+        A turn of the mouse wheel over the splits, or a trackpad's swipe, which has a device of its own and a scroll
+        phase, and both pixels and angles
+        """
         splits = qml(self.app.view, "splitList")
-        spot = splits.mapToScene(QtCore.QPointF(20, 20))
-        point = QtCore.QPointF(spot)
-        event = QtGui.QWheelEvent(point, self.app.view.mapToGlobal(point), QtCore.QPoint(0, delta if pixels else 0),
-                                  QtCore.QPoint(0, 0 if pixels else delta), QtCore.Qt.MouseButton.NoButton,
-                                  QtCore.Qt.KeyboardModifier.NoModifier, QtCore.Qt.ScrollPhase.NoScrollPhase, False)
+        point = QtCore.QPointF(splits.mapToScene(QtCore.QPointF(20, 20)))
+        if trackpad:
+            device = QtGui.QPointingDevice(
+                "trackpad", 1, QtGui.QInputDevice.DeviceType.TouchPad, QtGui.QPointingDevice.PointerType.Finger,
+                QtGui.QInputDevice.Capability.Scroll | QtGui.QInputDevice.Capability.PixelScroll, 1, 0)
+            self.addCleanup(device.deleteLater)
+            pixels, phase = QtCore.QPoint(0, delta), QtCore.Qt.ScrollPhase.ScrollUpdate
+        else:
+            device = QtGui.QPointingDevice.primaryPointingDevice()
+            pixels, phase = QtCore.QPoint(0, 0), QtCore.Qt.ScrollPhase.NoScrollPhase
+        event = QtGui.QWheelEvent(point, self.app.view.mapToGlobal(point), pixels, QtCore.QPoint(0, delta),
+                                  QtCore.Qt.MouseButton.NoButton, QtCore.Qt.KeyboardModifier.NoModifier, phase, False,
+                                  QtCore.Qt.MouseEventSource.MouseEventNotSynthesized, device)
         QtWidgets.QApplication.sendEvent(self.app.view, event)
         run_queued()
 
@@ -380,5 +391,9 @@ class SplitListTest(unittest.TestCase):
     def test_a_trackpad_scrolls_by_pixels(self):
         self.app.show()
         self.show([f"S{i}" for i in range(20)], 0)
-        self.wheel(-30, pixels=True)
-        self.assertAlmostEqual(qml(self.app.view, "splitList").property("contentY"), 30)
+        splits = qml(self.app.view, "splitList")
+        self.wheel(-30, trackpad=True)
+        self.assertAlmostEqual(splits.property("contentY"), 30, places=0)
+        self.wheel(-30, trackpad=True)
+        self.wheel(30, trackpad=True)
+        self.assertAlmostEqual(splits.property("contentY"), 30, places=0)

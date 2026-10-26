@@ -215,6 +215,7 @@ ThemedPane {
                 // Scrolls by the pixels a trackpad moves, or a row for each notch of a wheel. Dragging still moves the
                 // window, so the list isn't flickable.
                 WheelHandler {
+                    acceptedDevices: PointerDevice.AllDevices
                     onWheel: event => {
                         const delta = event.pixelDelta.y !== 0 ? event.pixelDelta.y
                                     : event.angleDelta.y / 120 * splitList.rowHeight
