@@ -162,19 +162,21 @@ class ThemedWidgetsTest(unittest.TestCase):
         height = splits.property("rowHeight")
         return origin.x(), origin.y() + index * height, height, splits.property("width")
 
-    def test_current_split_has_the_themes_highlight_bar_with_or_without_focus(self):
-        # During a run, the game or LiveSplit has focus, not AutoSplit64++: always the Active group's
-        highlight = self.palette.color(QtGui.QPalette.ColorGroup.Active, Role.Highlight).getRgb()[:3]
-        x, y, height, _ = self.row(0)
-        self.assertEqual(self.pixel(x + 9, y + height / 2), highlight)
-
     def test_split_list(self):
-        # The current row is raised, the others are the theme's background
+        # The current row is raised, the others are the theme's background. Always the Active group's colors: during
+        # a run, the game or LiveSplit has focus, not AutoSplit64++.
         raised, second, third = [self.pixel(self.row(i)[0] + self.row(i)[3] - 12, self.row(i)[1] + self.row(i)[2] / 2)
                                  for i in range(3)]
         self.assertEqual(raised, self.color(Role.Mid))
         self.assertEqual(second, self.color(Role.Base))
         self.assertEqual(third, self.color(Role.Base))
+
+    def test_divider_between_the_splits_and_the_rest_is_the_themes_border(self):
+        from tests.qt import qml
+        divider = qml(self.window.view, "divider")
+        origin = divider.mapToScene(QtCore.QPointF(0, 0))
+        self.assertEqual(divider.property("width"), 1)
+        self.assertEqual(self.pixel(origin.x() + 0.5, origin.y() + divider.property("height") / 2), self.color(Role.Dark))
 
     def test_menu_button_and_version_follow_the_text_color(self):
         muted = theme.muted(self.palette).getRgb()[:3]

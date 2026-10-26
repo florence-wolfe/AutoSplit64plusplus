@@ -352,3 +352,33 @@ class SplitListTest(unittest.TestCase):
         splits = self.app.main.values["splits"]
         self.assertEqual(splits[0]["star"], "6")
         self.assertEqual(self.app.main.values["routeTitle"], "16 Star · NoLBLJ 16")
+
+    def wheel(self, delta, pixels=False):
+        """ A turn of the mouse wheel (or a trackpad's swipe) over the splits """
+        splits = qml(self.app.view, "splitList")
+        spot = splits.mapToScene(QtCore.QPointF(20, 20))
+        point = QtCore.QPointF(spot)
+        event = QtGui.QWheelEvent(point, self.app.view.mapToGlobal(point), QtCore.QPoint(0, delta if pixels else 0),
+                                  QtCore.QPoint(0, 0 if pixels else delta), QtCore.Qt.MouseButton.NoButton,
+                                  QtCore.Qt.KeyboardModifier.NoModifier, QtCore.Qt.ScrollPhase.NoScrollPhase, False)
+        QtWidgets.QApplication.sendEvent(self.app.view, event)
+        run_queued()
+
+    def test_the_splits_scroll_with_the_wheel_and_stop_at_the_ends(self):
+        self.app.show()
+        self.show([f"S{i}" for i in range(20)], 0)
+        splits = qml(self.app.view, "splitList")
+        self.assertEqual(splits.property("contentY"), 0)
+        self.wheel(-120)
+        self.assertAlmostEqual(splits.property("contentY"), splits.property("rowHeight"), places=0)
+        self.wheel(120)
+        self.wheel(120)
+        self.assertEqual(splits.property("contentY"), 0)
+        self.wheel(-120 * 100)
+        self.assertAlmostEqual(splits.property("contentY"), splits.property("rowHeight") * 20 - splits.property("height"), places=0)
+
+    def test_a_trackpad_scrolls_by_pixels(self):
+        self.app.show()
+        self.show([f"S{i}" for i in range(20)], 0)
+        self.wheel(-30, pixels=True)
+        self.assertAlmostEqual(qml(self.app.view, "splitList").property("contentY"), 30)

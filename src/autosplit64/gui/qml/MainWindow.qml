@@ -78,12 +78,12 @@ ThemedPane {
                     text: main.values.current + " of " + main.values.splits.length
                     color: Tokens.muted
                     font.family: Tokens.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Tokens.textBody
                 }
             }
 
-            // The splits, as many rows as fit: icon, title and star count, the current one raised with an accent
-            // bar, those before it dimmed and checked off
+            // The splits, as many rows as fit: icon, title and star count, the current one raised, those before it
+            // dimmed and checked off
             ListView {
                 id: splitList
                 objectName: "splitList"
@@ -116,16 +116,6 @@ ThemedPane {
                         anchors.bottomMargin: 2
                         radius: Tokens.radiusRow
                         color: row.current ? Tokens.raised : "transparent"
-
-                        Rectangle {
-                            visible: row.current
-                            x: 0
-                            y: 8
-                            width: 3
-                            height: parent.height - 16
-                            radius: 1.5
-                            color: Tokens.accent
-                        }
 
                         RowLayout {
                             anchors.fill: parent
@@ -189,7 +179,7 @@ ThemedPane {
 
                             // The star count it's at, where it has one
                             Item {
-                                Layout.preferredWidth: 34
+                                Layout.preferredWidth: 42
                                 Layout.fillHeight: true
                                 Row {
                                     objectName: "splitStarBadge"
@@ -197,13 +187,13 @@ ThemedPane {
                                     anchors.verticalCenter: parent.verticalCenter
                                     visible: !!row.modelData.star
                                     spacing: 3
-                                    StarIcon { anchors.verticalCenter: parent.verticalCenter; size: 11; color: Tokens.muted }
+                                    StarIcon { anchors.verticalCenter: parent.verticalCenter; size: 14; color: Tokens.muted }
                                     Label {
                                         objectName: "splitStar"
                                         text: row.modelData.star || ""
                                         color: Tokens.muted
                                         font.family: Tokens.fontFamily
-                                        font.pixelSize: Tokens.textCaption
+                                        font.pixelSize: Tokens.textBody
                                     }
                                 }
                             }
@@ -222,19 +212,27 @@ ThemedPane {
                     }
                 }
 
-                // A row at a time, like the window did before
+                // Scrolls by the pixels a trackpad moves, or a row for each notch of a wheel. Dragging still moves the
+                // window, so the list isn't flickable.
                 WheelHandler {
-                    property real steps: 0
                     onWheel: event => {
-                        steps += event.angleDelta.y
-                        if (Math.abs(steps) < 120)
-                            return
-                        const first = splitList.indexAt(0, splitList.contentY + 1) + (steps > 0 ? -1 : 1)
-                        steps = 0
-                        splitList.positionViewAtIndex(Math.max(0, Math.min(first, splitList.count - 1)), ListView.Beginning)
+                        const delta = event.pixelDelta.y !== 0 ? event.pixelDelta.y
+                                    : event.angleDelta.y / 120 * splitList.rowHeight
+                        // Not contentHeight, which is an estimate until the rows are made, and the rows are all the same height
+                        const last = Math.max(0, splitList.rowHeight * splitList.count - splitList.height)
+                        splitList.contentY = Math.max(0, Math.min(last, splitList.contentY - delta))
                     }
                 }
+
+                ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
             }
+        }
+
+        Rectangle {
+            objectName: "divider"
+            Layout.fillHeight: true
+            implicitWidth: 1
+            color: Tokens.line
         }
 
         // The star, star count and start button, at their places in the art's panel
