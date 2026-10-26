@@ -348,6 +348,23 @@ class SplitListTest(unittest.TestCase):
                          [False, True, True, True, True, True])
         self.assertEqual([item.property("type") for item in self.items("splitType")], types)
 
+    def test_hovering_a_glyph_shows_what_type_it_is(self):
+        self.app.show()
+        self.app.main.update(splits=[{"title": t, "icon": "", "star": "1", "type": t} for t in ("Normal", "Mips-X")],
+                             current=0)
+        run_queued()
+        tips = self.app.view.rootContext().contextProperty("tips")
+        self.addCleanup(tips.hide)
+        glyph = self.items("splitType")[1]
+        center = glyph.mapToScene(QtCore.QPointF(glyph.width() / 2, glyph.height() / 2)).toPoint()
+        QTest.mouseMove(self.app.view, QtCore.QPoint(1, 1))
+        QTest.mouseMove(self.app.view, center)
+        wait_until(lambda: tips.view.isVisible(), timeout=3)
+        self.assertEqual(tips.view.rootObject().property("text"), "Mips, with an X-Cam")
+        QTest.mouseMove(self.app.view, QtCore.QPoint(1, 1))
+        wait_until(lambda: not tips.view.isVisible())
+        self.assertFalse(tips.view.isVisible())
+
     def test_a_split_without_a_type_has_no_glyph(self):
         self.show(["WF"], 0)
         self.assertEqual([item.property("visible") for item in self.items("splitType")], [False])
