@@ -60,6 +60,19 @@ class RollbackTest(unittest.TestCase):
         config.rollback()
         self.assertIs(config.get("game", "vc_fix"), False)
 
+    def test_saving_one_setting_keeps_the_rest_unsaved(self):
+        # e.g. a web page allowed while Configure Capture is open, whose changes Cancel still undoes
+        config.save_config()
+        config.create_rollback()
+        config.set_key("game", "vc_fix", True)
+        config.save_key("connection", "ws_allowed_origins", ["https://timer.example"])
+        with open(config._CONFIG_FILE_NAME) as file:
+            self.assertEqual(json.load(file), {"game": {"vc_fix": False, "game_region": [0, 0, 4, 3]},
+                                               "connection": {"ws_allowed_origins": ["https://timer.example"]}})
+        config.rollback()
+        self.assertIs(config.get("game", "vc_fix"), False)
+        self.assertEqual(config.get("connection", "ws_allowed_origins"), ["https://timer.example"])
+
 
 
 class DefaultConnectionModeTest(unittest.TestCase):

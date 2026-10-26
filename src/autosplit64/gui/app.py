@@ -9,6 +9,7 @@ from autosplit64.core import app_location, debug_info, route_loader, config, liv
 from autosplit64.core.resource_utils import base_path, absolute_path, rel_to_abs
 from . import constants
 from . import theme
+from .origin_prompt import OriginPrompt
 from .dialogs import AboutDialog, CaptureEditor, SettingsDialog, RouteEditor, ResetGeneratorDialog, DebugDialog
 from .qml_view import Values, qml_window
 from .server_status import ServerStatus
@@ -128,6 +129,8 @@ class App(QtWidgets.QMainWindow):
         self.view = qml_window(self.central_widget, "MainWindow", main=self.main, tips=TipWindow())
         # Split detection is running unless the start button offers to start it
         self.updates = Updates(self, self.update_badge, lambda: self.start_state != "start")
+        # Web pages that want to control the timer over WebSocket are asked about while the app is open
+        livesplit_one.ask = OriginPrompt(self)
 
         # Route
         self.route = None
@@ -527,4 +530,5 @@ class App(QtWidgets.QMainWindow):
         self.dialogs["debug_dialog"].close()
         self.stop.emit()
         self.updates.on_quit()
+        livesplit_one.ask = None
         event.accept()

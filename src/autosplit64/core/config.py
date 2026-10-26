@@ -156,6 +156,21 @@ def save_config():
     flush_rollback()
 
 
+def save_key(section, key, value):
+    """ Set and save one setting, leaving other changes, e.g. Configure Capture's, unsaved and its rollback kept """
+    set_key(section, key, value)
+    if _rollback is not None:
+        _rollback.setdefault(section, {})[key] = copy.deepcopy(value)
+    try:
+        with open(_CONFIG_FILE_NAME) as file:
+            saved = json.load(file)
+    except (OSError, ValueError):
+        saved = copy.deepcopy(_rollback if _rollback is not None else _config)
+    saved.setdefault(section, {})[key] = value
+    with open(_CONFIG_FILE_NAME, 'w') as file:
+        json.dump(saved, file, indent=4)
+
+
 def generate_config():
     global _config
 

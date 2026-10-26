@@ -138,6 +138,8 @@ ThemedPane {
                 SettingsPage {
                     title: "Connection"
                     SettingsSection {
+                        // For the allowed web pages' field
+                        fill: true
                         SettingLabel {
                             text: "Connection mode"
                             tip: "How splits reach LiveSplit. Named Pipe needs nothing started, TCP needs LiveSplit's server "
@@ -170,6 +172,14 @@ ThemedPane {
                             tip: "The port AutoSplit64++ waits for a timer on: connect the timer to ws://localhost:<port>"
                         }
                         WholeField { objectName: "lsoPort"; section: "connection"; key: "lso_port"; visible: mode.currentIndex === 2 }
+                        SettingLabel {
+                            text: "Allowed web pages"; visible: mode.currentIndex === 2
+                            Layout.alignment: Qt.AlignTop
+                            tip: "The web pages that can control your timer, one per line, like https://one.livesplit.org. "
+                                 + "One without a port allows any port. You're asked about other web pages when they "
+                                 + "connect. Timers that aren't web pages can always connect."
+                        }
+                        LinesField { objectName: "wsOrigins"; section: "connection"; key: "ws_allowed_origins"; visible: mode.currentIndex === 2 }
                     }
                 }
 
@@ -584,6 +594,17 @@ ThemedPane {
         Layout.preferredWidth: 160
         onTextEdited: if (acceptableInput) settings.set(section, key, text)
         Connections { target: settings; function onLoaded() { field.text = String(settings.get(field.section, field.key)) } }
+    }
+
+    // A list of text, one item per line
+    component LinesField: TextArea {
+        id: field
+        required property string section
+        required property string key
+        Layout.fillWidth: true
+        selectByMouse: true
+        onTextChanged: settings.set_lines(section, key, text)
+        Connections { target: settings; function onLoaded() { field.text = settings.get(field.section, field.key).join("\n") } }
     }
 
     component WholeField: SettingField {

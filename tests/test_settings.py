@@ -30,13 +30,14 @@ class ConnectionSettingsTest(unittest.TestCase):
         dialog.show()
         qml(dialog, "nav").setProperty("currentIndex", 1)
         choose(qml(dialog, "mode"), ["Named Pipe", "TCP", "WebSocket"].index(mode))
-        fields = {"pipe host": "pipeHost", "TCP host": "tcpHost", "TCP port": "tcpPort", "WebSocket port": "lsoPort"}
+        fields = {"pipe host": "pipeHost", "TCP host": "tcpHost", "TCP port": "tcpPort", "WebSocket port": "lsoPort",
+                  "allowed web pages": "wsOrigins"}
         return [name for name, field in fields.items() if qml(dialog, field).property("visible")]
 
     def test_only_the_selected_modes_settings_are_shown(self):
         self.assertEqual(self.shown_fields("Named Pipe"), ["pipe host"])
         self.assertEqual(self.shown_fields("TCP"), ["TCP host", "TCP port"])
-        self.assertEqual(self.shown_fields("WebSocket"), ["WebSocket port"])
+        self.assertEqual(self.shown_fields("WebSocket"), ["WebSocket port", "allowed web pages"])
 
 
 class SettingTipsTest(unittest.TestCase):
@@ -82,7 +83,7 @@ class SettingsDialogTest(unittest.TestCase):
                     "auto_start": True, "pause_on_stop": True, "theme": "dracula", "style": "Fusion"},
         "game": {"override_version": True, "version": "US"},
         "connection": {"ls_host": "host.example", "ls_port": 1234, "ls_pipe_host": "pipe.example", "lso_port": 5678,
-                       "ls_connection_type": 2},
+                       "ls_connection_type": 2, "ws_allowed_origins": ["https://one.livesplit.org", "http://localhost"]},
         "thresholds": {"probability_threshold": 0.11, "reset_threshold": 0.12, "confirmation_threshold": 0.13,
                        "black_threshold": 0.14, "white_threshold": 0.15, "xcam_bg_threshold": 16,
                        "xcam_rg_threshold": 17, "xcam_bg_activation": 18, "xcam_rg_activation": 19,
@@ -139,6 +140,23 @@ class SettingsDialogTest(unittest.TestCase):
                           settings["error"]["star_skip"]], [4321, 0.5, 0, [1, 2, 3], True])
         self.assertIs(type(settings["general"]["operation_mode"]), int)
         self.assertIs(type(settings["split_xcam"]["lower_bound"][0]), int)
+
+    def test_allowed_web_pages_one_per_line(self):
+        settings = copy.deepcopy(self.SETTINGS)
+        for patcher in [mock.patch.object(config, "_config", settings), mock.patch.object(config, "save_config")]:
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        dialog = SettingsDialog()
+        self.addCleanup(dialog.deleteLater)
+        dialog.show()
+        field = qml(dialog, "wsOrigins")
+        self.assertEqual(field.property("text"), "https://one.livesplit.org\nhttp://localhost")
+
+        # Spaces and empty lines, as typed
+        field.setProperty("text", "https://one.livesplit.org\n  https://timer.example \n\nhttp://localhost\n")
+        dialog.apply_clicked()
+        self.assertEqual(settings["connection"]["ws_allowed_origins"],
+                         ["https://one.livesplit.org", "https://timer.example", "http://localhost"])
 
     def test_deleting_it_has_no_qml_errors(self):
         """ Like quitting does: the QML mustn't outlive the settings it uses """

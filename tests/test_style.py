@@ -36,6 +36,7 @@ Item {
         MenuItem { id: menuChecked; objectName: "menuChecked"; text: "Checked"; checkable: true; checked: true }
         Label { objectName: "label"; text: "Label" }
         TextField { objectName: "field"; text: "Field" }
+        TextArea { objectName: "area"; text: "One\nTwo" }
         ComboBox { objectName: "combo"; model: ["A", "B"] }
         SpinBox { objectName: "spin"; from: 0; to: 10; value: 3 }
         ItemDelegate { objectName: "row"; text: "Row" }
@@ -77,6 +78,7 @@ out = {
     "checked": rgb(qml(view, "checked").property("indicator").property("color")),
     "unchecked": qml(view, "unchecked").property("indicator").property("color").alpha(),
     "field": rgb(qml(view, "field").property("background").property("color")),
+    "area": rgb(qml(view, "area").property("background").property("color")) if qml(view, "area").property("background") else None,
     "combo": rgb(qml(view, "combo").property("background").property("color")),
     "spin": rgb(qml(view, "spin").property("background").property("color")),
     "spinValue": qml(view, "spin").property("value"),
@@ -130,7 +132,7 @@ class StyleTest(unittest.TestCase):
             with self.subTest(name):
                 out = probe(name)
                 palette = out["palette"]
-                for field in ("field", "combo", "spin"):
+                for field in ("field", "area", "combo", "spin"):
                     self.assertEqual(out[field], palette["ground"], field)
                 self.assertEqual(out["chosen"], palette["raised"])
                 self.assertEqual(out["row"], 0)

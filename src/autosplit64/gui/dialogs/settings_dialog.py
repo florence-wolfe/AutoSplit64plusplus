@@ -71,6 +71,11 @@ class Settings(QtCore.QObject):
     def set_path(self, section, key, path):
         self._changes[section, key] = resource_utils.abs_to_rel(path)
 
+    @QtCore.pyqtSlot(str, str, str)
+    def set_lines(self, section, key, text):
+        """ A list from text with an item per line, without the spaces around them and the empty lines """
+        self._changes[section, key] = [line.strip() for line in text.splitlines() if line.strip()]
+
     @QtCore.pyqtSlot(str, result=str)
     def browse(self, title):
         file_name, _ = QtWidgets.QFileDialog.getOpenFileName(self.parent(), title, "")

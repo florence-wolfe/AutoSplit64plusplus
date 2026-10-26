@@ -3,12 +3,14 @@ import socket
 import threading
 import time
 import unittest
+from unittest import mock
 
 from websockets.exceptions import InvalidStatus
 from websockets.sync.client import connect
 
 from autosplit64.core import livesplit_one
 from autosplit64.core.livesplit_one import LiveSplitOneServer
+from tests.settings import patch_settings
 
 
 def free_port():
@@ -65,6 +67,9 @@ def wait_for(predicate, timeout=2.0):
 
 class LiveSplitOneServerTest(unittest.TestCase):
     def setUp(self):
+        for patcher in [mock.patch.object(livesplit_one, "ask", None), mock.patch.object(livesplit_one, "_refused", set())]:
+            patcher.start()
+            self.addCleanup(patcher.stop)
         self.server = LiveSplitOneServer(PORT)
 
     def tearDown(self):
@@ -146,7 +151,7 @@ class LiveSplitOneServerTest(unittest.TestCase):
         time.sleep(0.1)
         self.assertTrue(self.server.connected())
 
-    def test_timers_connect_from_their_pages(self):
+    def test_timers_connect_from_the_default_pages(self):
         # LiveSplit One's site, its desktop app on macOS and Linux and on Windows, and a copy hosted on this computer
         for origin in ["https://one.livesplit.org", "tauri://localhost", "https://tauri.localhost",
                        "http://localhost:8080", "http://127.0.0.1:5173", "http://[::1]:3000"]:
@@ -154,16 +159,54 @@ class LiveSplitOneServerTest(unittest.TestCase):
                 self.connect_client({"state": "Running", "index": 1}, origin)
                 self.assertTrue(wait_for(lambda: self.server.split_index() == 1))
 
-    def test_other_web_pages_cant_connect(self):
+    def refused(self, origin):
+        with self.assertRaises(InvalidStatus) as refused:
+            connect(f"ws://localhost:{PORT}", origin=origin)
+        return refused.exception.response.status_code == 403
+
+    def test_other_pages_are_refused_when_nobody_can_be_asked(self):
         # Any web page the runner has open could otherwise split, reset or undo, and take over the timer's connection
         self.connect_client({"state": "Running", "index": 1})
-        for origin in ["https://example.com", "http://localhost.example.com", "https://one.livesplit.org.example.com",
-                       "http://one.livesplit.org", "null"]:
-            with self.subTest(origin), self.assertRaises(InvalidStatus) as refused:
-                connect(f"ws://localhost:{PORT}", origin=origin)
-            self.assertEqual(refused.exception.response.status_code, 403)
+        with self.assertLogs(".log", "WARNING"):
+            for origin in ["https://example.com", "http://localhost.example.com", "https://one.livesplit.org.example.com",
+                           "http://one.livesplit.org", "null"]:
+                with self.subTest(origin):
+                    self.assertTrue(self.refused(origin))
         # The timer is still the one connected
         self.assertEqual(self.server.split_index(), 1)
+
+    def test_the_runner_is_asked_about_other_pages(self):
+        asked = []
+        with mock.patch.object(livesplit_one, "ask", lambda origin: asked.append(origin) or origin == "https://timer.example"):
+            self.connect_client({"state": "Running", "index": 1}, "https://timer.example")
+            self.assertTrue(wait_for(lambda: self.server.split_index() == 1))
+            with self.assertLogs(".log", "WARNING"):
+                self.assertTrue(self.refused("https://other.example"))
+                # Refused until the app quits, without asking again
+                self.assertTrue(self.refused("https://other.example"))
+        self.assertEqual(asked, ["https://timer.example", "https://other.example"])
+
+    def test_pages_allowed_in_the_settings(self):
+        with patch_settings({("connection", "ws_allowed_origins"): ["https://timer.example/"]}, real=True):
+            self.connect_client({"state": "Running", "index": 1}, "https://timer.example")
+            self.assertTrue(wait_for(lambda: self.server.split_index() == 1))
+            with self.assertLogs(".log", "WARNING"):
+                self.assertTrue(self.refused("https://one.livesplit.org"))
+
+
+class AllowedTest(unittest.TestCase):
+    def test_an_origin_without_a_port_allows_any_port(self):
+        self.assertTrue(livesplit_one.allowed("http://localhost:8080", ["http://localhost"]))
+        self.assertTrue(livesplit_one.allowed("http://localhost", ["http://localhost"]))
+        self.assertTrue(livesplit_one.allowed("http://localhost:8080", ["http://localhost:8080"]))
+        self.assertFalse(livesplit_one.allowed("http://localhost:8081", ["http://localhost:8080"]))
+        self.assertFalse(livesplit_one.allowed("http://localhost.example.com", ["http://localhost"]))
+        self.assertFalse(livesplit_one.allowed("https://localhost", ["http://localhost"]))
+
+    def test_as_typed(self):
+        # Spaces, a trailing slash and capitals, as they might be typed in the settings
+        self.assertTrue(livesplit_one.allowed("https://timer.example", [" HTTPS://Timer.example/ "]))
+        self.assertFalse(livesplit_one.allowed("https://timer.example", ["", " "]))
 
 
 class StatusTest(unittest.TestCase):

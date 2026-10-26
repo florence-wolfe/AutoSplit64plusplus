@@ -8,25 +8,49 @@ https://github.com/LiveSplit/livesplit-core/blob/master/src/networking/server_pr
 """
 import json
 import logging
-import re
 import threading
 from collections import deque
 
 from websockets.exceptions import ConnectionClosed
 from websockets.sync.server import serve
 
+from . import config
+
 log = logging.getLogger(".log")
 
-# The pages a timer may connect from, since a browser lets any web page the runner has open connect to localhost:
-# LiveSplit One's site, its desktop app (tauri://localhost on macOS and Linux, https://tauri.localhost on Windows), a
-# copy hosted on this computer, and None, the programs that aren't browsers, which send no Origin
-ORIGINS = [
-    "https://one.livesplit.org",
-    "tauri://localhost",
-    re.compile(r"https?://tauri\.localhost"),
-    re.compile(r"https?://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?"),
-    None,
-]
+# A browser lets any web page the runner has open connect to localhost, so web pages connect only from the ones in
+# the settings (connection.ws_allowed_origins), or when the runner allows them. Programs that aren't browsers send
+# no Origin and always can.
+# ask(origin), set by the app, asks the runner from the server's thread whether a web page may connect
+ask = None
+# Web pages the runner refused, which aren't asked about again until the app quits
+_refused = set()
+# One question at a time, so a page connecting twice is asked about once
+_asking = threading.Lock()
+
+
+def allowed(origin, origins):
+    """ Whether origin is one of origins, as typed in the settings: one without a port allows any port """
+    for entry in origins:
+        entry = entry.strip().rstrip("/").lower()
+        if entry and (origin == entry or origin.startswith(entry + ":") and origin[len(entry) + 1:].isdigit()):
+            return True
+    return False
+
+
+def _allows(origin):
+    if allowed(origin, config.get("connection", "ws_allowed_origins")):
+        return True
+    with _asking:
+        # Allowed by the answer to a question this one waited for
+        if allowed(origin, config.get("connection", "ws_allowed_origins")):
+            return True
+        if origin in _refused or ask is None:
+            return False
+        if ask(origin):
+            return True
+        _refused.add(origin)
+        return False
 
 # LiveSplit Server commands used by livesplit.py -> server protocol commands
 _COMMANDS = {
@@ -89,7 +113,7 @@ class LiveSplitOneServer:
         self._state_received = threading.Event()
         self._last_index = -1
 
-        self._server = serve(self._handle_client, "localhost", port, origins=ORIGINS)
+        self._server = serve(self._handle_client, "localhost", port, process_request=self._check_origin)
         threading.Thread(target=self._server.serve_forever, daemon=True).start()
 
     def close(self):
@@ -97,6 +121,13 @@ class LiveSplitOneServer:
 
     def connected(self):
         return self._client is not None
+
+    def _check_origin(self, connection, request):
+        origin = request.headers.get("Origin")
+        if origin is None or _allows(origin):
+            return None
+        log.warning("Refused a connection from the web page at %s", origin)
+        return connection.respond(403, "This web page isn't allowed to control the timer.\n")
 
     def _handle_client(self, ws):
         # The newest connection wins, e.g. after reloading the LiveSplit One tab
