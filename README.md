@@ -106,6 +106,8 @@ In WebSocket mode, AutoSplit64++ runs a WebSocket server and the timer connects 
 1. In AutoSplit64++, `Settings -> Connection` &rarr; set `Connection mode` to **WebSocket**. It listens on port `16835` by default. The dot in the top right corner shows the server state (green: connected, amber: waiting for a timer to connect, red: could not start). Hover it for the URL and click it to copy the URL.
 2. Connect the timer to `ws://localhost:16835`, and set its timer to start at **1.36**.
 
+Only this computer can connect. Of web pages, only LiveSplit One (its site and its desktop app) and pages on this computer can, so other pages you have open can't control your timer; timers that aren't web pages can always connect.
+
 For example, in [LiveSplit One](https://one.livesplit.org) (the web timer):
 
 1. `Settings -> Server Connection -> Connect` &rarr; enter `ws://localhost:16835`.

@@ -4,6 +4,7 @@ import threading
 import time
 import unittest
 
+from websockets.exceptions import InvalidStatus
 from websockets.sync.client import connect
 
 from autosplit64.core import livesplit_one
@@ -23,14 +24,14 @@ PORT = free_port()
 class FakeLiveSplitOne:
     """Plays the LiveSplit One side: answers commands the way livesplit-core's server protocol does."""
 
-    def __init__(self, port, state):
+    def __init__(self, port, state, origin=None):
         self.state = state
         self.commands = []
         # Whether the attempt has new best times, which makes LSO ask whether to save them on a reset without
         # saveAttempt. Until the runner answers, it sends no responses, as it sends them in order.
         self.new_best_times = False
         self._asking = False
-        self.ws = connect(f"ws://localhost:{port}")
+        self.ws = connect(f"ws://localhost:{port}", origin=origin)
         threading.Thread(target=self._serve, daemon=True).start()
 
     def _serve(self):
@@ -69,8 +70,8 @@ class LiveSplitOneServerTest(unittest.TestCase):
     def tearDown(self):
         self.server.close()
 
-    def connect_client(self, state):
-        client = FakeLiveSplitOne(PORT, state)
+    def connect_client(self, state, origin=None):
+        client = FakeLiveSplitOne(PORT, state, origin)
         self.addCleanup(client.close)
         self.assertTrue(wait_for(self.server.connected))
         return client
@@ -144,6 +145,25 @@ class LiveSplitOneServerTest(unittest.TestCase):
         first.close()
         time.sleep(0.1)
         self.assertTrue(self.server.connected())
+
+    def test_timers_connect_from_their_pages(self):
+        # LiveSplit One's site, its desktop app on macOS and Linux and on Windows, and a copy hosted on this computer
+        for origin in ["https://one.livesplit.org", "tauri://localhost", "https://tauri.localhost",
+                       "http://localhost:8080", "http://127.0.0.1:5173", "http://[::1]:3000"]:
+            with self.subTest(origin):
+                self.connect_client({"state": "Running", "index": 1}, origin)
+                self.assertTrue(wait_for(lambda: self.server.split_index() == 1))
+
+    def test_other_web_pages_cant_connect(self):
+        # Any web page the runner has open could otherwise split, reset or undo, and take over the timer's connection
+        self.connect_client({"state": "Running", "index": 1})
+        for origin in ["https://example.com", "http://localhost.example.com", "https://one.livesplit.org.example.com",
+                       "http://one.livesplit.org", "null"]:
+            with self.subTest(origin), self.assertRaises(InvalidStatus) as refused:
+                connect(f"ws://localhost:{PORT}", origin=origin)
+            self.assertEqual(refused.exception.response.status_code, 403)
+        # The timer is still the one connected
+        self.assertEqual(self.server.split_index(), 1)
 
 
 class StatusTest(unittest.TestCase):

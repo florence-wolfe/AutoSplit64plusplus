@@ -8,6 +8,7 @@ https://github.com/LiveSplit/livesplit-core/blob/master/src/networking/server_pr
 """
 import json
 import logging
+import re
 import threading
 from collections import deque
 
@@ -15,6 +16,17 @@ from websockets.exceptions import ConnectionClosed
 from websockets.sync.server import serve
 
 log = logging.getLogger(".log")
+
+# The pages a timer may connect from, since a browser lets any web page the runner has open connect to localhost:
+# LiveSplit One's site, its desktop app (tauri://localhost on macOS and Linux, https://tauri.localhost on Windows), a
+# copy hosted on this computer, and None, the programs that aren't browsers, which send no Origin
+ORIGINS = [
+    "https://one.livesplit.org",
+    "tauri://localhost",
+    re.compile(r"https?://tauri\.localhost"),
+    re.compile(r"https?://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?"),
+    None,
+]
 
 # LiveSplit Server commands used by livesplit.py -> server protocol commands
 _COMMANDS = {
@@ -77,7 +89,7 @@ class LiveSplitOneServer:
         self._state_received = threading.Event()
         self._last_index = -1
 
-        self._server = serve(self._handle_client, "localhost", port)
+        self._server = serve(self._handle_client, "localhost", port, origins=ORIGINS)
         threading.Thread(target=self._server.serve_forever, daemon=True).start()
 
     def close(self):
