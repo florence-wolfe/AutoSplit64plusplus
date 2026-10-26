@@ -19,7 +19,7 @@ log = logging.getLogger(".log")
 class UpdateBadge(QtCore.QObject):
     """
     The installed version, which the main window shows with a dot when an update is available, and its
-    tooltip. Clicking it checks for or installs an update, or opens the changelog once it's the latest.
+    tooltip. Clicking it checks for an update or offers it, or opens the changelog once it's the latest.
     """
     changed = QtCore.pyqtSignal()
     clicked = QtCore.pyqtSignal()
@@ -73,7 +73,7 @@ class Updates(QtCore.QObject):
         badge.clicked.connect(self._on_badge_clicked)
 
     def check(self, asked=False):
-        """ Check for a newer release in the background. On launch (not asked) it's offered in a prompt. """
+        """ Check for a newer release in the background, and offer it in a prompt """
         threading.Thread(target=self._check, args=(asked,), daemon=True).start()
 
     def _check(self, asked):
@@ -97,8 +97,12 @@ class Updates(QtCore.QObject):
 
         self._release = release
         self._badge.show_update(release.version)
-        if asked or self._ask(f"AutoSplit64++ v{release.version} is available. You have v{constants.VERSION}.",
-                              "Update", "Later"):
+        self._offer()
+
+    def _offer(self):
+        """ Ask whether to update to the newer release, on launch and when the version is clicked """
+        if self._ask(f"AutoSplit64++ v{self._release.version} is available. You have v{constants.VERSION}.",
+                     "Update", "Later"):
             self.update()
 
     def _on_check_failed(self, error, asked):
@@ -106,8 +110,11 @@ class Updates(QtCore.QObject):
             self._message(f"Couldn't check for updates:\n\n{error}")
 
     def _on_badge_clicked(self):
+        # e.g. the badge clicked again during the download
+        if self._downloading:
+            return
         if self._release:
-            self.update()
+            self._offer()
         elif self._badge.latest:
             QtGui.QDesktopServices.openUrl(QtCore.QUrl(
                 f"https://github.com/{constants.GITHUB_REPO}/releases/tag/v{constants.VERSION}"))

@@ -119,16 +119,46 @@ class BadgeTest(UpdatesTestCase):
         # It has no release with a changelog
         self.assertEqual(app.main.values["versionTip"], "Click to check for updates")
 
+    def asked(self, app, answer):
+        """ Click the version, answer whether to update, and return the questions and whether it downloaded """
+        prompts = []
+        with mock.patch.object(updates.Updates, "_ask", lambda self, text, yes, no: prompts.append(text) or answer), \
+             mock.patch.object(updater, "can_install", return_value=True), \
+             mock.patch.object(updater, "download", return_value="/tmp/update.zip") as download, \
+             answering("When I Quit"):
+            app.update_badge.clicked.emit()
+            self.wait_for(lambda: prompts)
+            QTest.qWait(50)
+        return prompts, download.called
+
+    def test_known_update_is_asked_before_downloading(self):
+        app = self.open_app()
+        app.updates._release = RELEASE
+        self.assertEqual(self.asked(app, False), (["AutoSplit64++ v0.5.0 is available. You have v0.4.0."], False))
+        self.assertEqual(self.asked(app, True), (["AutoSplit64++ v0.5.0 is available. You have v0.4.0."], True))
+
+    def test_update_found_by_clicking_is_asked_before_downloading(self):
+        app = self.open_app()
+        with mock.patch.object(updater, "newer_release", return_value=RELEASE):
+            self.assertEqual(self.asked(app, False), (["AutoSplit64++ v0.5.0 is available. You have v0.4.0."], False))
+
     def test_running_from_source_opens_the_release_page(self):
         app = self.open_app()
         app.updates._release = RELEASE
-        with mock.patch.object(updater, "can_install", return_value=False), \
+        with mock.patch.object(updates.Updates, "_ask", return_value=True), \
+             mock.patch.object(updater, "can_install", return_value=False), \
              mock.patch.object(updates.QtGui.QDesktopServices, "openUrl") as open_url:
             app.update_badge.clicked.emit()
         self.assertEqual(open_url.call_args.args[0].toString(), "https://example.com/release")
 
 
 class InstallTest(UpdatesTestCase):
+    def setUp(self):
+        super().setUp()
+        patcher = mock.patch.object(updates.Updates, "_ask", return_value=True)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def download_and_answer(self, choice, started_during_download=False):
         app = self.open_app()
         app.updates._release = RELEASE
