@@ -10,13 +10,17 @@ import os
 import sys
 from pathlib import Path
 
-from PyQt6 import QtGui, QtWidgets
+from PyQt6 import QtCore, QtGui, QtWidgets
 
 # qt-themes uses qtpy, which would otherwise look for PyQt5 first
 os.environ.setdefault("QT_API", "pyqt6")
 import qt_themes  # noqa: E402
 
-DEFAULT = "default"
+# The default: AS64++ Dark or AS64++ Light, as the system is set to
+SYSTEM = "as64_system"
+DEFAULT = SYSTEM
+# The palette the app had before its own themes, still named as it was in the settings
+CLASSIC = "default"
 # Where AutoSplit64++'s own Qt Quick Controls style is, a directory of QML named after it
 STYLES_DIR = Path(__file__).parent / "qml" / "styles"
 # The platforms' own Qt Quick Controls styles, whose controls take the system's accent color instead of the theme's
@@ -49,7 +53,7 @@ _OWN = {
         overlay0="#a9afba", surface2="#c5cad4", surface1="#d9dde5", surface0="#e8ebf1",
         base="#ffffff", mantle="#eef0f4", crust="#f4f5f8"),
 }
-_DISPLAY_NAMES = {"as64_dark": "AS64++ Dark", "as64_light": "AS64++ Light"}
+_DISPLAY_NAMES = {SYSTEM: "AS64++ (System)", "as64_dark": "AS64++ Dark", "as64_light": "AS64++ Light", CLASSIC: "Classic"}
 # AutoSplit64++'s own dark palette
 _DEFAULT_COLORS = {
     Role.Window: (60, 63, 65),
@@ -75,6 +79,8 @@ _DEFAULT_STATUS_COLORS = {"green": (76, 175, 80), "yellow": (255, 193, 7), "red"
 # The theme in use, by name and as a qt-themes theme (None for the default)
 _name = None
 _current = None
+# Whether apply() listens for the system's light or dark changing
+_watching = False
 
 
 def styles():
@@ -104,8 +110,8 @@ def default_palette():
 
 
 def themes():
-    """ The themes' names, the default first and then AutoSplit64++'s own """
-    return [DEFAULT, *_OWN] + sorted(qt_themes.get_themes())
+    """ The themes' names, the default first, then AutoSplit64++'s own and the one it had before them """
+    return [SYSTEM, *_OWN, CLASSIC] + sorted(qt_themes.get_themes())
 
 
 def status_color(name):
@@ -132,13 +138,33 @@ def current():
     return _name
 
 
+def system_dark():
+    """ Whether the system is set to dark, which it's taken to be where it doesn't say """
+    return QtGui.QGuiApplication.styleHints().colorScheme() != QtCore.Qt.ColorScheme.Light
+
+
+def _follows_system(name):
+    """ Whether the theme is the system's light or dark one: the default, also for a name that's no theme """
+    return name == SYSTEM or name not in themes()
+
+
+def _on_system_changed(*_):
+    if _name is not None and _follows_system(_name):
+        apply(_name)
+
+
 def apply(name):
     """ Use the theme, the default for one that doesn't exist. Widgets repaint once events are processed. """
-    global _name, _current
+    global _name, _current, _watching
     app = QtWidgets.QApplication.instance()
     _name = name
+    if not _watching:
+        # The default changes with the system, also while the app is open
+        QtGui.QGuiApplication.styleHints().colorSchemeChanged.connect(_on_system_changed)
+        _watching = True
+    drawn = ("as64_dark" if system_dark() else "as64_light") if _follows_system(name) else name
     # Before the palette, which makes the widgets repaint
-    _current = _OWN.get(name) or qt_themes.get_themes().get(name)
+    _current = _OWN.get(drawn) or qt_themes.get_themes().get(drawn)
     if _current:
         qt_themes.set_theme(_current, style=None)
     else:

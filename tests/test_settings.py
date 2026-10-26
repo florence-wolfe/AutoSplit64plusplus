@@ -242,7 +242,7 @@ class ThemeSettingTest(unittest.TestCase):
 
     def test_shows_the_saved_theme(self):
         self.assertEqual(self.combo.property("currentText"), "Dracula")
-        self.assertEqual(theme.themes()[0], "default")
+        self.assertEqual(theme.themes()[0], theme.DEFAULT)
 
     def test_choosing_shows_the_theme_without_saving_it(self):
         self.choose("nord")
@@ -265,7 +265,7 @@ class ThemeSettingTest(unittest.TestCase):
     def test_theme_that_doesnt_exist_shows_the_default(self):
         self.settings["general"]["theme"] = "removed_theme"
         self.dialog.show()
-        self.assertEqual(self.combo.property("currentText"), "Default")
+        self.assertEqual(self.combo.property("currentText"), "AS64++ (System)")
 
 
 class StyleSettingTest(unittest.TestCase):

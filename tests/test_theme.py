@@ -22,8 +22,8 @@ class ThemeTest(unittest.TestCase):
         theme.apply("nord")
         self.assertEqual(theme.current(), "nord")
 
-    def test_default_theme_is_the_original_palette(self):
-        theme.apply(theme.DEFAULT)
+    def test_classic_theme_is_the_original_palette(self):
+        theme.apply(theme.CLASSIC)
         self.assertEqual(self.window_color(), (60, 63, 65))
         self.assertEqual(qapp.palette().color(Role.Highlight).getRgb()[:3], (75, 110, 175))
 
@@ -37,15 +37,44 @@ class ThemeTest(unittest.TestCase):
         self.assertNotEqual(self.window_color(), dracula)
 
     def test_unknown_theme_is_the_default(self):
-        theme.apply("removed_theme")
-        self.assertEqual(self.window_color(), (60, 63, 65))
+        with mock.patch.object(theme, "system_dark", return_value=True):
+            theme.apply("removed_theme")
+        self.assertEqual(self.window_color(), (25, 27, 32))
+
+    def test_default_theme_follows_the_system_light_or_dark(self):
+        for dark, window in [(True, (25, 27, 32)), (False, (255, 255, 255))]:
+            with self.subTest(dark=dark), mock.patch.object(theme, "system_dark", return_value=dark):
+                theme.apply(theme.DEFAULT)
+                self.assertEqual(theme.current(), theme.DEFAULT)
+                self.assertEqual(self.window_color(), window)
+
+    def test_default_theme_changes_with_the_system_while_open(self):
+        with mock.patch.object(theme, "system_dark", return_value=True):
+            theme.apply(theme.DEFAULT)
+            self.assertEqual(self.window_color(), (25, 27, 32))
+        with mock.patch.object(theme, "system_dark", return_value=False):
+            QtGui.QGuiApplication.styleHints().colorSchemeChanged.emit(QtCore.Qt.ColorScheme.Light)
+            self.assertEqual(self.window_color(), (255, 255, 255))
+            self.assertEqual(theme.current(), theme.DEFAULT)
+
+    def test_other_themes_dont_change_with_the_system(self):
+        theme.apply("nord")
+        nord = self.window_color()
+        with mock.patch.object(theme, "system_dark", return_value=False):
+            QtGui.QGuiApplication.styleHints().colorSchemeChanged.emit(QtCore.Qt.ColorScheme.Light)
+        self.assertEqual(self.window_color(), nord)
+
+    def test_default_setting_is_the_default_theme(self):
+        from autosplit64.core import config
+        self.assertEqual(config.get_default("general", "theme"), theme.DEFAULT)
 
     def test_display_names(self):
         self.assertEqual(theme.display_name("github_dark"), "Github Dark")
-        self.assertEqual(theme.display_name(theme.DEFAULT), "Default")
+        self.assertEqual(theme.display_name(theme.DEFAULT), "AS64++ (System)")
+        self.assertEqual(theme.display_name(theme.CLASSIC), "Classic")
 
     def test_own_themes_come_after_the_default(self):
-        self.assertEqual(theme.themes()[:3], [theme.DEFAULT, "as64_dark", "as64_light"])
+        self.assertEqual(theme.themes()[:4], [theme.DEFAULT, "as64_dark", "as64_light", theme.CLASSIC])
         self.assertEqual(theme.display_name("as64_dark"), "AS64++ Dark")
         self.assertEqual(theme.display_name("as64_light"), "AS64++ Light")
 
@@ -130,7 +159,7 @@ class StatusColorTest(unittest.TestCase):
         self.assertEqual(theme.status_color("green"), qt_themes.get_themes()["dracula"].green)
         theme.apply("as64_dark")
         self.assertEqual(theme.status_color("green").getRgb()[:3], (76, 175, 80))
-        theme.apply(theme.DEFAULT)
+        theme.apply(theme.CLASSIC)
         self.assertEqual(theme.status_color("green").getRgb()[:3], (76, 175, 80))
         self.assertEqual(theme.status_color("red").getRgb()[:3], (244, 67, 54))
 

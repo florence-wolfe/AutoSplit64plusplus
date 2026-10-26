@@ -101,7 +101,7 @@ ThemedPane {
                         SettingLabel { text: "Theme"; tip: "The colours of AutoSplit64++'s windows" }
                         ValueCombo {
                             objectName: "theme"
-                            section: "general"; key: "theme"; fallback: "default"
+                            section: "general"; key: "theme"; fallback: "as64_system"
                             model: settings.themes
                             Layout.preferredWidth: 200
                             // Shown right away, but only kept when the settings are applied
