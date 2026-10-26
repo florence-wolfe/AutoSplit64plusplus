@@ -10,17 +10,11 @@ AUTHOR = "Flo Wolfe\nDavi Be\nSynozure"
 
 GITHUB_REPO = "florence-wolfe/AutoSplit64plusplus"
 
-WIDTH = 365
-HEIGHT = 259
+WIDTH = 460
+HEIGHT = 330
 
 FONT_PATH = str(DATA_DIR / "font" / "InterVariable.ttf")
 ICON_PATH = "resources/gui/icons/as64plus.png"
-START_PATH = "resources/gui/buttons/pipe_start_btn.png"
-STOP_PATH = "resources/gui/buttons/wall_stop_btn.png"
-INIT_PATH = "resources/gui/buttons/wall_init_btn.png"
-STAR_PATH = "resources/gui/buttons/star.png"
-STAR_HOVER_PATH = "resources/gui/buttons/refresh_pipes_icon.png"
-BACKGROUND_PATH = "resources/gui/gui_bg.png"
 ROUTES_DIR = "routes"
 PLACEHOLDER_PATH = "resources/gui/obs_error.png"
 

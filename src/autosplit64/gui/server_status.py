@@ -31,6 +31,8 @@ class ServerStatus(QtCore.QObject):
         self.state = "stopped"
         self.url = ""
         self.tooltip = ""
+        # Which LiveSplit it's for, which the main window's status says beside the dot
+        self.label = ""
 
         self._timer = QtCore.QTimer(self)
         self._timer.timeout.connect(self.refresh)
@@ -42,10 +44,12 @@ class ServerStatus(QtCore.QObject):
         if config.get("connection", "ls_connection_type") != 2:
             self.state, self.url, error = livesplit.client_status()
             self.tooltip = CLIENT_DESCRIPTIONS[self.state] + (f": {error}" if error else "") + f"\n{self.url}\nClick to copy"
+            self.label = "LiveSplit"
         else:
             self.state, port, error = livesplit_one.status()
             self.url = f"ws://localhost:{port or config.get('connection', 'lso_port')}"
             self.tooltip = f"{DESCRIPTIONS[self.state]}\n{self.url}\nClick to copy"
+            self.label = "LiveSplit One"
             if error is not None:
                 reason = f"port {port} is already in use" if error.errno == errno.EADDRINUSE else str(error)
                 self.tooltip = f"{DESCRIPTIONS[self.state]}: {reason}\n{self.url}"

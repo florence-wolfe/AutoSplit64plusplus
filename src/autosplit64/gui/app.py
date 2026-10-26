@@ -23,10 +23,6 @@ def _window_flags(on_top):
     return flags | QtCore.Qt.WindowType.WindowStaysOnTopHint if on_top else flags
 
 
-def _url(path):
-    return QtCore.QUrl.fromLocalFile(base_path(path)).toString()
-
-
 class Main(Values):
     """
     What MainWindow.qml shows, in values: the route's splits, the current one, the star counts, the start
@@ -47,7 +43,7 @@ class Main(Values):
         setting, copy_status() copies the address, and screen_top() is where the window's screen's free space starts
         """
         super().__init__({"splits": [], "routeTitle": "", "current": 0, "starCount": "-", "splitStar": "-",
-                         "start": "start", "statusColor": "gray", "statusTip": "", "version": "", "update": False, "versionTip": "",
+                         "start": "start", "statusColor": "gray", "statusTip": "", "statusLabel": "", "version": "", "update": False, "versionTip": "",
                          "muted": "gray", "green": "green"})
         self._menu_items = menu_items
         self._set_general = set_general
@@ -129,9 +125,7 @@ class App(QtWidgets.QMainWindow):
         self.server_status.changed.connect(self._show_status)
         self.update_badge.changed.connect(self._show_version)
         self.central_widget = QtWidgets.QWidget(self)
-        art = {"start": _url(constants.START_PATH), "stop": _url(constants.STOP_PATH), "init": _url(constants.INIT_PATH),
-               "star": _url(constants.STAR_PATH), "starHover": _url(constants.STAR_HOVER_PATH)}
-        self.view = qml_window(self.central_widget, "MainWindow", main=self.main, art=art, tips=TipWindow())
+        self.view = qml_window(self.central_widget, "MainWindow", main=self.main, tips=TipWindow())
         # Split detection is running unless the start button offers to start it
         self.updates = Updates(self, self.update_badge, lambda: self.start_state != "start")
 
@@ -264,7 +258,7 @@ class App(QtWidgets.QMainWindow):
     def _show_status(self):
         color = self.server_status.color()
         self.main.update(statusColor=theme.status_color(color).name() if color else self.main.values["muted"],
-                         statusTip=self.server_status.tooltip)
+                         statusTip=self.server_status.tooltip, statusLabel=self.server_status.label)
 
     def _show_version(self):
         badge = self.update_badge

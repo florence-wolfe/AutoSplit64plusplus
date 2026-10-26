@@ -32,6 +32,17 @@ class ClientModesTest(unittest.TestCase):
             with self.subTest(status[0]):
                 self.assertEqual(self.status(1, status).tooltip, tooltip)
 
+    def test_label_names_the_kind_of_connection(self):
+        self.assertEqual(self.status(1, ("stopped", "localhost:16834", None)).label, "LiveSplit")
+
+    def test_label_in_livesplit_one_mode(self):
+        from autosplit64.core import livesplit_one
+        with patch_settings({("connection", "ls_connection_type"): 2, ("connection", "lso_port"): 5000}, real=True), \
+                mock.patch.object(livesplit_one, "status", return_value=("waiting", 5000, None)):
+            status = ServerStatus()
+            self.addCleanup(status.deleteLater)
+            self.assertEqual(status.label, "LiveSplit One")
+
     def test_the_window_shows_it_in_its_color(self):
         from autosplit64.gui import theme
         from autosplit64.gui.app import App
@@ -42,6 +53,7 @@ class ClientModesTest(unittest.TestCase):
         self.addCleanup(close_window, window)
         self.assertEqual((window.main.values["statusColor"], window.main.values["statusTip"]),
                          (theme.status_color("green").name(), "Connected to LiveSplit\nlocalhost:16834\nClick to copy"))
+        self.assertEqual(window.main.values["statusLabel"], "LiveSplit")
 
 
 if __name__ == "__main__":

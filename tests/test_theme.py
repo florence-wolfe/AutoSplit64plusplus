@@ -152,7 +152,7 @@ class ThemedWidgetsTest(unittest.TestCase):
 
     def test_main_window_background(self):
         panel = self.item("rightPanel")
-        self.assertEqual(self.pixel(panel.x() + 2, panel.y() + 2), self.color(Role.Base))
+        self.assertEqual(self.pixel(panel.x() + 2, panel.y() + 2), self.color(Role.Window))
 
     def row(self, index):
         """ The scene's x and y of a split's row, and its height """

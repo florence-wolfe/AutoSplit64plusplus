@@ -161,34 +161,58 @@ class MainWindowTest(unittest.TestCase):
                 self.assertTrue(self.app.isVisible())
 
     def test_size(self):
-        self.assertEqual((self.app.minimumWidth(), self.app.minimumHeight()), (365, 259))
+        self.assertEqual((self.app.minimumWidth(), self.app.minimumHeight()), (460, 330))
         panel = qml(self.app.view, "rightPanel")
-        self.assertEqual((panel.width(), panel.height()), (182, 259))
+        self.assertEqual((panel.width(), panel.height()), (220, 330))
 
-    def test_start_button_grows_while_hovered(self):
-        button = qml(self.app.view, "start")
-        center = button.mapToScene(QtCore.QPointF(button.width() / 2, button.height() / 2)).toPoint()
-        # Rendered first: before, the mouse over it isn't hovering. Hovering is then updated with the next frame.
-        frames = []
-        self.app.view.frameSwapped.connect(lambda: frames.append(True))
-        self.app.view.update()
-        wait_until(lambda: frames)
-        QTest.mouseMove(self.app.view, center)
-        wait_until(lambda: button.scale() != 1)
-        self.assertAlmostEqual(button.scale(), 1.1)
-        QTest.mouseMove(self.app.view, QtCore.QPoint(10, 10))
-        wait_until(lambda: button.scale() == 1)
-        self.assertAlmostEqual(button.scale(), 1)
+    def test_start_button_offers_what_split_detection_does_next(self):
+        for state, label in [("start", "Start"), ("stop", "Stop"), ("init", "Starting…")]:
+            with self.subTest(state):
+                self.app.main.update(start=state)
+                run_queued()
+                self.assertEqual(qml(self.app.view, "startLabel").property("text"), label)
+
+    def test_start_button_starts_and_the_restart_button_restarts(self):
+        started, restarted = mock.Mock(), mock.Mock()
+        self.app.main.start_clicked.connect(started)
+        self.app.main.restart.connect(restarted)
+        QtCore.QMetaObject.invokeMethod(qml(self.app.view, "start"), "clicked")
+        started.assert_called_once()
+        restarted.assert_not_called()
+        QtCore.QMetaObject.invokeMethod(qml(self.app.view, "restart"), "clicked")
+        restarted.assert_called_once()
+
+    def test_status_says_what_it_is_connected_to(self):
+        self.app.main.update(statusLabel="LiveSplit")
+        run_queued()
+        self.assertEqual(qml(self.app.view, "statusLabel").property("text"), "LiveSplit")
+
+    def test_status_line_says_what_detection_is_waiting_for(self):
+        self.app.main.update(splits=[{"title": t, "icon": ""} for t in ("WF", "SSL")], current=1, start="stop")
+        run_queued()
+        self.assertEqual(qml(self.app.view, "statusLine").property("text"), "Detecting · SSL")
+        self.app.main.update(start="start")
+        run_queued()
+        self.assertEqual(qml(self.app.view, "statusLine").property("text"), "Split detection is off")
 
     def test_split_index_past_the_end_shows_the_last_split(self):
         self.app.main.update(splits=[{"title": title, "icon": ""} for title in ("A", "B")])
         self.app.update_display(5, 3, 4)
         self.assertEqual(qml(self.app.view, "splitList").property("currentIndex"), 1)
-        self.assertEqual(qml(self.app.view, "starCount").property("text"), "3  /  4")
+        self.assertEqual(qml(self.app.view, "starCount").property("text"), "3")
+        self.assertEqual(qml(self.app.view, "starTarget").property("text"), "of 4 stars")
 
     def test_split_star_of_none_is_a_dash(self):
         self.app.update_display(0, 3, -1)
-        self.assertEqual(qml(self.app.view, "starCount").property("text"), "3  /  -")
+        self.assertEqual(qml(self.app.view, "starCount").property("text"), "3")
+        self.assertEqual(qml(self.app.view, "starTarget").property("text"), "stars")
+        self.assertEqual(qml(self.app.view, "starRing").property("progress"), 0)
+
+    def test_ring_fills_as_the_star_count_nears_the_splits(self):
+        for count, target, progress in [(0, 4, 0), (3, 4, 0.75), (4, 4, 1), (9, 4, 1)]:
+            with self.subTest(count=count):
+                self.app.update_display(0, count, target)
+                self.assertAlmostEqual(qml(self.app.view, "starRing").property("progress"), progress)
 
     def test_quitting_stops_detection_and_installs_a_downloaded_update(self):
         stopped = mock.Mock()
