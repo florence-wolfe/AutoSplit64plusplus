@@ -48,7 +48,7 @@ MODEL_RECOVERY_TIME, MODEL_RELOAD_INTERVAL = 300, 1
 # The prediction while the model fails, which matches no star count and no threshold, for the processes
 NO_PREDICTION = PredictionInfo(-1, 0.0)
 # Settings' names for the connection and operation modes
-CONNECTION_MODES = ["Named Pipe", "TCP", "LiveSplit One"]
+CONNECTION_MODES = ["Named Pipe", "TCP", "WebSocket"]
 OPERATION_MODES = ["Probability", "X-Cam"]
 
 
@@ -185,7 +185,7 @@ class SplitDetection(Thread):
     def validity_check(self):
 
         if not livesplit.check_connection(self._ls_socket):
-            self._error_occurred("Could not connect to LiveSplit.\nIs LiveSplit running?\nIf Connection mode is TCP, ensure the LiveSplit Server is started.\nIf Connection mode is LiveSplit One, connect it to ws://localhost:" + str(config.get("connection", "lso_port")) + " via Settings > Connect to Server.")
+            self._error_occurred("Could not connect to LiveSplit.\nIs LiveSplit running?\nIf Connection mode is TCP, ensure the LiveSplit Server is started.\nIf Connection mode is WebSocket, connect your timer to ws://localhost:" + str(config.get("connection", "lso_port")) + ", in LiveSplit One via Settings > Connect to Server.")
             return False
         
         try:

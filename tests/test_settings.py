@@ -29,14 +29,14 @@ class ConnectionSettingsTest(unittest.TestCase):
         # Visible means shown: on the page that's open
         dialog.show()
         qml(dialog, "nav").setProperty("currentIndex", 1)
-        choose(qml(dialog, "mode"), ["Named Pipe", "TCP", "LiveSplit One"].index(mode))
-        fields = {"pipe host": "pipeHost", "TCP host": "tcpHost", "TCP port": "tcpPort", "LiveSplit One port": "lsoPort"}
+        choose(qml(dialog, "mode"), ["Named Pipe", "TCP", "WebSocket"].index(mode))
+        fields = {"pipe host": "pipeHost", "TCP host": "tcpHost", "TCP port": "tcpPort", "WebSocket port": "lsoPort"}
         return [name for name, field in fields.items() if qml(dialog, field).property("visible")]
 
     def test_only_the_selected_modes_settings_are_shown(self):
         self.assertEqual(self.shown_fields("Named Pipe"), ["pipe host"])
         self.assertEqual(self.shown_fields("TCP"), ["TCP host", "TCP port"])
-        self.assertEqual(self.shown_fields("LiveSplit One"), ["LiveSplit One port"])
+        self.assertEqual(self.shown_fields("WebSocket"), ["WebSocket port"])
 
 
 class SettingTipsTest(unittest.TestCase):
@@ -214,7 +214,7 @@ class SettingsLayoutTest(unittest.TestCase):
     def test_the_connection_mode_is_segmented_and_shows_its_fields(self):
         qml(self.dialog, "nav").setProperty("currentIndex", 1)
         self.assertEqual([qml(self.dialog, f"modeSegment{i}").property("text") for i in range(3)],
-                         ["Named Pipe", "TCP", "LiveSplit One"])
+                         ["Named Pipe", "TCP", "WebSocket"])
         self.click("modeSegment1")
         qt.run_queued()
         self.assertTrue(qml(self.dialog, "tcpHost").property("visible"))

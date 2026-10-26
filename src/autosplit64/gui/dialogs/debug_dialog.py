@@ -16,7 +16,7 @@ from autosplit64.core.constants import INITIAL_STATE, SPLIT_FADE_ONLY, SPLIT_FIN
 from autosplit64.gui.qml_view import Values, qml_view
 
 # The connection to LiveSplit, as the dot in the main window shows it
-LIVESPLIT_STATES = {"connected": "LiveSplit connected", "waiting": "waiting for LiveSplit One",
+LIVESPLIT_STATES = {"connected": "LiveSplit connected", "waiting": "waiting for a timer over WebSocket",
                     "error": "LiveSplit not connected", "stopped": "LiveSplit not connected"}
 
 

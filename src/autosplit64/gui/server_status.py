@@ -18,8 +18,8 @@ CLIENT_DESCRIPTIONS = {
 LABELS = {"connected": "Connected", "waiting": "Waiting", "error": "Error", "stopped": "Not connected"}
 
 DESCRIPTIONS = {
-    "connected": "LiveSplit One connected",
-    "waiting": "Waiting for LiveSplit One to connect",
+    "connected": "Timer connected over WebSocket",
+    "waiting": "Waiting for a timer to connect over WebSocket",
     "error": "Server could not start",
     "stopped": "Server not running",
 }
@@ -43,7 +43,7 @@ class ServerStatus(QtCore.QObject):
         self.refresh()
 
     def refresh(self):
-        # LiveSplit One mode (2) runs a server; TCP and named pipe mode connect to LiveSplit's
+        # WebSocket mode (2) runs a server; TCP and named pipe mode connect to LiveSplit's
         if config.get("connection", "ls_connection_type") != 2:
             self.state, self.url, error = livesplit.client_status()
             self.tooltip = CLIENT_DESCRIPTIONS[self.state] + (f": {error}" if error else "") + f"\n{self.url}\nClick to copy"

@@ -12,7 +12,7 @@ AutoSplit64++ automates splitting for Super Mario 64 speedruns on console. It wa
 It is a fork of [AutoSplit64+](https://github.com/DaviBe92/AutoSplit64plus), which is an enhanced fork of [AutoSplit64](https://github.com/Kainev/AutoSplit64). AutoSplit64++ adds:
 - macOS (Apple Silicon) support, capturing a video device (capture card, OBS Virtual Camera) or a window
 - Streamed window capture on Windows, which keeps working while the window is covered
-- LiveSplit One support
+- A WebSocket connection, for LiveSplit One
 - Updates from GitHub releases, from inside the app
 - Themes and a resizable window
 - Updated detection model for resets and some splits
@@ -91,7 +91,7 @@ The look of the whole app can be changed in `Settings -> General -> Theme`.
 AutoSplit64++ can control LiveSplit in three ways, chosen in `Settings -> Connection -> Connection Mode`:
 - **Named Pipe** (Windows only, the default there): connects to LiveSplit directly. There is no need to start the LiveSplit Server.
 - **TCP**: connects to the LiveSplit Server at the host and port you set (`localhost:16834` by default). Start the server in LiveSplit first (`Right-Click LiveSplit -> Control -> Start Server`).
-- **LiveSplit One** (the default on macOS): see [LiveSplit One](#livesplit-one).
+- **WebSocket** (the default on macOS): AutoSplit64++ runs a WebSocket server that a timer connects to, such as LiveSplit One: see [WebSocket and LiveSplit One](#websocket-and-livesplit-one).
 
 The dot in the top right corner shows the connection to LiveSplit: green while split detection is connected, grey until it starts, and red if connecting failed. Hover it for the address, and click it to copy the address.
 
@@ -99,11 +99,11 @@ AutoSplit64++ recognizes a reset only when the Super Mario 64 logo appears, so t
 
 In LiveSplit `Right-Click -> Edit Splits...` &rarr; Set `Start Timer at:` to **1.36**
 
-#### LiveSplit One
+#### WebSocket and LiveSplit One
 
-AutoSplit64++ can also control [LiveSplit One](https://one.livesplit.org) (the web timer):
+In WebSocket mode, AutoSplit64++ runs a WebSocket server and the timer connects to it, using livesplit-core's server protocol. This is how it controls [LiveSplit One](https://one.livesplit.org) (the web timer):
 
-1. In AutoSplit64++, `Settings -> Connection` &rarr; set `Connection mode` to **LiveSplit One**. It listens on port `16835` by default. The dot in the top right corner shows the server state (green: connected, amber: waiting for LiveSplit One, red: could not start). Hover it for the URL and click it to copy the URL.
+1. In AutoSplit64++, `Settings -> Connection` &rarr; set `Connection mode` to **WebSocket**. It listens on port `16835` by default. The dot in the top right corner shows the server state (green: connected, amber: waiting for a timer to connect, red: could not start). Hover it for the URL and click it to copy the URL.
 2. In LiveSplit One, `Settings -> Server Connection -> Connect` &rarr; enter `ws://localhost:16835`.
 3. Click `OK` to leave LiveSplit One's settings. LiveSplit One ignores timer commands while its settings are open.
 

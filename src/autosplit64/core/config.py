@@ -140,7 +140,7 @@ def load_defaults():
         data = json.load(file)
         _defaults = data
 
-    # Named pipes and LiveSplit desktop are Windows only; elsewhere connect to LiveSplit One
+    # Named pipes and LiveSplit desktop are Windows only; elsewhere wait for a timer over WebSocket
     if sys.platform != "win32":
         _defaults["connection"]["ls_connection_type"] = 2
 
