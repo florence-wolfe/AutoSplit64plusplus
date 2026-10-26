@@ -145,6 +145,10 @@ def reset(ls_socket) -> None:
 def restart(ls_socket) -> None:
     send(ls_socket, "reset\r\nstarttimer\r\n")
 
+def pause(ls_socket) -> None:
+    send(ls_socket, "pause\r\n")
+
+
 def skip(ls_socket) -> None:
     send(ls_socket, "skipsplit\r\n")
 

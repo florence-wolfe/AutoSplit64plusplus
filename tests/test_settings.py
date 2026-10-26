@@ -79,7 +79,7 @@ class SettingsDialogTest(unittest.TestCase):
     # A value for every setting the dialog edits, each different from the defaults and its neighbours
     SETTINGS = {
         "general": {"operation_mode": 1, "mid_run_start_enabled": False, "on_top": False, "update_check": True,
-                    "auto_start": True, "theme": "dracula", "style": "Fusion"},
+                    "auto_start": True, "pause_on_stop": True, "theme": "dracula", "style": "Fusion"},
         "game": {"override_version": True, "version": "US"},
         "connection": {"ls_host": "host.example", "ls_port": 1234, "ls_pipe_host": "pipe.example", "lso_port": 5678,
                        "ls_connection_type": 2},
@@ -287,6 +287,7 @@ class DetectionModelSettingTest(unittest.TestCase):
         self.assertIn("20 s into the fight", about.property("text"))
         choose(qml(dialog, "detectionModel"), self.MODELS.index("as64pp"))
         self.assertIn("Bowser gave his last speech", about.property("text"))
+        self.assertIn("Mario's hat drops out of sight at once", about.property("text"))
 
 
 if __name__ == "__main__":

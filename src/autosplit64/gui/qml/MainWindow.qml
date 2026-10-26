@@ -144,7 +144,7 @@ ThemedPane {
                 hover: art[main.values.start]
                 tip: ({
                     "start": "Start split detection",
-                    "stop": "Stop split detection. Your timer isn't affected.",
+                    "stop": "Stop split detection. Your timer isn't affected, unless Pause timer on stop is on.",
                     "init": "Starting split detection... Click to cancel."
                 })[main.values.start]
                 // 10% larger while hovered, around its center

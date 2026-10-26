@@ -23,6 +23,7 @@ _COMMANDS = {
     # they do, as it answers in order. Saving them is what it does without new best times.
     "reset": {"command": "reset", "saveAttempt": True},
     "starttimer": {"command": "start"},
+    "pause": {"command": "pause"},
     "skipsplit": {"command": "skipSplit"},
     "unsplit": {"command": "undoSplit"},
 }

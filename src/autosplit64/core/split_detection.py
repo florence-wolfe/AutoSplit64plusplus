@@ -700,6 +700,16 @@ class SplitDetection(Thread):
         self.xcam_count = 0
         self._in_game = False
 
+    def pause(self):
+        """ Pause the timer, when connected to LiveSplit: only the Stop button asks for it, not errors """
+        if not self._running or not self._ls_socket:
+            return
+        log.info("Paused the timer: %s", self._state())
+        try:
+            livesplit.pause(self._ls_socket)
+        except ConnectionAbortedError as e:
+            log.warning("Could not pause the timer: %s", e)
+
     def skip(self):
         log.info("Skipped the split: %s", self._state())
         livesplit.skip(self._ls_socket)

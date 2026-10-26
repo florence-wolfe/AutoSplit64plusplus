@@ -48,6 +48,12 @@ ThemedPane {
                     SettingSwitch { section: "general"; key: "update_check" }
                     SettingLabel { text: "Autostart"; tip: "Start split detection when AutoSplit64++ opens, trying for up to 5 minutes" }
                     SettingSwitch { section: "general"; key: "auto_start" }
+                    SettingLabel {
+                        text: "Pause timer on stop"
+                        tip: "Pause the timer when you click Stop while connected to LiveSplit. Split detection stopping "
+                             + "for any other reason, like an error, leaves the timer running"
+                    }
+                    SettingSwitch { section: "general"; key: "pause_on_stop" }
 
                     Heading { text: "Detection" }
                     SettingLabel {

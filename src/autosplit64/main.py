@@ -142,6 +142,7 @@ class AutoSplit64(QtCore.QObject):
         # Connections
         self.app.start.connect(lambda: Thread(target=self.start).start())
         self.app.stop.connect(self.stop)
+        self.app.stop_clicked.connect(self.pause)
         self.app.destroyed.connect(lambda: self.stop())
         self.error.connect(self.app.display_error_message)
         self.started_changed.connect(self.app.set_started)
@@ -178,6 +179,11 @@ class AutoSplit64(QtCore.QObject):
         # None before the first start
         if self.app.detection is not None:
             self.app.detection.stop()
+
+    def pause(self):
+        """ The Stop button was clicked: pause the timer if the setting says so, before the stop disconnects """
+        if config.get("general", "pause_on_stop") and self.app.detection is not None:
+            self.app.detection.pause()
 
     def on_start(self):
         self.started_changed.emit(True)

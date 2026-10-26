@@ -368,6 +368,18 @@ class DetectionLogTest(unittest.TestCase):
                 self.base.set_star_count = mock.Mock()
                 self.assertIn(words, self.logged(getattr(self.base, command)))
 
+    def test_pause_only_while_running_and_connected(self):
+        self.base._ls_socket = mock.Mock()
+        for running, connected in ((False, True), (True, False)):
+            with self.subTest(running=running, connected=connected):
+                self.base._running = running
+                self.base._ls_socket = mock.Mock() if connected else False
+                self.base.pause()
+                self.livesplit.pause.assert_not_called()
+        self.base._running, self.base._ls_socket = True, mock.Mock()
+        self.assertIn("Paused", self.logged(self.base.pause))
+        self.livesplit.pause.assert_called_once_with(self.base._ls_socket)
+
     def test_star_count_change_with_its_prediction(self):
         log = self.logged(lambda: self.base.set_star_count(8))
         self.assertIn("Star count 7 -> 8", log)

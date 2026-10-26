@@ -103,6 +103,8 @@ class Main(Values):
 class App(QtWidgets.QMainWindow):
     start = QtCore.pyqtSignal()
     stop = QtCore.pyqtSignal()
+    # The Stop button was clicked, as opposed to split detection being stopped for another reason
+    stop_clicked = QtCore.pyqtSignal()
 
     def __init__(self, parent=None):
         self.autostarter_active = False
@@ -305,6 +307,8 @@ class App(QtWidgets.QMainWindow):
     def start_clicked(self):
         if self.start_state in ("stop", "init"):
             self.autostarter_active = False
+            if self.start_state == "stop":
+                self.stop_clicked.emit()
             self._set_start_state("start")
             self.main.update(current=0)
             # No route is loaded when e.g. autostart is retrying without one

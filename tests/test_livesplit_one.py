@@ -101,8 +101,9 @@ class LiveSplitOneServerTest(unittest.TestCase):
         self.server.send_classic("reset\r\nstarttimer\r\n")
         self.server.send_classic("skipsplit\r\n")
         self.server.send_classic("unsplit\r\n")
-        self.assertTrue(wait_for(lambda: len(client.commands) == 5))
-        self.assertEqual(client.commands, ["splitOrStart", "reset", "start", "skipSplit", "undoSplit"])
+        self.server.send_classic("pause\r\n")
+        self.assertTrue(wait_for(lambda: len(client.commands) == 6))
+        self.assertEqual(client.commands, ["splitOrStart", "reset", "start", "skipSplit", "undoSplit", "pause"])
 
     def test_split_index_after_commands_ignores_their_responses(self):
         self.connect_client({"state": "Running", "index": 7})
