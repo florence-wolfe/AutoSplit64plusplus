@@ -389,6 +389,38 @@ class SplitListTest(unittest.TestCase):
         wait_until(lambda: not tips.view.isVisible())
         self.assertFalse(tips.view.isVisible())
 
+    def hover_for_tip(self, item):
+        """ The tooltip's text after resting the mouse over the item, or None if none comes """
+        tips = self.app.view.rootContext().contextProperty("tips")
+        self.addCleanup(tips.hide)
+        center = item.mapToScene(QtCore.QPointF(item.width() / 2, item.height() / 2)).toPoint()
+        QTest.mouseMove(self.app.view, QtCore.QPoint(1, 1))
+        # Away from what it was about, a tip from before is gone
+        wait_until(lambda: not tips.view.isVisible())
+        QTest.mouseMove(self.app.view, center)
+        wait_until(lambda: tips.view.isVisible(), timeout=1.5)
+        return tips.view.rootObject().property("text") if tips.view.isVisible() else None
+
+    def test_hovering_a_title_that_is_cut_off_shows_all_of_it(self):
+        self.app.show()
+        long = "Bowser in the Fire Sea, Red Coins on the Platform After the Elevator"
+        self.app.main.update(splits=[{"title": title, "icon": "", "star": "120", "type": "Mips-X"}
+                                     for title in (long, "WF")], current=0)
+        run_queued()
+        long_title, short_title = self.items("splitTitle")
+        self.assertTrue(long_title.property("truncated"))
+        self.assertEqual(self.hover_for_tip(long_title), long)
+        # A title that fits has nothing more to say
+        self.assertFalse(short_title.property("truncated"))
+        self.assertIsNone(self.hover_for_tip(short_title))
+
+    def test_hovering_a_route_name_that_is_cut_off_shows_all_of_it(self):
+        self.app.show()
+        long = "16 Star · A Really Long Route Name That Goes On And On"
+        self.app.main.update(routeTitle=long)
+        run_queued()
+        self.assertEqual(self.hover_for_tip(qml(self.app.view, "routeTitle")), long)
+
     def test_a_split_without_a_type_has_no_glyph(self):
         self.show(["WF"], 0)
         self.assertEqual([item.property("visible") for item in self.items("splitType")], [False])

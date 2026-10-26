@@ -72,6 +72,9 @@ ThemedPane {
                     font.weight: Font.DemiBold
                     font.letterSpacing: 0.8
                     font.capitalization: Font.AllUppercase
+                    // All of it, where it's cut off
+                    HoverHandler { id: routeHover }
+                    WindowTip { text: parent.truncated ? parent.text : ""; shown: routeHover.hovered }
                 }
                 Label {
                     objectName: "splitProgress"
@@ -175,6 +178,9 @@ ThemedPane {
                                 font.family: Tokens.fontFamily
                                 font.pixelSize: Tokens.textRow
                                 font.weight: row.current ? Font.DemiBold : Font.Medium
+                                // All of it, where it's cut off
+                                HoverHandler { id: titleHover }
+                                WindowTip { text: parent.truncated ? parent.text : ""; shown: titleHover.hovered }
                             }
 
                             // What kind of split it is, unless it's a normal one
