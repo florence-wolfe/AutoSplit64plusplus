@@ -7,7 +7,7 @@ from unittest import mock
 
 from PyQt6 import QtCore
 
-from autosplit64.core import config, route_loader
+from autosplit64.core import config, resource_utils, route_loader
 from autosplit64.gui.dialogs.route_editor_dialog import RouteEditor
 from tests.qt import qml, wait_until
 
@@ -186,6 +186,69 @@ class RouteEditorTest(unittest.TestCase):
                 self.editor = RouteEditor()
                 self.addCleanup(self.editor.deleteLater)
                 self.assertEqual(self.convert(names), (header, rows))
+
+
+    def convert_run(self, segments, game="", category=""):
+        """ LiveSplit splits with a game, category and each segment's name and icon (None for no icon element) """
+        from xml.sax.saxutils import escape
+        from tests.test_lss import livesplit_icon
+        icons = {name: ("<Icon />" if icon is None else f"<Icon>{livesplit_icon()}</Icon>") for name, icon in segments}
+        lss = self.dir / "Super Mario 64 - 16 Star.lss"
+        lss.write_text(f"<Run><GameName>{game}</GameName><CategoryName>{category}</CategoryName><Segments>"
+                       + "".join(f"<Segment><Name>{escape(name)}</Name>{icons[name]}</Segment>" for name, _ in segments)
+                       + "</Segments></Run>")
+        # The icons are saved in the app's folder, here a temporary one
+        with mock.patch.object(resource_utils, "base_path", lambda path=None: str(self.dir / (path or ""))):
+            self.editor.convert_lss(str(lss))
+
+    def title(self):
+        return self.details()[0]
+
+    def test_converting_takes_the_title_from_the_category_without_the_one_it_found(self):
+        # 16 stars: the category is "16 Star", which the title needn't say again
+        self.convert_run([("BitS 16", None), ("Bowser", None)], game="Super Mario 64", category="16 Star No LBLJ")
+        self.assertEqual(self.details()[1], "16 Star")
+        self.assertEqual(self.title(), "No LBLJ")
+
+    def test_converting_keeps_all_of_a_category_it_didnt_find_in_the_title(self):
+        self.convert_run([("Start", None), ("End", None)], game="Super Mario 64", category="Any% Glitchless")
+        self.assertEqual(self.title(), "Any% Glitchless")
+
+    def test_converting_falls_back_to_the_game_for_a_title(self):
+        self.convert_run([("Start", None), ("End", None)], game="Super Mario 64", category="")
+        self.assertEqual(self.title(), "Super Mario 64")
+
+    def test_converting_with_no_game_or_category_leaves_the_title(self):
+        self.convert_run([("Start", None), ("End", None)])
+        self.assertEqual(self.title(), "")
+
+    def test_converting_a_category_that_is_only_the_one_found_keeps_it(self):
+        self.convert_run([("BitS 16", None), ("Bowser", None)], category="16 Star")
+        self.assertEqual(self.title(), "16 Star")
+
+    def test_converting_saves_each_icon_and_gives_it_to_its_split(self):
+        from tests.test_lss import PNG
+        self.convert_run([("WF 6", True), ("CCM 8", None), ("Bowser 16", True)], category="16 Star")
+        icons = [row["icon"] for row in self.editor.splits.rows]
+        # Where it has none, none
+        self.assertEqual(icons[1], "")
+        for icon in (icons[0], icons[2]):
+            self.assertEqual(Path(icon).read_bytes(), PNG)
+        self.assertNotEqual(icons[0], icons[2])
+        # In the icons' folder, in one of its own for the splits
+        self.assertEqual(Path(icons[0]).parent, self.dir / "resources" / "icons" / "imported" / "Super Mario 64 - 16 Star")
+
+    def test_converting_names_icons_safely(self):
+        self.convert_run([("WF/6: <1>", True), ("End", None)])
+        icon = Path(self.editor.splits.rows[0]["icon"])
+        self.assertTrue(icon.is_file())
+        self.assertEqual(icon.parent.parent, self.dir / "resources" / "icons" / "imported")
+
+    def test_converting_goes_on_without_an_icon_it_cant_save(self):
+        with mock.patch.object(Path, "write_bytes", side_effect=OSError("read-only")):
+            self.convert_run([("WF 6", True), ("Bowser 16", None)])
+        self.assertEqual([row["icon"] for row in self.editor.splits.rows], ["", ""])
+        self.assertEqual(self.rows()[0][0], "WF 6")
 
 
 if __name__ == "__main__":

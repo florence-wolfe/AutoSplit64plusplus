@@ -1,5 +1,6 @@
 import os
 from os import path
+from pathlib import Path
 import sys
 from json import JSONDecodeError
 import re
@@ -8,7 +9,7 @@ import xml.etree.ElementTree as ET
 from PyQt6 import QtWidgets, QtCore, QtGui
 from PyQt6.QtGui import QIcon
 
-from autosplit64.core import resource_utils
+from autosplit64.core import lss, resource_utils
 from autosplit64.core import route_loader, config
 from autosplit64.core.route import Route, Split
 from autosplit64.gui.qml_view import Values, qml_view
@@ -429,6 +430,8 @@ class RouteEditor(QtWidgets.QMainWindow):
         tree = ET.parse(file_name)
         root = tree.getroot()
         segments = root.find('Segments')
+        # Where each segment's icon is saved, in the icons' folder, in one of its own for these splits
+        icons = Path(resource_utils.base_path("resources/icons/imported")) / re.sub(r'[^\w\-. ()]+', "_", self._lss_name).strip()
 
         # Default initial star to 0
         self.editor.update(initialStar="0")
@@ -505,7 +508,8 @@ class RouteEditor(QtWidgets.QMainWindow):
                 except IndexError:
                     star_count = "0"
 
-            self._insert_row(title=name,
+            self._insert_row(icon_path=self._save_lss_icon(icons, i, name, child.findtext('Icon')),
+                             title=name,
                              star_count=star_count,
                              fadeouts=fadeouts,
                              row_type=split_type)
@@ -539,6 +543,28 @@ class RouteEditor(QtWidgets.QMainWindow):
             self.editor.update(category="70 Star", version="US")
         elif final_star == "120":
             self.editor.update(category="120 Star")
+
+        # The title is the splits' category, without the one it found, which the route has apart from it
+        title = (root.findtext('CategoryName') or root.findtext('GameName') or "").strip()
+        category = self.editor.values["category"]
+        if category and title.lower().startswith(category.lower()):
+            title = title[len(category):].strip(" -–:·") or title
+        if title:
+            self.editor.update(title=title)
+
+    @staticmethod
+    def _save_lss_icon(directory, index, name, text):
+        """ The path of a segment's icon, saved in directory, or "" where it has none or it can't be saved """
+        png = lss.icon_png(text)
+        if not png:
+            return ""
+        file = directory / f"{index + 1:02d} {re.sub(r'[^\w\-. ()]+', '_', name).strip()}.png"
+        try:
+            directory.mkdir(parents=True, exist_ok=True)
+            file.write_bytes(png)
+        except OSError:
+            return ""
+        return resource_utils.abs_to_rel(str(file))
 
     @classmethod
     def split_row(cls, icon_path, title, star_count="0", fadeouts="1", fadeins="0", xcam="1", split_type=SPLIT_NORMAL):

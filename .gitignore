@@ -158,3 +158,5 @@ dmypy.json
 *.iml
 out
 gen
+# Icons imported from LiveSplit splits, which a run from source saves here
+resources/icons/imported/
