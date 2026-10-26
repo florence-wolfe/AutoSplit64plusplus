@@ -6,6 +6,7 @@ from unittest import mock
 import numpy as np
 
 from autosplit64.core.constants import FADEOUT_PARTIAL, NO_FADE
+from autosplit64.core import detection_model
 from autosplit64.processes.ddd import ProcessDDDSplit, ProcessDDDSplitX
 from tests.processes import ProcessTestCase
 from tests.settings import patch_settings
@@ -15,16 +16,22 @@ SETTINGS = {
     ("split_ddd_enter", "hat_upper_bound"): [30, 30, 255],
 }
 
-# Blue painting, with or without a few pixels of Mario's red hat (BGR)
-NO_HAT = np.full((20, 20, 3), (200, 60, 30), np.uint8)
+# Blue painting, with or without Mario's red hat (BGR): as much of it as when he runs into the painting, or a few
+# pixels, as when he's far and in shadow
+NO_HAT = np.full((100, 100, 3), (200, 60, 30), np.uint8)
 HAT = NO_HAT.copy()
-HAT[5:7, 5:7] = (10, 10, 200)
+HAT[5:9, 5:9] = (10, 10, 200)
+FAINT_HAT = NO_HAT.copy()
+FAINT_HAT[5, 5:7] = (10, 10, 200)
 
 
 class DDDSplitTest(unittest.TestCase):
     def setUp(self):
         self.split = mock.Mock()
-        self.detection = SimpleNamespace(split=self.split, fade_status=NO_FADE, get_region=mock.Mock(), fps=0)
+        # The AS64++ model's features
+        self.features = set(detection_model.FEATURES[detection_model.AS64PP])
+        self.detection = SimpleNamespace(split=self.split, fade_status=NO_FADE, get_region=mock.Mock(), fps=0,
+                                         has=lambda feature: feature in self.features)
         patcher = patch_settings(SETTINGS)
         patcher.start()
         self.addCleanup(patcher.stop)
@@ -48,6 +55,26 @@ class DDDSplitTest(unittest.TestCase):
         # Like AutoSplit64 always has, which runners' Mips and DDD times were made with: see ProcessDDDSplit
         self.assertEqual(self.frames(HAT, NO_HAT), ["LOOP", "ENTERED"])
         self.split.assert_called_once()
+
+    def test_no_split_without_the_hat_at_the_first_look(self):
+        # Mario out of sight as the portal shows, after clipping through the door
+        self.assertEqual(self.frames(NO_HAT, NO_HAT, HAT, NO_HAT), ["LOOP", "LOOP", "LOOP", "ENTERED"])
+        self.split.assert_called_once()
+
+    def test_no_split_when_a_faint_hat_fades(self):
+        # Mario far down the hallway, too dark for his hat's red to show
+        self.assertEqual(self.frames(HAT, FAINT_HAT, NO_HAT, HAT, NO_HAT), ["LOOP", "LOOP", "LOOP", "LOOP", "ENTERED"])
+        self.split.assert_called_once()
+
+    def test_other_models_split_on_the_first_look_without_the_hat(self):
+        # As in 0.8.0, which their runners' times are compared against
+        for model in (detection_model.LEGACY, detection_model.STAR_PREDICTOR):
+            with self.subTest(model):
+                self.features = set(detection_model.FEATURES[model])
+                self.process.on_transition()
+                self.assertEqual(self.frames(HAT, FAINT_HAT, NO_HAT), ["LOOP", "LOOP", "ENTERED"])
+                self.process.on_transition()
+                self.assertEqual(self.frames(NO_HAT), ["ENTERED"])
 
     def test_fadeout(self):
         self.detection.fade_status = FADEOUT_PARTIAL

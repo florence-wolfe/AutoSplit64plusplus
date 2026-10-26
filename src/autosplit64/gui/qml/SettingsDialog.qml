@@ -278,11 +278,11 @@ ThemedPane {
                             }
                             ColourField {
                                 section: "split_ddd_enter"; key: "hat_lower_bound"; label: "Hat lower bound"
-                                tip: "The darkest colours of Mario's hat: it splits on the first frame without them"
+                                tip: "The darkest colours of Mario's hat: it splits on the first frame without them, or with AS64++ Detection, once they drop out of sight at once"
                             }
                             ColourField {
                                 section: "split_ddd_enter"; key: "hat_upper_bound"; label: "Hat upper bound"
-                                tip: "The brightest colours of Mario's hat: it splits on the first frame without them"
+                                tip: "The brightest colours of Mario's hat: it splits on the first frame without them, or with AS64++ Detection, once they drop out of sight at once"
                             }
                         }
                         ColumnLayout {
@@ -382,7 +382,7 @@ ThemedPane {
                     Heading { text: "Model" }
                     SettingLabel {
                         text: "Detection model"
-                        tip: "What reads the star count and finds the final split. What each does is shown below it."
+                        tip: "What reads the star count and finds the Mips and final splits. What each does is shown below it."
                     }
                     ValueCombo {
                         id: detectionModel
@@ -391,10 +391,12 @@ ThemedPane {
                         Layout.preferredWidth: 240
                         model: [
                             { text: "AS64++ Detection", value: "as64pp",
-                              about: "The AS64+ Star Predictor, with a new final split. It only looks for the Grand Star "
+                              about: "The AS64+ Star Predictor, with new Mips and final splits. It only looks for the Grand Star "
                                      + "once Bowser gave his last speech, so yellow in the fight, from Bowser or the "
                                      + "power meter, can't split it before he's beaten, which some captures and "
-                                     + "emulators did with the others. It splits on the first frame after Mario grabs it." },
+                                     + "emulators did with the others. It splits on the first frame after Mario grabs it. "
+                                     + "Mips splits once Mario's hat drops out of sight at once, as he enters the painting, "
+                                     + "not as it fades while he's far and in shadow, or before he's in sight after the door clip." },
                             { text: "AS64+ Star Predictor", value: "star_predictor",
                               about: "AutoSplit64+'s star predictor. The final split looks for the Grand Star's yellow "
                                      + "from 20 s into the fight, and can split early when Bowser or the power meter "

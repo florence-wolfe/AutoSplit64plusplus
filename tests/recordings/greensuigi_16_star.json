@@ -8,7 +8,7 @@
     "timer_offset": 2.8,
     "timer_start": 1.36,
     "artifacts": {
-        "Mips": "Split detection splits Mips at 684.43 s, while Mario runs to the painting, where the runner's split is at 684.77 s, when he enters it. The YouTube video loses his hat for that one frame, small against the painting, which split detection takes as entering it. The runner's live split shows his capture didn't, and NoraSM64's run, split live with AutoSplit64+, splits Mips on the first frame without the hat, like split detection does."
+        "Mips": "The AS64+ and legacy models split Mips at 684.43 s, while Mario runs to the painting, where the runner's split is at 684.77 s, when he enters it. As the portal first shows, Mario is far down the hallway and in shadow, and his hat's red fades out of the hat's colour bounds for a few frames, which they take as entering the painting. AS64++ splits when the hat drops out of sight at once, as he enters it: see GreensuigiAs64ppMipsTest."
     },
     "splits": [
         ["BOB 1", "1:35.1"],

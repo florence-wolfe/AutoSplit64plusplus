@@ -29,10 +29,13 @@ RESET_LOGO_ONCE = "reset_logo_once"
 # Sending no split within general.split_cooldown seconds of the last. AS64++ sends a split once per fade or X-Cam
 # instead, which every model does, and which the cooldown no longer stops any split over the recordings for.
 SPLIT_COOLDOWN = "split_cooldown"
+# Splitting Mips when Mario's hat drops out of sight at once, as he enters the painting, instead of on the first look
+# without it, which can be as the portal first shows after the door clip, or while he's far and in shadow
+MIPS_HAT_DROP = "mips_hat_drop"
 FEATURES = {
     LEGACY: {DEATHS, SPLIT_COOLDOWN},
     STAR_PREDICTOR: {DEATHS, SPLIT_COOLDOWN},
-    AS64PP: {DEATHS, LOOKS_BETWEEN, IRISES_ENDING_LATE, RESET_LOGO_ONCE},
+    AS64PP: {DEATHS, LOOKS_BETWEEN, IRISES_ENDING_LATE, RESET_LOGO_ONCE, MIPS_HAT_DROP},
 }
 
 

@@ -305,9 +305,9 @@
 649.933 Running ProcessFindDDDPortal
 684.433 Running Processor
 684.433 Running ProcessDDDSplit
-684.433 Split: split 8 of 12, Mips (needs 15 stars, fadeout -1, fade-in -1), star count 15, fadeouts 0, fade-ins 0
-684.467 Timer on split 9: DDD 16
-684.467 Running ProcessStarCount
+684.767 Split: split 8 of 12, Mips (needs 15 stars, fadeout -1, fade-in -1), star count 15, fadeouts 0, fade-ins 0
+684.800 Timer on split 9: DDD 16
+684.800 Running ProcessStarCount
 687.033 Fade-in 1: split 9 of 12, DDD 16 (needs 16 stars, fadeout 1, fade-in 0), star count 15, fadeouts 0, fade-ins 1
 687.200 Running ProcessFadein
 688.133 Running ProcessStarCount

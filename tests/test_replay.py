@@ -233,6 +233,31 @@ class NoraSM64As64ppBitsTest(_As64ppBitsTest):
     RECORDING = NoraSM64Test.RECORDING
 
 
+class _As64ppMipsTest(_RecordingTest):
+    """ AS64++'s Mips split over the recording, from the split before to a second after the runner's """
+    MIPS = 7
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        windows = cls.RECORDING.split_windows()
+        cls.result = replay(cls.RECORDING, windows[cls.MIPS - 1][2], windows[cls.MIPS][2] + 1, cls.templates,
+                            split_index=cls.MIPS, variant=AS64PP)
+
+    def test_splits_when_mario_enters_the_painting(self):
+        self.assertEqual(self.result.errors, [])
+        self.assertEqual([command for _, command, _ in self.result.commands], ["split"])
+        self.assert_split_in_window(self.result, self.MIPS)
+
+
+class GreensuigiAs64ppMipsTest(_As64ppMipsTest):
+    RECORDING = GreensuigiTest.RECORDING
+
+
+class NoraSM64As64ppMipsTest(_As64ppMipsTest):
+    RECORDING = NoraSM64Test.RECORDING
+
+
 class _BowserStageDeathTest(unittest.TestCase):
     """ Split detection over a Bowser stage that Mario dies in once, with the timer on its split, from the castle before it """
 
