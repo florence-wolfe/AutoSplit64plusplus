@@ -20,6 +20,9 @@ QtObject {
     readonly property color accent: palette.highlight
     readonly property color accentText: palette.highlightedText
 
+    // The bundled font, which main.py loads (constants.FONT_PATH)
+    readonly property string fontFamily: "Inter Variable"
+
     // Corners
     readonly property int radiusSmall: 8
     readonly property int radiusRow: 10

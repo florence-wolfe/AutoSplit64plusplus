@@ -13,7 +13,7 @@ GITHUB_REPO = "florence-wolfe/AutoSplit64plusplus"
 WIDTH = 365
 HEIGHT = 259
 
-FONT_PATH = str(DATA_DIR / "font" / "TCM_____.TTF")
+FONT_PATH = str(DATA_DIR / "font" / "InterVariable.ttf")
 ICON_PATH = "resources/gui/icons/as64plus.png"
 START_PATH = "resources/gui/buttons/pipe_start_btn.png"
 STOP_PATH = "resources/gui/buttons/wall_stop_btn.png"

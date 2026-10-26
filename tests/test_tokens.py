@@ -71,3 +71,11 @@ class TokensTest(unittest.TestCase):
 
     def test_sizes(self):
         self.assertEqual(self.view.rootObject().property("radiusCard"), 12)
+
+
+class FontTest(unittest.TestCase):
+    def test_the_bundled_font_is_the_tokens_family(self):
+        from PyQt6 import QtGui
+        from autosplit64.gui.constants import FONT_PATH
+        families = QtGui.QFontDatabase.applicationFontFamilies(QtGui.QFontDatabase.addApplicationFont(FONT_PATH))
+        self.assertIn("Inter Variable", families)
