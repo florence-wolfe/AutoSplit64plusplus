@@ -97,21 +97,26 @@ class StyleTest(unittest.TestCase):
             theme.use_style("Fusion")
             self.assertEqual(os.environ["QML2_IMPORT_PATH"].split(os.pathsep), ["/elsewhere", str(theme.STYLES_DIR)])
 
+    def test_the_default_setting_is_the_first_style(self):
+        from autosplit64.core import config
+        self.assertEqual(config.get_default("general", "style"), theme.styles()[0])
+        self.assertEqual(theme.styles()[0], "AutoSplit64")
+
     def test_unknown_style_is_the_default(self):
         with mock.patch.dict(os.environ):
             theme.use_style("Removed")
-            self.assertEqual(os.environ["QT_QUICK_CONTROLS_STYLE"], "Material")
+            self.assertEqual(os.environ["QT_QUICK_CONTROLS_STYLE"], "AutoSplit64")
 
     def test_other_platforms_style_is_the_default(self):
         # e.g. settings copied from a Mac to Windows
         with mock.patch.dict(os.environ), mock.patch.object(theme.sys, "platform", "win32"):
             theme.use_style("macOS")
-            self.assertEqual(os.environ["QT_QUICK_CONTROLS_STYLE"], "Material")
+            self.assertEqual(os.environ["QT_QUICK_CONTROLS_STYLE"], "AutoSplit64")
 
     def test_styles_of_each_platform(self):
         for platform, own in [("darwin", ["macOS"]), ("win32", ["Windows", "FluentWinUI3"]), ("linux", [])]:
             with self.subTest(platform), mock.patch.object(theme.sys, "platform", platform):
-                self.assertEqual(theme.styles(), ["Material", "AutoSplit64", "Fusion", "Universal"] + own)
+                self.assertEqual(theme.styles(), ["AutoSplit64", "Material", "Fusion", "Universal"] + own)
 
 
 class StatusColorTest(unittest.TestCase):

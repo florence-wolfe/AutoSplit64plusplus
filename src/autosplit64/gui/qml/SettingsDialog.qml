@@ -111,7 +111,7 @@ ThemedPane {
                         ValueCombo {
                             id: style
                             objectName: "style"
-                            section: "general"; key: "style"; fallback: "Material"
+                            section: "general"; key: "style"; fallback: "AutoSplit64"
                             model: settings.styles
                             Layout.preferredWidth: 200
                         }
