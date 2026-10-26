@@ -9,6 +9,10 @@ from autosplit64.gui.constants import (
 )
 
 
+# The styles' names where they aren't the ones Qt gives them
+STYLE_NAMES = {"FluentWinUI3": "Fluent", "AutoSplit64": "AutoSplit64++"}
+
+
 def show_theme(name):
     if name != theme.current():
         theme.apply(name)
@@ -37,7 +41,7 @@ class Settings(QtCore.QObject):
 
     @QtCore.pyqtProperty("QVariantList", constant=True)
     def styles(self):
-        return [{"text": "Fluent" if name == "FluentWinUI3" else name, "value": name,
+        return [{"text": STYLE_NAMES.get(name, name), "value": name,
                  "about": "Its controls take the system's accent color, not the theme's." if name in theme.SYSTEM_STYLES else ""}
                 for name in theme.styles()]
 

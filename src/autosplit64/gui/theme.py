@@ -8,6 +8,7 @@ needs a restart.
 """
 import os
 import sys
+from pathlib import Path
 
 from PyQt6 import QtGui, QtWidgets
 
@@ -16,6 +17,8 @@ os.environ.setdefault("QT_API", "pyqt6")
 import qt_themes  # noqa: E402
 
 DEFAULT = "default"
+# Where AutoSplit64++'s own Qt Quick Controls style is, a directory of QML named after it
+STYLES_DIR = Path(__file__).parent / "qml" / "styles"
 # The platforms' own Qt Quick Controls styles, whose controls take the system's accent color instead of the theme's
 _PLATFORM_STYLES = {"darwin": ["macOS"], "win32": ["Windows", "FluentWinUI3"]}
 SYSTEM_STYLES = {style for styles in _PLATFORM_STYLES.values() for style in styles}
@@ -76,15 +79,20 @@ _current = None
 
 def styles():
     """
-    The Qt Quick Controls styles there are on this platform, the default first. Not Basic, which draws with palette
-    colors that most of the themes' dark palettes have the wrong way round, e.g. its switches' handles in `light`.
+    The Qt Quick Controls styles there are on this platform, the default first: AutoSplit64++'s own, in STYLES_DIR.
+    Not Basic, which draws with palette colors that most of the themes' dark palettes have the wrong way round, e.g.
+    its switches' handles in `light`.
     """
-    return ["Material", "Fusion", "Universal"] + _PLATFORM_STYLES.get(sys.platform, [])
+    return ["AutoSplit64", "Material", "Fusion", "Universal"] + _PLATFORM_STYLES.get(sys.platform, [])
 
 
 def use_style(name):
     """ The QML windows' style, before the first opens """
     os.environ["QT_QUICK_CONTROLS_STYLE"] = name if name in styles() else styles()[0]
+    # Where Qt looks for a style that isn't one of its own
+    paths = [path for path in os.environ.get("QML2_IMPORT_PATH", "").split(os.pathsep) if path]
+    if str(STYLES_DIR) not in paths:
+        os.environ["QML2_IMPORT_PATH"] = os.pathsep.join(paths + [str(STYLES_DIR)])
 
 
 def default_palette():

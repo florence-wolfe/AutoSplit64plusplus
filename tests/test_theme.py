@@ -84,21 +84,34 @@ class StyleTest(unittest.TestCase):
             theme.use_style("Fusion")
             self.assertEqual(os.environ["QT_QUICK_CONTROLS_STYLE"], "Fusion")
 
+    def test_own_style_is_found_in_its_directory(self):
+        with mock.patch.dict(os.environ):
+            theme.use_style("AutoSplit64")
+            self.assertEqual(os.environ["QT_QUICK_CONTROLS_STYLE"], "AutoSplit64")
+            self.assertIn(str(theme.STYLES_DIR), os.environ["QML2_IMPORT_PATH"].split(os.pathsep))
+            self.assertTrue((theme.STYLES_DIR / "AutoSplit64" / "qmldir").is_file())
+
+    def test_the_import_path_keeps_the_ones_it_had(self):
+        with mock.patch.dict(os.environ, {"QML2_IMPORT_PATH": "/elsewhere"}):
+            theme.use_style("Fusion")
+            theme.use_style("Fusion")
+            self.assertEqual(os.environ["QML2_IMPORT_PATH"].split(os.pathsep), ["/elsewhere", str(theme.STYLES_DIR)])
+
     def test_unknown_style_is_the_default(self):
         with mock.patch.dict(os.environ):
             theme.use_style("Removed")
-            self.assertEqual(os.environ["QT_QUICK_CONTROLS_STYLE"], "Material")
+            self.assertEqual(os.environ["QT_QUICK_CONTROLS_STYLE"], "AutoSplit64")
 
     def test_other_platforms_style_is_the_default(self):
         # e.g. settings copied from a Mac to Windows
         with mock.patch.dict(os.environ), mock.patch.object(theme.sys, "platform", "win32"):
             theme.use_style("macOS")
-            self.assertEqual(os.environ["QT_QUICK_CONTROLS_STYLE"], "Material")
+            self.assertEqual(os.environ["QT_QUICK_CONTROLS_STYLE"], "AutoSplit64")
 
     def test_styles_of_each_platform(self):
         for platform, own in [("darwin", ["macOS"]), ("win32", ["Windows", "FluentWinUI3"]), ("linux", [])]:
             with self.subTest(platform), mock.patch.object(theme.sys, "platform", platform):
-                self.assertEqual(theme.styles(), ["Material", "Fusion", "Universal"] + own)
+                self.assertEqual(theme.styles(), ["AutoSplit64", "Material", "Fusion", "Universal"] + own)
 
 
 class StatusColorTest(unittest.TestCase):

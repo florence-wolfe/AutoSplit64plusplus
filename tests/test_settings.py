@@ -228,9 +228,16 @@ class StyleSettingTest(unittest.TestCase):
     def test_choosing_saves_it(self):
         combo = qml(self.dialog, "style")
         self.assertEqual(combo.property("currentText"), "Fusion")
-        choose(combo, 0)
+        choose(combo, theme.styles().index("Material"))
         self.dialog.apply_clicked()
         self.assertEqual(self.settings["general"]["style"], "Material")
+
+    def test_offers_its_own_style_first(self):
+        combo = qml(self.dialog, "style")
+        choose(combo, 0)
+        self.assertEqual(combo.property("currentText"), "AutoSplit64++")
+        self.dialog.apply_clicked()
+        self.assertEqual(self.settings["general"]["style"], "AutoSplit64")
 
     def test_says_it_needs_a_restart(self):
         note = qml(self.dialog, "styleRestart")
