@@ -46,8 +46,8 @@ class Main(Values):
         menu_items() are the menu's entries, see App._menu_items(), set_general(key, checked) sets a checkbox's
         setting, copy_status() copies the address, and screen_top() is where the window's screen's free space starts
         """
-        super().__init__({"splits": [], "current": 0, "starCount": "-", "splitStar": "-", "start": "start",
-                         "statusColor": "gray", "statusTip": "", "version": "", "update": False, "versionTip": "",
+        super().__init__({"splits": [], "routeTitle": "", "current": 0, "starCount": "-", "splitStar": "-",
+                         "start": "start", "statusColor": "gray", "statusTip": "", "version": "", "update": False, "versionTip": "",
                          "muted": "gray", "green": "green"})
         self._menu_items = menu_items
         self._set_general = set_general
@@ -351,9 +351,10 @@ class App(QtWidgets.QMainWindow):
         self.route = route
 
         self._show_star_count(route.initial_star, route.splits[0].star_count)
-        self.main.update(current=0, splits=[
+        self.main.update(current=0, routeTitle=" · ".join(filter(None, [route.category, route.title])), splits=[
             {"title": split.title,
-             "icon": QtCore.QUrl.fromLocalFile(rel_to_abs(split.icon_path)).toString() if split.icon_path else ""}
+             "icon": QtCore.QUrl.fromLocalFile(rel_to_abs(split.icon_path)).toString() if split.icon_path else "",
+             "star": "" if split.star_count == -1 else str(split.star_count)}
             for split in route.splits])
 
         return True

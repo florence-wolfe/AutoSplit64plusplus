@@ -1,4 +1,5 @@
 import inspect
+from pathlib import Path
 import unittest
 from unittest import mock
 
@@ -6,7 +7,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtTest import QTest
 
 from autosplit64.gui.app import App
-from tests.qt import close_window, qml, wait_until
+from tests.qt import close_window, qml, qml_items, run_queued, wait_until
 from tests.settings import patch_settings
 
 
@@ -307,3 +308,47 @@ class DragTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SplitListTest(unittest.TestCase):
+    """ The splits' rows: icon, title and star count, and which ones are done """
+
+    def setUp(self):
+        with mock.patch("autosplit64.gui.updates.Updates.check"):
+            self.app = App()
+        self.addCleanup(close_window, self.app)
+
+    def show(self, titles, current, stars=None):
+        stars = stars or [str(2 * (i + 1)) for i in range(len(titles))]
+        self.app.main.update(splits=[{"title": title, "icon": "", "star": star} for title, star in zip(titles, stars)],
+                             current=current, routeTitle="16 Star · NoLBLJ 16")
+        run_queued()
+
+    def items(self, name):
+        return [item for item in qml_items(self.app.view) if item.objectName() == name]
+
+    def test_rows_show_the_title_and_star_count(self):
+        self.show(["WF", "SSL", "LLL"], 0)
+        self.assertEqual([item.property("text") for item in self.items("splitTitle")], ["WF", "SSL", "LLL"])
+        self.assertEqual([item.property("text") for item in self.items("splitStar")], ["2", "4", "6"])
+
+    def test_a_split_without_a_star_count_shows_none(self):
+        self.show(["WF", "SSL"], 0, stars=["", "4"])
+        self.assertEqual([item.property("visible") for item in self.items("splitStarBadge")], [False, True])
+
+    def test_splits_before_the_current_one_are_checked_off(self):
+        self.show(["WF", "SSL", "LLL", "HMC"], 2)
+        self.assertEqual([item.property("visible") for item in self.items("splitDone")], [True, True, False, False])
+
+    def test_header_shows_the_route_and_how_many_splits_are_done(self):
+        self.show(["WF", "SSL", "LLL", "HMC"], 2)
+        self.assertEqual(qml(self.app.view, "routeTitle").property("text"), "16 Star · NoLBLJ 16")
+        self.assertEqual(qml(self.app.view, "splitProgress").property("text"), "2 of 4")
+
+    def test_a_route_gives_its_splits_star_counts_and_the_header_its_name(self):
+        path = str(Path(__file__).parent.parent / "routes" / "16_No_lblj.as64")
+        with patch_settings({("route", "path"): path}, real=True):
+            self.app.open_route()
+        splits = self.app.main.values["splits"]
+        self.assertEqual(splits[0]["star"], "6")
+        self.assertEqual(self.app.main.values["routeTitle"], "16 Star · NoLBLJ 16")

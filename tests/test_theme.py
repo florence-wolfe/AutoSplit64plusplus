@@ -154,17 +154,27 @@ class ThemedWidgetsTest(unittest.TestCase):
         panel = self.item("rightPanel")
         self.assertEqual(self.pixel(panel.x() + 2, panel.y() + 2), self.color(Role.Base))
 
-    def test_current_split_is_the_themes_highlight_with_or_without_focus(self):
+    def row(self, index):
+        """ The scene's x and y of a split's row, and its height """
+        from tests.qt import qml
+        splits = qml(self.window.view, "splitList")
+        origin = self.item("splitList")
+        height = splits.property("rowHeight")
+        return origin.x(), origin.y() + index * height, height, splits.property("width")
+
+    def test_current_split_has_the_themes_highlight_bar_with_or_without_focus(self):
         # During a run, the game or LiveSplit has focus, not AutoSplit64++: always the Active group's
         highlight = self.palette.color(QtGui.QPalette.ColorGroup.Active, Role.Highlight).getRgb()[:3]
-        self.assertEqual(self.pixel(2, 2), highlight)
+        x, y, height, _ = self.row(0)
+        self.assertEqual(self.pixel(x + 9, y + height / 2), highlight)
 
     def test_split_list(self):
-        second, third = self.pixel(2, 37 + 2), self.pixel(2, 2 * 37 + 2)
-        self.assertNotEqual(second, third)
-        # Both rows are shades of the theme's background
-        for row in (second, third):
-            self.assertLess(max(abs(a - b) for a, b in zip(row, self.color(Role.Base))), 60)
+        # The current row is raised, the others are the theme's background
+        raised, second, third = [self.pixel(self.row(i)[0] + self.row(i)[3] - 12, self.row(i)[1] + self.row(i)[2] / 2)
+                                 for i in range(3)]
+        self.assertEqual(raised, self.color(Role.Mid))
+        self.assertEqual(second, self.color(Role.Base))
+        self.assertEqual(third, self.color(Role.Base))
 
     def test_menu_button_and_version_follow_the_text_color(self):
         muted = theme.muted(self.palette).getRgb()[:3]

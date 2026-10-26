@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import QtQuick.Controls.Material as M
 import QtQuick.Controls.Universal as U
+import QtQuick.Effects
 
 // The main window's content: the route's splits beside the star, star count and start button, which keep
 // their art. `main` is the Python Main object (app.py): its values are what's shown, and its slots the
@@ -45,64 +46,193 @@ ThemedPane {
         anchors.fill: parent
         spacing: 0
 
-        // The splits, as many rows as fit, the current one highlighted
-        ListView {
-            id: splitList
-            objectName: "splitList"
+        // The route's name and how far along it is, above the splits
+        ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.minimumWidth: 183
-            // Dragging moves the window instead
-            interactive: false
-            clip: true
-            model: main.values.splits
-            currentIndex: main.values.current
-            readonly property real rowHeight: height / Math.max(1, Math.floor(height / 37))
-            onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
-            onHeightChanged: positionViewAtIndex(currentIndex, ListView.Contain)
+            spacing: 0
 
-            delegate: Rectangle {
-                required property var modelData
-                required property int index
-                width: ListView.view.width
-                height: splitList.rowHeight
-                // Alternating shades of the background, and the theme's highlight for the current split,
-                // also while another window has focus, as during a run
-                color: index === splitList.currentIndex ? system.highlight
-                     : Qt.darker(system.base, index % 2 ? 1.08 : 1.03)
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: 14
+                Layout.rightMargin: 12
+                Layout.topMargin: 10
+                Layout.bottomMargin: 4
+                spacing: Tokens.space2
 
-                Image {
-                    x: (parent.height - width) / 2
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: parent.height * 0.8
-                    height: width
-                    source: modelData.icon
-                    sourceSize.width: width
-                    sourceSize.height: height
+                Label {
+                    objectName: "routeTitle"
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                    text: main.values.routeTitle
+                    color: Tokens.muted
+                    font.family: Tokens.fontFamily
+                    font.pixelSize: 11
+                    font.weight: Font.DemiBold
+                    font.letterSpacing: 0.8
+                    font.capitalization: Font.AllUppercase
                 }
                 Label {
-                    x: parent.height
-                    width: parent.width - x
-                    height: parent.height
-                    verticalAlignment: Text.AlignVCenter
-                    elide: Text.ElideRight
-                    text: modelData.title
-                    color: system.text
-                    font.family: "Tw Cen MT"
-                    font.pointSize: 14
+                    objectName: "splitProgress"
+                    text: main.values.current + " of " + main.values.splits.length
+                    color: Tokens.muted
+                    font.family: Tokens.fontFamily
+                    font.pixelSize: 11
                 }
             }
 
-            // A row at a time, like the window did before
-            WheelHandler {
-                property real steps: 0
-                onWheel: event => {
-                    steps += event.angleDelta.y
-                    if (Math.abs(steps) < 120)
-                        return
-                    const first = splitList.indexAt(0, splitList.contentY + 1) + (steps > 0 ? -1 : 1)
-                    steps = 0
-                    splitList.positionViewAtIndex(Math.max(0, Math.min(first, splitList.count - 1)), ListView.Beginning)
+            // The splits, as many rows as fit: icon, title and star count, the current one raised with an accent
+            // bar, those before it dimmed and checked off
+            ListView {
+                id: splitList
+                objectName: "splitList"
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                // Dragging moves the window instead
+                interactive: false
+                clip: true
+                model: main.values.splits
+                currentIndex: main.values.current
+                readonly property real rowHeight: height / Math.max(1, Math.floor(height / 40))
+                onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
+                onHeightChanged: positionViewAtIndex(currentIndex, ListView.Contain)
+
+                delegate: Item {
+                    id: row
+                    required property var modelData
+                    required property int index
+                    readonly property bool current: index === splitList.currentIndex
+                    readonly property bool done: index < splitList.currentIndex
+                    readonly property real tileSize: height - 12
+                    width: ListView.view.width
+                    height: splitList.rowHeight
+
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.leftMargin: Tokens.space2
+                        anchors.rightMargin: Tokens.space1
+                        anchors.topMargin: 2
+                        anchors.bottomMargin: 2
+                        radius: Tokens.radiusRow
+                        color: row.current ? Tokens.raised : "transparent"
+
+                        Rectangle {
+                            visible: row.current
+                            x: 0
+                            y: 8
+                            width: 3
+                            height: parent.height - 16
+                            radius: 1.5
+                            color: Tokens.accent
+                        }
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: Tokens.space2
+                            spacing: 10
+
+                            // The split's icon with rounded corners, or its first letters where it has none
+                            Item {
+                                Layout.preferredWidth: row.tileSize
+                                Layout.preferredHeight: row.tileSize
+                                opacity: row.done ? 0.45 : 1
+
+                                Image {
+                                    id: art
+                                    anchors.fill: parent
+                                    visible: status === Image.Ready
+                                    source: row.modelData.icon || ""
+                                    sourceSize.width: width * 2
+                                    sourceSize.height: height * 2
+                                    fillMode: Image.PreserveAspectCrop
+                                    layer.enabled: true
+                                    layer.effect: MultiEffect {
+                                        maskEnabled: true
+                                        maskSource: artMask
+                                    }
+                                }
+                                Item {
+                                    id: artMask
+                                    anchors.fill: parent
+                                    visible: false
+                                    layer.enabled: true
+                                    Rectangle { anchors.fill: parent; radius: 6 }
+                                }
+                                Rectangle {
+                                    anchors.fill: parent
+                                    visible: art.status !== Image.Ready
+                                    radius: 6
+                                    color: Tokens.line
+                                    Label {
+                                        anchors.centerIn: parent
+                                        text: (row.modelData.title || "").slice(0, 2)
+                                        color: Tokens.muted
+                                        font.family: Tokens.fontFamily
+                                        font.pixelSize: 11
+                                        font.weight: Font.DemiBold
+                                    }
+                                }
+                            }
+
+                            Label {
+                                objectName: "splitTitle"
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                                text: row.modelData.title
+                                color: row.done ? Tokens.muted : Tokens.text
+                                font.family: Tokens.fontFamily
+                                font.pixelSize: Tokens.textRow
+                                font.weight: row.current ? Font.DemiBold : Font.Medium
+                            }
+
+                            // The star count it's at, where it has one
+                            Item {
+                                Layout.preferredWidth: 34
+                                Layout.fillHeight: true
+                                Row {
+                                    objectName: "splitStarBadge"
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    visible: !!row.modelData.star
+                                    spacing: 3
+                                    StarIcon { anchors.verticalCenter: parent.verticalCenter; size: 11; color: Tokens.muted }
+                                    Label {
+                                        objectName: "splitStar"
+                                        text: row.modelData.star || ""
+                                        color: Tokens.muted
+                                        font.family: Tokens.fontFamily
+                                        font.pixelSize: Tokens.textCaption
+                                    }
+                                }
+                            }
+
+                            Item {
+                                Layout.preferredWidth: 16
+                                Layout.preferredHeight: 16
+                                CheckIcon {
+                                    objectName: "splitDone"
+                                    anchors.centerIn: parent
+                                    visible: row.done
+                                    color: main.values.green
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // A row at a time, like the window did before
+                WheelHandler {
+                    property real steps: 0
+                    onWheel: event => {
+                        steps += event.angleDelta.y
+                        if (Math.abs(steps) < 120)
+                            return
+                        const first = splitList.indexAt(0, splitList.contentY + 1) + (steps > 0 ? -1 : 1)
+                        steps = 0
+                        splitList.positionViewAtIndex(Math.max(0, Math.min(first, splitList.count - 1)), ListView.Beginning)
+                    }
                 }
             }
         }
@@ -132,7 +262,7 @@ ThemedPane {
                 horizontalAlignment: Text.AlignHCenter
                 text: main.values.starCount + "  /  " + main.values.splitStar
                 color: system.text
-                font.family: "Tw Cen MT"
+                font.family: Tokens.fontFamily
                 font.pointSize: 20
             }
 
