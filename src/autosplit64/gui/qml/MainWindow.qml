@@ -120,7 +120,7 @@ ThemedPane {
                         RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: 10
-                            anchors.rightMargin: Tokens.space2
+                            anchors.rightMargin: 10
                             spacing: 10
 
                             // The split's icon with rounded corners, or its first letters where it has none
@@ -177,27 +177,7 @@ ThemedPane {
                                 font.weight: row.current ? Font.DemiBold : Font.Medium
                             }
 
-                            // The star count it's at, where it has one
-                            Item {
-                                Layout.preferredWidth: 42
-                                Layout.fillHeight: true
-                                Row {
-                                    objectName: "splitStarBadge"
-                                    anchors.right: parent.right
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    visible: !!row.modelData.star
-                                    spacing: 3
-                                    StarIcon { anchors.verticalCenter: parent.verticalCenter; size: 14; color: Tokens.muted }
-                                    Label {
-                                        objectName: "splitStar"
-                                        text: row.modelData.star || ""
-                                        color: Tokens.muted
-                                        font.family: Tokens.fontFamily
-                                        font.pixelSize: Tokens.textBody
-                                    }
-                                }
-                            }
-
+                            // Checked off before the star count
                             Item {
                                 Layout.preferredWidth: 16
                                 Layout.preferredHeight: 16
@@ -206,6 +186,30 @@ ThemedPane {
                                     anchors.centerIn: parent
                                     visible: row.done
                                     color: main.values.green
+                                }
+                            }
+                            // The star count it's at, where it has one: the number right-aligned against the star at
+                            // the right edge, the same distance from it as the icon is from the left
+                            Item {
+                                Layout.preferredWidth: 42
+                                Layout.fillHeight: true
+                                Row {
+                                    objectName: "splitStarBadge"
+                                    anchors.right: parent.right
+                                    // The star's points are inside its box by 1.5 px
+                                    anchors.rightMargin: -1.5
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    visible: !!row.modelData.star
+                                    layoutDirection: Qt.RightToLeft
+                                    spacing: 4
+                                    StarIcon { anchors.verticalCenter: parent.verticalCenter; size: 14; color: Tokens.muted }
+                                    Label {
+                                        objectName: "splitStar"
+                                        text: row.modelData.star || ""
+                                        color: Tokens.muted
+                                        font.family: Tokens.fontFamily
+                                        font.pixelSize: Tokens.textBody
+                                    }
                                 }
                             }
                         }
