@@ -474,6 +474,165 @@ class SplitListTest(unittest.TestCase):
         self.wheel(-120 * 100)
         self.assertAlmostEqual(splits.property("contentY"), splits.property("rowHeight") * 20 - splits.property("height"), places=0)
 
+    def settled(self, splits):
+        """ Once a scroll has stopped and the list has settled on a row """
+        wait_until(lambda: abs(splits.property("contentY") / splits.property("rowHeight")
+                               - round(splits.property("contentY") / splits.property("rowHeight"))) < 0.001, timeout=3)
+
+    def test_a_trackpad_scrolls_by_pixels_and_settles_on_a_whole_row(self):
+        self.app.show()
+        self.show([f"S{i}" for i in range(20)], 0)
+        splits = qml(self.app.view, "splitList")
+        row = splits.property("rowHeight")
+        self.wheel(-30, trackpad=True)
+        # By the pixels while it moves
+        self.assertAlmostEqual(splits.property("contentY"), 30, places=0)
+        self.wheel(-30, trackpad=True)
+        self.wheel(30, trackpad=True)
+        self.assertAlmostEqual(splits.property("contentY"), 30, places=0)
+        # Then a row, the nearest: 30 px is more than half of one
+        self.settled(splits)
+        self.assertAlmostEqual(splits.property("contentY"), row, places=0)
+        # Less than half goes back
+        self.wheel(10, trackpad=True)
+        self.settled(splits)
+        self.assertAlmostEqual(splits.property("contentY"), row, places=0)
+
+    def test_the_last_split_is_whole_whatever_the_height(self):
+        self.app.show()
+        self.show([f"S{i}" for i in range(11)], 0)
+        splits = qml(self.app.view, "splitList")
+        for height in (330, 357, 384, 411, 438):
+            with self.subTest(height=height):
+                before = splits.property("height")
+                self.app.resize(460, height)
+                # Its layout reaches the list a moment later, which then shows the current split again
+                wait_until(lambda: splits.property("height") != before)
+                run_queued()
+                end = splits.property("rowHeight") * 11 - splits.property("height")
+                # Stopped a third of a row short of the end
+                splits.setProperty("contentY", end - splits.property("rowHeight") / 3)
+                self.wheel(-1, trackpad=True)
+                self.settled(splits)
+                self.assertAlmostEqual(splits.property("contentY"), end, places=0)
+                # So its row ends where the list does
+                self.assertAlmostEqual(splits.property("rowHeight") * 11 - splits.property("contentY"),
+                                       splits.property("height"), places=0)
+
+    def test_scrolling_stays_on_whole_rows_after_the_window_is_resized(self):
+        self.app.show()
+        self.show([f"S{i}" for i in range(20)], 0)
+        splits = qml(self.app.view, "splitList")
+        self.wheel(-120 * 3)
+        self.app.resize(460, 400)
+        run_queued()
+        self.settled(splits)
+        end = splits.property("rowHeight") * 20 - splits.property("height")
+        self.assertGreaterEqual(splits.property("contentY"), -0.5)
+        self.assertLessEqual(splits.property("contentY"), end + 0.5)
+
+    def test_hovering_a_glyph_shows_what_type_it_is(self):
+        self.app.show()
+        self.app.main.update(splits=[{"title": t, "icon": "", "star": "1", "type": t} for t in ("Normal", "Mips-X")],
+                             current=0)
+        run_queued()
+        tips = self.app.view.rootContext().contextProperty("tips")
+        self.addCleanup(tips.hide)
+        glyph = self.items("splitType")[1]
+        center = glyph.mapToScene(QtCore.QPointF(glyph.width() / 2, glyph.height() / 2)).toPoint()
+        QTest.mouseMove(self.app.view, QtCore.QPoint(1, 1))
+        QTest.mouseMove(self.app.view, center)
+        wait_until(lambda: tips.view.isVisible(), timeout=3)
+        self.assertEqual(tips.view.rootObject().property("text"), "Mips, with an X-Cam")
+        QTest.mouseMove(self.app.view, QtCore.QPoint(1, 1))
+        wait_until(lambda: not tips.view.isVisible())
+        self.assertFalse(tips.view.isVisible())
+
+    def hover_for_tip(self, item):
+        """ The tooltip's text after resting the mouse over the item, or None if none comes """
+        tips = self.app.view.rootContext().contextProperty("tips")
+        self.addCleanup(tips.hide)
+        center = item.mapToScene(QtCore.QPointF(item.width() / 2, item.height() / 2)).toPoint()
+        QTest.mouseMove(self.app.view, QtCore.QPoint(1, 1))
+        # Away from what it was about, a tip from before is gone
+        wait_until(lambda: not tips.view.isVisible())
+        QTest.mouseMove(self.app.view, center)
+        wait_until(lambda: tips.view.isVisible(), timeout=1.5)
+        return tips.view.rootObject().property("text") if tips.view.isVisible() else None
+
+    def test_hovering_a_title_that_is_cut_off_shows_all_of_it(self):
+        self.app.show()
+        long = "Bowser in the Fire Sea, Red Coins on the Platform After the Elevator"
+        self.app.main.update(splits=[{"title": title, "icon": "", "star": "120", "type": "Mips-X"}
+                                     for title in (long, "WF")], current=0)
+        run_queued()
+        long_title, short_title = self.items("splitTitle")
+        self.assertTrue(long_title.property("truncated"))
+        self.assertEqual(self.hover_for_tip(long_title), long)
+        # A title that fits has nothing more to say
+        self.assertFalse(short_title.property("truncated"))
+        self.assertIsNone(self.hover_for_tip(short_title))
+
+    def test_hovering_a_route_name_that_is_cut_off_shows_all_of_it(self):
+        self.app.show()
+        long = "16 Star · A Really Long Route Name That Goes On And On"
+        self.app.main.update(routeTitle=long)
+        run_queued()
+        self.assertEqual(self.hover_for_tip(qml(self.app.view, "routeTitle")), long)
+
+    def test_a_split_without_a_type_has_no_glyph(self):
+        self.show(["WF"], 0)
+        self.assertEqual([item.property("visible") for item in self.items("splitType")], [False])
+
+    def test_header_shows_the_route_and_how_many_splits_are_done(self):
+        self.show(["WF", "SSL", "LLL", "HMC"], 2)
+        self.assertEqual(qml(self.app.view, "routeTitle").property("text"), "16 Star · NoLBLJ 16")
+        self.assertEqual(qml(self.app.view, "splitProgress").property("text"), "2 of 4")
+
+    def test_a_route_gives_its_splits_star_counts_and_the_header_its_name(self):
+        path = str(Path(__file__).parent.parent / "routes" / "16_No_lblj.as64")
+        with patch_settings({("route", "path"): path}, real=True):
+            self.app.open_route()
+        splits = self.app.main.values["splits"]
+        self.assertEqual(splits[0]["star"], "6")
+        self.assertEqual((splits[6]["type"], splits[-1]["type"], splits[0]["type"]), ("Mips", "Final", "Normal"))
+        self.assertEqual(self.app.main.values["routeTitle"], "16 Star · NoLBLJ 16")
+
+    def wheel(self, delta, trackpad=False):
+        """
+        A turn of the mouse wheel over the splits, or a trackpad's swipe, which has a device of its own and a scroll
+        phase, and both pixels and angles
+        """
+        splits = qml(self.app.view, "splitList")
+        point = QtCore.QPointF(splits.mapToScene(QtCore.QPointF(20, 20)))
+        if trackpad:
+            device = QtGui.QPointingDevice(
+                "trackpad", 1, QtGui.QInputDevice.DeviceType.TouchPad, QtGui.QPointingDevice.PointerType.Finger,
+                QtGui.QInputDevice.Capability.Scroll | QtGui.QInputDevice.Capability.PixelScroll, 1, 0)
+            self.addCleanup(device.deleteLater)
+            pixels, phase = QtCore.QPoint(0, delta), QtCore.Qt.ScrollPhase.ScrollUpdate
+        else:
+            device = QtGui.QPointingDevice.primaryPointingDevice()
+            pixels, phase = QtCore.QPoint(0, 0), QtCore.Qt.ScrollPhase.NoScrollPhase
+        event = QtGui.QWheelEvent(point, self.app.view.mapToGlobal(point), pixels, QtCore.QPoint(0, delta),
+                                  QtCore.Qt.MouseButton.NoButton, QtCore.Qt.KeyboardModifier.NoModifier, phase, False,
+                                  QtCore.Qt.MouseEventSource.MouseEventNotSynthesized, device)
+        QtWidgets.QApplication.sendEvent(self.app.view, event)
+        run_queued()
+
+    def test_the_splits_scroll_with_the_wheel_and_stop_at_the_ends(self):
+        self.app.show()
+        self.show([f"S{i}" for i in range(20)], 0)
+        splits = qml(self.app.view, "splitList")
+        self.assertEqual(splits.property("contentY"), 0)
+        self.wheel(-120)
+        self.assertAlmostEqual(splits.property("contentY"), splits.property("rowHeight"), places=0)
+        self.wheel(120)
+        self.wheel(120)
+        self.assertEqual(splits.property("contentY"), 0)
+        self.wheel(-120 * 100)
+        self.assertAlmostEqual(splits.property("contentY"), splits.property("rowHeight") * 20 - splits.property("height"), places=0)
+
     def test_a_trackpad_scrolls_by_pixels(self):
         self.app.show()
         self.show([f"S{i}" for i in range(20)], 0)

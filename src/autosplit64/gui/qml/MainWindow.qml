@@ -99,7 +99,19 @@ ThemedPane {
                 currentIndex: main.values.current
                 readonly property real rowHeight: height / Math.max(1, Math.floor(height / 40))
                 onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
-                onHeightChanged: positionViewAtIndex(currentIndex, ListView.Contain)
+                onHeightChanged: { positionViewAtIndex(currentIndex, ListView.Contain); settleTimer.restart() }
+                onCountChanged: settleTimer.restart()
+
+                // Only whole rows are left showing, as the window always had: once a scroll has stopped, the list
+                // settles on the nearest row, which at the end is the last split's. The rows are as many as fit, so
+                // the end is a whole number of rows too.
+                function settle() {
+                    const last = Math.max(0, rowHeight * count - height)
+                    settleTo.to = Math.max(0, Math.min(Math.round(contentY / rowHeight) * rowHeight, last))
+                    settleTo.restart()
+                }
+                NumberAnimation { id: settleTo; target: splitList; property: "contentY"; duration: 120; easing.type: Easing.OutCubic }
+                Timer { id: settleTimer; interval: 150; onTriggered: splitList.settle() }
 
                 delegate: Item {
                     id: row
@@ -238,8 +250,8 @@ ThemedPane {
                     }
                 }
 
-                // Scrolls by the pixels a trackpad moves, or a row for each notch of a wheel. Dragging still moves the
-                // window, so the list isn't flickable.
+                // Scrolls by the pixels a trackpad moves, or a row for each notch of a wheel, and settles on a row when
+                // it stops. Dragging still moves the window, so the list isn't flickable.
                 WheelHandler {
                     acceptedDevices: PointerDevice.AllDevices
                     onWheel: event => {
@@ -247,7 +259,9 @@ ThemedPane {
                                     : event.angleDelta.y / 120 * splitList.rowHeight
                         // Not contentHeight, which is an estimate until the rows are made, and the rows are all the same height
                         const last = Math.max(0, splitList.rowHeight * splitList.count - splitList.height)
+                        settleTo.stop()
                         splitList.contentY = Math.max(0, Math.min(last, splitList.contentY - delta))
+                        settleTimer.restart()
                     }
                 }
 
