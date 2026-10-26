@@ -36,16 +36,23 @@ T.MenuItem {
         }
     }
 
-    indicator: Item {
+    // A box, which fills with the accent color and a check when it's checked
+    indicator: Rectangle {
         x: control.mirrored ? control.width - width - control.rightPadding : control.leftPadding
         y: control.topPadding + (control.availableHeight - height) / 2
         implicitWidth: 16
         implicitHeight: 16
+        radius: 4
         visible: control.checkable
+        color: control.checked ? UI.Tokens.accent : "transparent"
+        border.width: 1.5
+        border.color: control.checked ? UI.Tokens.accent : UI.Tokens.muted
+
         UI.CheckIcon {
             anchors.centerIn: parent
             visible: control.checked
-            color: UI.Tokens.accent
+            scale: 0.8
+            color: UI.Tokens.accentText
         }
     }
 

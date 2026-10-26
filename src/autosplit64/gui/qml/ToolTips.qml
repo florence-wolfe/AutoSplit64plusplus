@@ -16,9 +16,13 @@ Item {
         tip.palette.toolTipBase = Qt.binding(() => root.M.Material.tooltipColor)
         tip.palette.toolTipText = "white"
         // Implicit sizes, like Material's: Qt narrows a tooltip that doesn't fit when it's placed, which would place it again
-        const left = () => tip.parent.mapToItem(null, 0, 0).x - tip.implicitWidth - gap >= tip.margins
+        // An item with a `tipAbove` of true, like a row of buttons, has it above, where one to its left would cover the
+        // button beside it
+        const above = () => tip.parent.tipAbove === true
+        const left = () => !above() && tip.parent.mapToItem(null, 0, 0).x - tip.implicitWidth - gap >= tip.margins
         tip.x = Qt.binding(() => !tip.parent ? 0 : left() ? -tip.implicitWidth - gap : (tip.parent.width - tip.implicitWidth) / 2)
-        // Material's place above
-        tip.y = Qt.binding(() => !tip.parent ? 0 : left() ? (tip.parent.height - tip.implicitHeight) / 2 : -tip.implicitHeight - 24)
+        // Material's place above, or closer where it's asked for
+        tip.y = Qt.binding(() => !tip.parent ? 0 : left() ? (tip.parent.height - tip.implicitHeight) / 2
+                                 : -tip.implicitHeight - (above() ? gap : 24))
     }
 }

@@ -170,6 +170,11 @@ class PreviewTest(unittest.TestCase):
         self.assertLessEqual(480 * self.zoom(), self.preview.height() + 0.5)
         self.assertTrue(abs(640 * self.zoom() - self.preview.width()) < 1 or abs(480 * self.zoom() - self.preview.height()) < 1)
 
+    def test_zoom_tooltips_ask_to_be_above_the_buttons_not_over_the_ones_beside(self):
+        for name in ("zoomOut", "fit", "zoomIn"):
+            with self.subTest(name):
+                self.assertIs(qml(self.editor.view, name).property("tipAbove"), True)
+
     def test_shows_the_zoom(self):
         self.click("zoomIn")
         self.assertEqual(qml(self.editor.view, "zoom").property("text"), "125%")

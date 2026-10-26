@@ -11,6 +11,8 @@ ThemedPane {
     implicitHeight: content.implicitHeight + 32
 
     readonly property bool running: debug.values.split !== ""
+    // How tall the recent events are before the window adds to them, which the grip below them changes
+    property int eventsHeight: 140
 
     SystemPalette { id: system }
 
@@ -47,12 +49,13 @@ ThemedPane {
         // What split detection did in this session, like in the log, the latest at the bottom
         Label { text: "Recent events"; opacity: 0.7; Layout.topMargin: 8 }
         Rectangle {
+            objectName: "eventsBox"
             color: system.base
             radius: 4
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.minimumHeight: 80
-            implicitHeight: 140
+            Layout.preferredHeight: root.eventsHeight
 
             ListView {
                 id: events
@@ -88,6 +91,44 @@ ThemedPane {
                     font.pixelSize: 12
                 }
                 ScrollBar.vertical: ScrollBar {}
+            }
+        }
+
+        // Drag to make the recent events taller or shorter, and the window with them
+        Item {
+            objectName: "eventsGrip"
+            Layout.fillWidth: true
+            Layout.preferredHeight: 12
+            Layout.topMargin: -6
+            Layout.bottomMargin: -4
+
+            Rectangle {
+                anchors.centerIn: parent
+                width: 36
+                height: 4
+                radius: 2
+                color: Qt.alpha(system.text, grip.pressed ? 0.6 : grip.containsMouse ? 0.45 : 0.25)
+            }
+            MouseArea {
+                id: grip
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.SizeVerCursor
+                property real last
+                onPressed: mouse => last = mapToItem(root, mouse.x, mouse.y).y
+                onPositionChanged: mouse => {
+                    if (!pressed)
+                        return
+                    // Where the mouse is in the window, which the window growing doesn't move
+                    const y = mapToItem(root, mouse.x, mouse.y).y
+                    const wanted = Math.max(80, root.eventsHeight + Math.round(y - last))
+                    const applied = wanted - root.eventsHeight
+                    if (applied === 0)
+                        return
+                    root.eventsHeight = wanted
+                    last += applied
+                    debug.events_resized(applied)
+                }
             }
         }
 
@@ -145,7 +186,7 @@ ThemedPane {
         GridLayout {
             columns: 2
             columnSpacing: 8
-            rowSpacing: 0
+            rowSpacing: 8
             Layout.fillWidth: true
             Layout.topMargin: 8
             PointerButton { objectName: "openLog"; text: "Open log"; Layout.fillWidth: true; onClicked: debug.open_log() }

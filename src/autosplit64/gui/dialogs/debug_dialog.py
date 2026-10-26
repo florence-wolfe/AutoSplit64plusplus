@@ -115,6 +115,8 @@ class Debug(Values):
     open_log = QtCore.pyqtSignal()
     open_old_log = QtCore.pyqtSignal()
     save_info = QtCore.pyqtSignal()
+    # The recent events were made this many pixels taller (or shorter) by dragging below them
+    events_resized = QtCore.pyqtSignal(int)
 
     def __init__(self, lines):
         super().__init__({"status": "", "split": "", "needs": "", "counted": "", "fields": {}, "advanced": False,
@@ -155,12 +157,18 @@ class DebugDialog(QtWidgets.QDialog):
         self.debug.open_log.connect(lambda: self._open(logs.LOG_FILE))
         self.debug.open_old_log.connect(lambda: self._open(logs.OLD_LOG_FILE))
         self.debug.save_info.connect(self.save_debug_info)
+        self.debug.events_resized.connect(self._resize_events)
         self.view = qml_view(self, "DebugDialog", debug=self.debug, maxEvents=DetectionEvents.MAX)
         # Tall enough for what's shown, e.g. Advanced. Queued: resizing while the QML renders a frame breaks it.
         self.view.rootObject().implicitHeightChanged.connect(self._fit, QtCore.Qt.ConnectionType.QueuedConnection)
         self._fit()
 
         self._show_advanced(bool(config.get("general", "debug_advanced")), save=False)
+
+    def _resize_events(self, change):
+        """ The window grows or shrinks with the recent events, which its smallest height does as well """
+        self.setMinimumHeight(self.minimumHeight() + change)
+        self.resize(self.width(), self.height() + change)
 
     def _fit(self):
         self.setMinimumHeight(int(self.view.rootObject().property("implicitHeight")))

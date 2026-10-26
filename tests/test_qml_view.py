@@ -16,7 +16,8 @@ Item {
     width: 400
     height: 200
     property var tip: button.ToolTip.toolTip
-    Button { id: button; objectName: "button"; x: %d; y: 80; text: "Button"; ToolTip.text: "%s"; ToolTip.visible: true }
+    Button { id: button; objectName: "button"; x: %d; y: 80; text: "Button"; ToolTip.text: "%s"; ToolTip.visible: true
+             property bool tipAbove: %s }
 }
 """
 
@@ -27,10 +28,10 @@ class ToolTipTest(unittest.TestCase):
         previous = QtCore.qInstallMessageHandler(lambda kind, context, message: self.messages.append(message))
         self.addCleanup(QtCore.qInstallMessageHandler, previous)
 
-    def view(self, x, text="A tooltip"):
+    def view(self, x, text="A tooltip", above=False):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
-        (Path(directory.name) / "Button.qml").write_text(BUTTON % (x, text))
+        (Path(directory.name) / "Button.qml").write_text(BUTTON % (x, text, str(above).lower()))
         window = QtWidgets.QWidget()
         self.addCleanup(window.deleteLater)
         window.resize(400, 200)
@@ -50,6 +51,14 @@ class ToolTipTest(unittest.TestCase):
     def test_above_where_the_left_has_no_room(self):
         tip, button = self.view(10)
         self.assertLess(tip.property("y") + tip.property("height"), 0)
+
+    def test_above_where_asked_even_with_room_on_the_left(self):
+        # e.g. a row of buttons, where one to the left would cover the button beside it
+        tip, button = self.view(300, above=True)
+        self.assertLess(tip.property("y") + tip.property("height"), 0)
+        self.assertGreater(tip.property("x") + tip.property("width"), 0)
+        # Centered on the button, not to its left
+        self.assertAlmostEqual(tip.property("x") + tip.property("width") / 2, button.property("width") / 2, delta=1)
 
     def test_no_binding_loop(self):
         # Wider than the room on the left, which Qt narrows tooltips to

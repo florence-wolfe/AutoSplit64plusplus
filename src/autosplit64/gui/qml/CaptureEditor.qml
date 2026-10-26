@@ -297,6 +297,8 @@ ThemedPane {
 
     component ZoomButton: CompactButton {
         property string tip
+        // In a row, the tooltip above, not left over the button beside it
+        property bool tipAbove: true
         implicitWidth: 40
         // Narrow enough for "Fit" and no wider
         leftPadding: 4

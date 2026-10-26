@@ -15,7 +15,9 @@ from autosplit64.core import config, logs
 from autosplit64.core.model import PredictionInfo
 from autosplit64.gui.dialogs import debug_dialog
 from autosplit64.gui.dialogs.debug_dialog import DebugDialog, describe
-from tests.qt import qml, wait_until
+from PyQt6.QtTest import QTest
+
+from tests.qt import qml, run_queued, wait_until
 
 OUTPUT = {"fade_status": "FADEOUT_PARTIAL", "fadeout_count": 2, "fadein_count": 1, "xcam_percent": 0.123456789,
           "xcam_count": 3, "xcam_status": True, "prediction": 16, "probability": 0.987654321, "execution": 0.0123456,
@@ -81,6 +83,53 @@ class DebugDialogTest(unittest.TestCase):
         spin_box = self.qml("updateRate")
         spin_box.setProperty("value", rate)
         QtCore.QMetaObject.invokeMethod(spin_box, "valueModified")
+
+    def scene_box(self, name):
+        item = self.qml(name)
+        origin = item.mapToScene(QtCore.QPointF(0, 0))
+        return origin.y(), origin.y() + item.height()
+
+    def test_the_buttons_have_space_between_them(self):
+        QtWidgets.QDialog.show(self.dialog)
+        self.addCleanup(self.dialog.hide)
+        run_queued()
+        logs, old = self.scene_box("openLog"), self.scene_box("openOldLog")
+        save = self.scene_box("saveInfo")
+        self.assertEqual(logs, old)
+        self.assertGreaterEqual(save[0] - logs[1], 6)
+
+    def drag_grip(self, dy):
+        grip = self.qml("eventsGrip")
+        start = grip.mapToScene(QtCore.QPointF(grip.width() / 2, grip.height() / 2)).toPoint()
+        left, none = QtCore.Qt.MouseButton.LeftButton, QtCore.Qt.KeyboardModifier.NoModifier
+        QTest.mousePress(self.dialog.view, left, none, start)
+        for step in range(1, 11):
+            QTest.mouseMove(self.dialog.view, start + QtCore.QPoint(0, dy * step // 10))
+        QTest.mouseRelease(self.dialog.view, left, none, start + QtCore.QPoint(0, dy))
+        run_queued()
+        wait_until(lambda: False, timeout=0.15)
+
+    def test_dragging_the_grip_resizes_the_recent_events_and_the_window_with_them(self):
+        self.dialog.resize(360, 600)
+        QtWidgets.QDialog.show(self.dialog)
+        self.addCleanup(self.dialog.hide)
+        run_queued()
+        box, window = self.qml("eventsBox").height(), self.dialog.height()
+        self.drag_grip(60)
+        self.assertAlmostEqual(self.qml("eventsBox").height(), box + 60, delta=3)
+        self.assertAlmostEqual(self.dialog.height(), window + 60, delta=3)
+        self.drag_grip(-40)
+        self.assertAlmostEqual(self.qml("eventsBox").height(), box + 20, delta=3)
+        self.assertAlmostEqual(self.dialog.height(), window + 20, delta=3)
+
+    def test_the_recent_events_stay_at_least_a_few_lines_tall(self):
+        self.dialog.resize(360, 600)
+        QtWidgets.QDialog.show(self.dialog)
+        self.addCleanup(self.dialog.hide)
+        run_queued()
+        self.drag_grip(-2000)
+        self.assertGreaterEqual(self.qml("eventsBox").height(), 79)
+        self.assertGreaterEqual(self.dialog.height(), self.dialog.minimumHeight())
 
     def test_shows_the_output_in_advanced(self):
         self.dialog.display_output(OUTPUT)

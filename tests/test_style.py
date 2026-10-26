@@ -21,6 +21,8 @@ Item {
     // Which QML reads, as Python can't read a background's border
     property var borders: ({button: button.background.border.width, highlighted: highlighted.background.border.width,
                             flat: flat.background.border.width})
+    property var menuChecks: ({unchecked: menuUnchecked.indicator.border.width, filled: menuChecked.indicator.color.a > 0, hollow: menuUnchecked.indicator.color.a === 0,
+                               box: menuUnchecked.indicator.visible})
     Column {
         Button { id: button; objectName: "button"; text: "Button" }
         Button { id: highlighted; objectName: "highlighted"; text: "Highlighted"; highlighted: true }
@@ -30,6 +32,8 @@ Item {
         Switch { objectName: "switchOff" }
         CheckBox { objectName: "checked"; checked: true }
         CheckBox { objectName: "unchecked" }
+        MenuItem { id: menuUnchecked; objectName: "menuUnchecked"; text: "Unchecked"; checkable: true }
+        MenuItem { id: menuChecked; objectName: "menuChecked"; text: "Checked"; checkable: true; checked: true }
         Label { objectName: "label"; text: "Label" }
         TextField { objectName: "field"; text: "Field" }
         ComboBox { objectName: "combo"; model: ["A", "B"] }
@@ -78,6 +82,7 @@ out = {
     "spinValue": qml(view, "spin").property("value"),
     "row": qml(view, "row").property("background").property("color").alpha(),
     "chosen": rgb(qml(view, "chosen").property("background").property("color")),
+    "menuChecks": view.rootObject().property("menuChecks").toVariant(),
     "labelFont": qml(view, "label").property("font").family(),
     "buttonHeight": qml(view, "button").property("implicitHeight"),
 }
@@ -105,6 +110,16 @@ class StyleTest(unittest.TestCase):
                 self.assertEqual(out["switchOn"], palette["accent"])
                 self.assertEqual(out["checked"], palette["accent"])
                 self.assertEqual(out["unchecked"], 0)
+
+    def test_checkable_menu_entries_show_their_box_before_they_are_checked(self):
+        for name in ["as64_dark", "as64_light"]:
+            with self.subTest(name):
+                out = probe(name)
+                self.assertTrue(out["menuChecks"]["box"])
+                self.assertGreater(out["menuChecks"]["unchecked"], 0)
+                # Hollow until checked, then filled
+                self.assertTrue(out["menuChecks"]["hollow"])
+                self.assertTrue(out["menuChecks"]["filled"])
 
     def test_buttons_come_in_three_levels(self):
         # A raised one with a border, an accent one with none, and a flat one with no fill or border
