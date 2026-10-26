@@ -168,6 +168,59 @@ class SettingsDialogTest(unittest.TestCase):
 
 
 
+class SettingsLayoutTest(unittest.TestCase):
+    """ The pages' settings in sections, and the modes as segmented controls """
+
+    def setUp(self):
+        self.settings = copy.deepcopy(SettingsDialogTest.SETTINGS)
+        for patcher in [mock.patch.object(config, "_config", self.settings), mock.patch.object(config, "save_config")]:
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        self.dialog = SettingsDialog()
+        self.addCleanup(self.dialog.deleteLater)
+        self.dialog.show()
+
+    def sections(self, page):
+        """ The titles of the sections on the page at index page, in the order they're shown """
+        qml(self.dialog, "nav").setProperty("currentIndex", page)
+        qt.run_queued()
+        shown = [item for item in qt.qml_items(self.dialog.view)
+                 if item.objectName() == "settingsSection" and item.isVisible()]
+        return [item.property("title") for item in sorted(shown, key=lambda item: item.mapToScene(QtCore.QPointF(0, 0)).y())]
+
+    def test_each_page_is_in_sections(self):
+        for page, titles in [(0, ["Startup", "Detection", "Appearance"]), (1, [""]),
+                             (2, ["Prediction", "Fades", "X-Cam", "Undo"]), (3, [""]),
+                             (4, ["Undo", "Star skips"]), (5, ["Frames", "Frame rates", "Model"])]:
+            with self.subTest(page):
+                self.assertEqual(self.sections(page), titles)
+
+    def click(self, name):
+        QtCore.QMetaObject.invokeMethod(qml(self.dialog, name), "clicked")
+
+    def test_the_operation_mode_shows_the_saved_one(self):
+        mode = qml(self.dialog, "operationMode")
+        self.assertEqual(mode.property("currentIndex"), 1)
+        self.assertEqual([qml(self.dialog, f"operationModeSegment{i}").property("text") for i in range(2)],
+                         ["Probability", "X-Cam"])
+
+    def test_clicking_a_mode_chooses_and_saves_it(self):
+        self.click("operationModeSegment0")
+        self.assertEqual(qml(self.dialog, "operationMode").property("currentIndex"), 0)
+        self.dialog.apply_clicked()
+        self.assertEqual(self.settings["general"]["operation_mode"], 0)
+        self.assertIs(type(self.settings["general"]["operation_mode"]), int)
+
+    def test_the_connection_mode_is_segmented_and_shows_its_fields(self):
+        qml(self.dialog, "nav").setProperty("currentIndex", 1)
+        self.assertEqual([qml(self.dialog, f"modeSegment{i}").property("text") for i in range(3)],
+                         ["Named Pipe", "TCP", "LiveSplit One"])
+        self.click("modeSegment1")
+        qt.run_queued()
+        self.assertTrue(qml(self.dialog, "tcpHost").property("visible"))
+        self.assertFalse(qml(self.dialog, "pipeHost").property("visible"))
+
+
 class ThemeSettingTest(unittest.TestCase):
     """ Choosing a theme shows it right away, but only Apply keeps it """
 
