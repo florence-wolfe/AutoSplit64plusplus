@@ -21,6 +21,32 @@ _PLATFORM_STYLES = {"darwin": ["macOS"], "win32": ["Windows", "FluentWinUI3"]}
 SYSTEM_STYLES = {style for styles in _PLATFORM_STYLES.values() for style in styles}
 
 Role = QtGui.QPalette.ColorRole
+
+
+def _theme(**colors):
+    """ A qt-themes theme from hex colors, like the ones its own files describe """
+    return qt_themes.Theme(**{name: QtGui.QColor(color) for name, color in colors.items()})
+
+
+# AutoSplit64++'s own themes, which qt-themes turns into a palette like the others: base is the window and its
+# panels, mantle (crust in a light theme) the splits' ground, surface0 a raised row and surface1 a border
+_OWN = {
+    "as64_dark": _theme(
+        primary="#f5b83d", secondary="#f5b83d",
+        magenta="#e8567a", red="#f44336", orange="#ff9800", yellow="#ffc107", green="#4caf50", cyan="#4dd0e1",
+        blue="#5b8def",
+        text="#e6e8ec", subtext1="#c5c9d1", subtext0="#b0b5bf", overlay2="#9aa0ab", overlay1="#8a909b",
+        overlay0="#5b616c", surface2="#3a3e47", surface1="#2c3038", surface0="#23262d",
+        base="#191b20", mantle="#131418", crust="#0e0f12"),
+    "as64_light": _theme(
+        primary="#2f61cc", secondary="#2f61cc",
+        magenta="#c2185b", red="#d32f2f", orange="#e65100", yellow="#f9a825", green="#2e8b4c", cyan="#00838f",
+        blue="#2f61cc",
+        text="#1c1f24", subtext1="#3a3f48", subtext0="#4a505b", overlay2="#575d68", overlay1="#6b717c",
+        overlay0="#a9afba", surface2="#c5cad4", surface1="#d9dde5", surface0="#e8ebf1",
+        base="#ffffff", mantle="#eef0f4", crust="#f4f5f8"),
+}
+_DISPLAY_NAMES = {"as64_dark": "AS64++ Dark", "as64_light": "AS64++ Light"}
 # AutoSplit64++'s own dark palette
 _DEFAULT_COLORS = {
     Role.Window: (60, 63, 65),
@@ -70,8 +96,8 @@ def default_palette():
 
 
 def themes():
-    """ The themes' names, the default first """
-    return [DEFAULT] + sorted(qt_themes.get_themes())
+    """ The themes' names, the default first and then AutoSplit64++'s own """
+    return [DEFAULT, *_OWN] + sorted(qt_themes.get_themes())
 
 
 def status_color(name):
@@ -90,7 +116,7 @@ def muted(palette):
 
 
 def display_name(name):
-    return name.replace("_", " ").title()
+    return _DISPLAY_NAMES.get(name) or name.replace("_", " ").title()
 
 
 def current():
@@ -104,8 +130,8 @@ def apply(name):
     app = QtWidgets.QApplication.instance()
     _name = name
     # Before the palette, which makes the widgets repaint
-    _current = qt_themes.get_themes().get(name)
+    _current = _OWN.get(name) or qt_themes.get_themes().get(name)
     if _current:
-        qt_themes.set_theme(name, style=None)
+        qt_themes.set_theme(_current, style=None)
     else:
         app.setPalette(default_palette())

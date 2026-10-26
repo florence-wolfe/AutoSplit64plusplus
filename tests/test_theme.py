@@ -44,6 +44,39 @@ class ThemeTest(unittest.TestCase):
         self.assertEqual(theme.display_name("github_dark"), "Github Dark")
         self.assertEqual(theme.display_name(theme.DEFAULT), "Default")
 
+    def test_own_themes_come_after_the_default(self):
+        self.assertEqual(theme.themes()[:3], [theme.DEFAULT, "as64_dark", "as64_light"])
+        self.assertEqual(theme.display_name("as64_dark"), "AS64++ Dark")
+        self.assertEqual(theme.display_name("as64_light"), "AS64++ Light")
+
+    def test_own_themes_colors(self):
+        for name, window, highlight in [("as64_dark", (25, 27, 32), (245, 184, 61)),
+                                        ("as64_light", (255, 255, 255), (47, 97, 204))]:
+            with self.subTest(name):
+                theme.apply(name)
+                self.assertEqual(theme.current(), name)
+                self.assertEqual(self.window_color(), window)
+                self.assertEqual(qapp.palette().color(Role.Highlight).getRgb()[:3], highlight)
+
+    def test_own_themes_are_readable(self):
+        # WCAG AA for normal text
+        def luminance(color):
+            channels = [c / 255 for c in color.getRgb()[:3]]
+            r, g, b = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in channels]
+            return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+        def contrast(a, b):
+            a, b = sorted([luminance(a), luminance(b)], reverse=True)
+            return (a + 0.05) / (b + 0.05)
+
+        for name in ["as64_dark", "as64_light"]:
+            theme.apply(name)
+            palette = qapp.palette()
+            for text, ground in [(Role.Text, Role.Window), (Role.Text, Role.Base), (Role.HighlightedText, Role.Highlight),
+                                 (Role.PlaceholderText, Role.Base), (Role.ToolTipText, Role.ToolTipBase)]:
+                with self.subTest(name=name, text=text.name, ground=ground.name):
+                    self.assertGreaterEqual(contrast(palette.color(text), palette.color(ground)), 4.5)
+
 
 class StyleTest(unittest.TestCase):
     def test_style(self):
@@ -77,6 +110,8 @@ class StatusColorTest(unittest.TestCase):
         import qt_themes
         theme.apply("dracula")
         self.assertEqual(theme.status_color("green"), qt_themes.get_themes()["dracula"].green)
+        theme.apply("as64_dark")
+        self.assertEqual(theme.status_color("green").getRgb()[:3], (76, 175, 80))
         theme.apply(theme.DEFAULT)
         self.assertEqual(theme.status_color("green").getRgb()[:3], (76, 175, 80))
         self.assertEqual(theme.status_color("red").getRgb()[:3], (244, 67, 54))
