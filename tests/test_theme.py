@@ -100,18 +100,18 @@ class StyleTest(unittest.TestCase):
     def test_unknown_style_is_the_default(self):
         with mock.patch.dict(os.environ):
             theme.use_style("Removed")
-            self.assertEqual(os.environ["QT_QUICK_CONTROLS_STYLE"], "AutoSplit64")
+            self.assertEqual(os.environ["QT_QUICK_CONTROLS_STYLE"], "Material")
 
     def test_other_platforms_style_is_the_default(self):
         # e.g. settings copied from a Mac to Windows
         with mock.patch.dict(os.environ), mock.patch.object(theme.sys, "platform", "win32"):
             theme.use_style("macOS")
-            self.assertEqual(os.environ["QT_QUICK_CONTROLS_STYLE"], "AutoSplit64")
+            self.assertEqual(os.environ["QT_QUICK_CONTROLS_STYLE"], "Material")
 
     def test_styles_of_each_platform(self):
         for platform, own in [("darwin", ["macOS"]), ("win32", ["Windows", "FluentWinUI3"]), ("linux", [])]:
             with self.subTest(platform), mock.patch.object(theme.sys, "platform", platform):
-                self.assertEqual(theme.styles(), ["AutoSplit64", "Material", "Fusion", "Universal"] + own)
+                self.assertEqual(theme.styles(), ["Material", "AutoSplit64", "Fusion", "Universal"] + own)
 
 
 class StatusColorTest(unittest.TestCase):

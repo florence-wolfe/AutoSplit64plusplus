@@ -285,9 +285,10 @@ class StyleSettingTest(unittest.TestCase):
         self.dialog.apply_clicked()
         self.assertEqual(self.settings["general"]["style"], "Material")
 
-    def test_offers_its_own_style_first(self):
+    def test_offers_its_own_style_after_the_default(self):
         combo = qml(self.dialog, "style")
-        choose(combo, 0)
+        self.assertEqual(theme.styles()[:2], ["Material", "AutoSplit64"])
+        choose(combo, 1)
         self.assertEqual(combo.property("currentText"), "AutoSplit64++")
         self.dialog.apply_clicked()
         self.assertEqual(self.settings["general"]["style"], "AutoSplit64")
