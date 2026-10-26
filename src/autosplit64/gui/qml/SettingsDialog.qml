@@ -141,7 +141,7 @@ ThemedPane {
                         SettingLabel {
                             text: "Connection mode"
                             tip: "How splits reach LiveSplit. Named Pipe needs nothing started, TCP needs LiveSplit's server "
-                                 + "started, and WebSocket waits for a timer such as LiveSplit One to connect to AutoSplit64++."
+                                 + "started, and WebSocket waits for a timer to connect to AutoSplit64++."
                         }
                         SettingSegmented {
                             id: mode
@@ -167,8 +167,7 @@ ThemedPane {
                         WholeField { objectName: "tcpPort"; section: "connection"; key: "ls_port"; visible: mode.currentIndex === 1 }
                         SettingLabel {
                             text: "WebSocket port"; visible: mode.currentIndex === 2
-                            tip: "The port AutoSplit64++ waits for a timer on, at ws://localhost:<port>: in LiveSplit One, "
-                                 + "Settings > Connect to Server"
+                            tip: "The port AutoSplit64++ waits for a timer on: connect the timer to ws://localhost:<port>"
                         }
                         WholeField { objectName: "lsoPort"; section: "connection"; key: "lso_port"; visible: mode.currentIndex === 2 }
                     }

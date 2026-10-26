@@ -266,7 +266,7 @@ class App(QtWidgets.QMainWindow):
 
     def settings_updated(self):
         self.set_always_on_top(config.get("general", "on_top"))
-        # Start the LiveSplit One server right away, or stop it when switching modes
+        # Start the WebSocket server right away, or stop it when switching modes
         if config.get("connection", "ls_connection_type") == 2:
             livesplit.connect()
         else:

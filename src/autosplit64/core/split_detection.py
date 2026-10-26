@@ -185,7 +185,7 @@ class SplitDetection(Thread):
     def validity_check(self):
 
         if not livesplit.check_connection(self._ls_socket):
-            self._error_occurred("Could not connect to LiveSplit.\nIs LiveSplit running?\nIf Connection mode is TCP, ensure the LiveSplit Server is started.\nIf Connection mode is WebSocket, connect your timer to ws://localhost:" + str(config.get("connection", "lso_port")) + ", in LiveSplit One via Settings > Connect to Server.")
+            self._error_occurred("Could not connect to LiveSplit.\nIs LiveSplit running?\nIf Connection mode is TCP, ensure the LiveSplit Server is started.\nIf Connection mode is WebSocket, connect your timer to ws://localhost:" + str(config.get("connection", "lso_port")) + ".")
             return False
         
         try:
