@@ -135,7 +135,7 @@ ThemedPane {
 
         RowLayout {
             Item { Layout.fillWidth: true }
-            PointerButton { text: "Cancel"; flat: true; onClicked: editor.cancel() }
+            PointerButton { text: "Cancel"; onClicked: editor.cancel() }
             PointerButton { text: "Apply"; highlighted: true; onClicked: editor.apply() }
         }
     }

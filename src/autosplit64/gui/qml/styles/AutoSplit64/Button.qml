@@ -2,8 +2,9 @@ import QtQuick
 import QtQuick.Templates as T
 import "../.." as UI
 
-// A raised button, accent-filled when it's highlighted, or with no fill when it's flat. Lighter or darker while hovered
-// or pressed, in the text's color so it shows in light and dark themes alike.
+// Three levels: an accent-filled button for what a window is for, a raised one with a border for the other things to
+// do, and a flat one with no fill or border for the quiet ones, like a toolbar's. Lighter or darker while hovered or
+// pressed, in the text's color so it shows in light and dark themes alike.
 T.Button {
     id: control
 
@@ -33,8 +34,8 @@ T.Button {
         radius: UI.Tokens.radiusSmall
         color: control.flat ? "transparent" : control.highlighted ? UI.Tokens.accent : UI.Tokens.raised
         opacity: control.enabled ? 1 : 0.4
-        border.width: control.visualFocus ? 2 : 0
-        border.color: UI.Tokens.accent
+        border.width: control.visualFocus ? 2 : control.flat || control.highlighted ? 0 : 1
+        border.color: control.visualFocus ? UI.Tokens.accent : Qt.alpha(UI.Tokens.text, 0.2)
 
         Rectangle {
             anchors.fill: parent

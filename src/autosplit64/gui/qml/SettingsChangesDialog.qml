@@ -54,7 +54,7 @@ ThemedPane {
         RowLayout {
             Layout.topMargin: 8
             Item { Layout.fillWidth: true }
-            PointerButton { text: "Keep My Settings"; flat: true; onClicked: changes.keep() }
+            PointerButton { text: "Keep My Settings"; onClicked: changes.keep() }
             PointerButton { text: "Apply"; highlighted: true; onClicked: changes.apply() }
         }
     }

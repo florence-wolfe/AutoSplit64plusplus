@@ -148,11 +148,10 @@ ThemedPane {
             rowSpacing: 0
             Layout.fillWidth: true
             Layout.topMargin: 8
-            PointerButton { objectName: "openLog"; text: "Open log"; flat: true; Layout.fillWidth: true; onClicked: debug.open_log() }
+            PointerButton { objectName: "openLog"; text: "Open log"; Layout.fillWidth: true; onClicked: debug.open_log() }
             PointerButton {
                 objectName: "openOldLog"
                 text: "Open previous log"
-                flat: true
                 enabled: debug.values.oldLog
                 Layout.fillWidth: true
                 onClicked: debug.open_old_log()

@@ -422,7 +422,7 @@ ThemedPane {
         RowLayout {
             Layout.margins: 12
             Item { Layout.fillWidth: true }
-            PointerButton { text: "Cancel"; flat: true; onClicked: settings.cancel() }
+            PointerButton { text: "Cancel"; onClicked: settings.cancel() }
             PointerButton { objectName: "apply"; text: "Apply"; highlighted: true; onClicked: settings.apply() }
         }
     }
@@ -553,7 +553,6 @@ ThemedPane {
         }
         CompactButton {
             text: "Browse"
-            flat: true
             onClicked: {
                 const chosen = settings.browse(field.title)
                 if (chosen) {

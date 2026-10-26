@@ -22,9 +22,9 @@ ThemedPane {
         Item { Layout.fillHeight: true }
 
         RowLayout {
-            PointerButton { text: "Help"; flat: true; onClicked: help.open() }
+            PointerButton { text: "Help"; onClicked: help.open() }
             Item { Layout.fillWidth: true }
-            PointerButton { text: "Cancel"; flat: true; onClicked: templates.cancel() }
+            PointerButton { text: "Cancel"; onClicked: templates.cancel() }
             PointerButton {
                 objectName: "generate"
                 text: templates.values.status

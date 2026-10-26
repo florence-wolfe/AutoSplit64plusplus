@@ -16,11 +16,16 @@ import QtQuick
 import QtQuick.Controls
 
 Item {
+    id: root
     width: 400; height: 300
+    // Which QML reads, as Python can't read a background's border
+    property var borders: ({button: button.background.border.width, highlighted: highlighted.background.border.width,
+                            flat: flat.background.border.width})
     Column {
-        Button { objectName: "button"; text: "Button" }
-        Button { objectName: "highlighted"; text: "Highlighted"; highlighted: true }
-        Button { objectName: "flat"; text: "Flat"; flat: true }
+        Button { id: button; objectName: "button"; text: "Button" }
+        Button { id: highlighted; objectName: "highlighted"; text: "Highlighted"; highlighted: true }
+        Button { id: flat; objectName: "flat"; text: "Flat"; flat: true }
+        Button { objectName: "plain"; text: "Plain" }
         Switch { objectName: "switchOn"; checked: true }
         Switch { objectName: "switchOff" }
         CheckBox { objectName: "checked"; checked: true }
@@ -63,6 +68,7 @@ out = {
     "button": rgb(qml(view, "button").property("background").property("color")),
     "highlighted": rgb(qml(view, "highlighted").property("background").property("color")),
     "flat": qml(view, "flat").property("background").property("color").alpha(),
+    "borders": view.rootObject().property("borders").toVariant(),
     "switchOn": rgb(qml(view, "switchOn").property("indicator").property("color")),
     "checked": rgb(qml(view, "checked").property("indicator").property("color")),
     "unchecked": qml(view, "unchecked").property("indicator").property("color").alpha(),
@@ -100,6 +106,10 @@ class StyleTest(unittest.TestCase):
                 self.assertEqual(out["checked"], palette["accent"])
                 self.assertEqual(out["unchecked"], 0)
 
+    def test_buttons_come_in_three_levels(self):
+        # A raised one with a border, an accent one with none, and a flat one with no fill or border
+        self.assertEqual(probe("as64_dark")["borders"], {"button": 1, "highlighted": 0, "flat": 0})
+
     def test_fields_are_on_the_ground_and_a_chosen_row_is_raised(self):
         for name in ["as64_dark", "as64_light"]:
             with self.subTest(name):
@@ -115,6 +125,38 @@ class StyleTest(unittest.TestCase):
         out = probe("as64_dark")
         self.assertEqual(out["labelFont"], "Inter Variable")
         self.assertEqual(out["buttonHeight"], 32)
+
+
+CAPTURE_SCRIPT = """
+import json, sys
+from PyQt6 import QtGui
+from tests.qt import qapp, qml, run_queued
+from autosplit64.gui import theme
+theme.use_style("AutoSplit64")
+theme.apply("as64_dark")
+from tests.test_capture_editor import CaptureEditorTest
+test = CaptureEditorTest("editor")
+editor, window = test.editor()
+run_queued()
+buttons = {name: qml(editor.view, name) for name in ("zoomOut", "fit", "zoomIn")}
+print(json.dumps({name: {"text": button.property("text"), "truncated": button.property("contentItem").property("truncated"),
+                         "flat": button.property("flat")} for name, button in buttons.items()}))
+"""
+
+
+@unittest.skipUnless(sys.platform == "darwin", "macOS capture sources")
+class CaptureEditorButtonsTest(unittest.TestCase):
+    def test_zoom_buttons_show_their_whole_text_and_are_buttons(self):
+        result = subprocess.run([sys.executable, "-c", CAPTURE_SCRIPT], capture_output=True, text=True, cwd=ROOT,
+                                timeout=60)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        out = json.loads(result.stdout.strip().splitlines()[-1])
+        for name, text in [("zoomOut", "−"), ("fit", "Fit"), ("zoomIn", "+")]:
+            with self.subTest(name):
+                self.assertEqual(out[name]["text"], text)
+                self.assertFalse(out[name]["truncated"])
+                # Secondary: not flat
+                self.assertFalse(out[name]["flat"])
 
 
 if __name__ == "__main__":

@@ -49,7 +49,7 @@ ThemedPane {
                     Layout.fillWidth: true
                 }
                 PointerButton { text: capture.values.allowText; highlighted: true; Layout.fillWidth: true; onClicked: capture.allow() }
-                PointerButton { text: "Open System Settings"; flat: true; Layout.fillWidth: true; onClicked: capture.open_settings() }
+                PointerButton { text: "Open System Settings"; Layout.fillWidth: true; onClicked: capture.open_settings() }
             }
             // The OBS plugin is only on Windows
             PointerCheckBox {
@@ -82,7 +82,7 @@ ThemedPane {
                 }
             }
             PointerButton { text: "Capture screen"; Layout.fillWidth: true; Layout.topMargin: 8; onClicked: capture.capture_screen() }
-            PointerButton { text: "Auto detect region"; flat: true; Layout.fillWidth: true; onClicked: capture.auto_detect() }
+            PointerButton { text: "Auto detect region"; Layout.fillWidth: true; onClicked: capture.auto_detect() }
             PointerCheckBox {
                 objectName: "vcFix"
                 text: "VC fix (experimental)"
@@ -207,7 +207,7 @@ ThemedPane {
             Item { Layout.fillHeight: true }
             RowLayout {
                 Item { Layout.fillWidth: true }
-                PointerButton { text: "Cancel"; flat: true; onClicked: capture.cancel() }
+                PointerButton { text: "Cancel"; onClicked: capture.cancel() }
                 PointerButton { text: "Apply"; highlighted: true; onClicked: capture.apply() }
             }
         }
@@ -297,8 +297,10 @@ ThemedPane {
 
     component ZoomButton: CompactButton {
         property string tip
-        flat: true
         implicitWidth: 40
+        // Narrow enough for "Fit" and no wider
+        leftPadding: 4
+        rightPadding: 4
         ToolTip.visible: hovered
         ToolTip.text: tip
     }
