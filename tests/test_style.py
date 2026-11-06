@@ -178,3 +178,60 @@ class CaptureEditorButtonsTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+COMBO_PROBE = """
+import QtQuick
+import QtQuick.Controls
+
+Item {
+    width: 400; height: 300
+    function open() { strings.popup.open(); objects.popup.open() }
+    function rows(combo) {
+        var texts = []
+        var items = combo.popup.contentItem.contentItem.children
+        for (var i = 0; i < items.length; i++)
+            if (items[i].text !== undefined) texts.push(String(items[i].text))
+        return texts
+    }
+    function texts() { return {strings: rows(strings), objects: rows(objects)} }
+    Row {
+        ComboBox { id: strings; model: ["Alpha", "Beta"] }
+        ComboBox { id: objects; model: [{name: "Gamma"}, {name: "Delta"}]; textRole: "name" }
+    }
+}
+"""
+
+COMBO_SCRIPT = """
+import json, sys, tempfile
+from pathlib import Path
+from PyQt6 import QtCore, QtWidgets
+from tests.qt import qapp, run_queued, wait_until
+from autosplit64.gui import theme
+theme.use_style("AutoSplit64")
+theme.apply("as64_dark")
+from autosplit64.gui.qml_view import qml_view
+directory = tempfile.TemporaryDirectory()
+(Path(directory.name) / "Probe.qml").write_text(sys.stdin.read())
+window = QtWidgets.QWidget()
+window.resize(400, 300)
+view = qml_view(window, f"{directory.name}/Probe")
+window.show()
+run_queued()
+root = view.rootObject()
+QtCore.QMetaObject.invokeMethod(root, "open")
+def texts():
+    return QtCore.QMetaObject.invokeMethod(root, "texts", QtCore.Q_RETURN_ARG("QVariant")).toVariant()
+wait_until(lambda: len(texts()["strings"]) == 2 and len(texts()["objects"]) == 2)
+print(json.dumps(texts()))
+"""
+
+
+class ComboBoxRowsTest(unittest.TestCase):
+    def test_rows_show_their_text(self):
+        result = subprocess.run([sys.executable, "-c", COMBO_SCRIPT], input=COMBO_PROBE, capture_output=True, text=True,
+                                cwd=ROOT, timeout=60)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout.strip().splitlines()[-1]),
+                         {"strings": ["Alpha", "Beta"], "objects": ["Gamma", "Delta"]})
+        self.assertNotIn("modelData is not defined", result.stderr)

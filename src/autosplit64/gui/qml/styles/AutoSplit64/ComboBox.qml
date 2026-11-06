@@ -23,7 +23,7 @@ T.ComboBox {
         required property var model
         required property int index
         width: ListView.view.width
-        text: control.textRole ? (Array.isArray(control.model) ? modelData[control.textRole] : model[control.textRole]) : modelData
+        text: control.textRole ? (Array.isArray(control.model) ? model.modelData[control.textRole] : model[control.textRole]) : model.modelData
         highlighted: control.highlightedIndex === index
         hoverEnabled: control.hoverEnabled
     }
