@@ -58,6 +58,24 @@ class ScreenRecordingPermissionTest(CaptureEditorTest):
         window.get_visible_processes.assert_called()
 
 
+class DeviceNamesTest(CaptureEditorTest):
+    """ AVFoundation's names are PyObjC strings, which QML doesn't read as text unless they're made plain ones """
+
+    def test_shows_the_devices_names(self):
+        from Foundation import NSString
+        from autosplit64.core import capture_device_mac
+        device = mock.Mock(**{"uniqueID.return_value": NSString.stringWithString_("card"),
+                              "localizedName.return_value": NSString.stringWithString_("Capture Card")})
+        session = mock.Mock(**{"devices.return_value": [device]})
+        av = mock.Mock(**{"AVCaptureDeviceDiscoverySession.discoverySessionWithDeviceTypes_mediaType_position_.return_value": session})
+        editor, _ = self.editor()
+        self.settings["game"]["capture_device"] = "card"
+        with mock.patch.object(capture_device_mac, "AV", av), \
+             mock.patch.object(capture_device_mac, "has_permission", return_value=False):
+            editor.capture.choose("source", "device")
+        self.assertEqual(qml(editor.view, "device").property("displayText"), "Capture Card")
+
+
 class GameRegionTest(CaptureEditorTest):
     def test_shows_the_capture(self):
         frame = np.full((300, 400, 3), 90, np.uint8)

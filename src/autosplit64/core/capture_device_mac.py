@@ -44,7 +44,8 @@ def get_devices():
     """ Returns a list of (unique id, name) of the connected video devices """
     session = AV.AVCaptureDeviceDiscoverySession.discoverySessionWithDeviceTypes_mediaType_position_(
         _DEVICE_TYPES, AV.AVMediaTypeVideo, AV.AVCaptureDevicePositionUnspecified)
-    return [(device.uniqueID(), device.localizedName()) for device in session.devices()]
+    # A plain string for the name, as QML doesn't read PyObjC's as text
+    return [(device.uniqueID(), str(device.localizedName())) for device in session.devices()]
 
 
 def has_permission():
